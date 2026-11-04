@@ -1,6 +1,6 @@
 """Crea dati dimostrativi CHIARAMENTE ETICHETTATI (is_demo=True, badge DEMO).
 
-Uso:  backend/.venv/bin/python scripts/seed_demo.py
+Uso:  scripts/py.sh scripts/seed_demo.py
 
 Crea solo progetti vuoti di esempio: nessun dato storico o finanziario viene
 inventato. Rieseguibile: non duplica i progetti già presenti.

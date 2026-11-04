@@ -1,6 +1,6 @@
 """Backup consistente del database SQLite (API di backup di SQLite).
 
-Uso:  backend/.venv/bin/python scripts/backup_db.py [cartella_destinazione]
+Uso:  scripts/py.sh scripts/backup_db.py [cartella_destinazione]
 
 Il backup è sicuro anche con l'applicazione in esecuzione. Per PostgreSQL
 usare pg_dump (non gestito da questo script).

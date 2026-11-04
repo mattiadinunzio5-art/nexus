@@ -1,9 +1,9 @@
 """Genera il Daily Briefing dalla riga di comando (programmabile con cron).
 
-Uso:  backend/.venv/bin/python scripts/generate_briefing.py [--refresh] [--email utente@esempio]
+Uso:  scripts/py.sh scripts/generate_briefing.py [--refresh] [--email utente@esempio]
 
 Esempio di pianificazione (ogni giorno alle 7:10, crontab -e):
-    10 7 * * * cd /percorso/nexus && backend/.venv/bin/python scripts/generate_briefing.py --refresh
+    10 7 * * * cd /percorso/nexus && scripts/py.sh scripts/generate_briefing.py --refresh
 
 Senza --email usa l'utente locale.
 """

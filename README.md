@@ -32,7 +32,11 @@ su Crossref; registro attività; notifiche; ricerca globale; dashboard personali
 - **Documenti = dati**: i contenuti importati non sono mai trattati come istruzioni.
 
 ## Requisiti
-Python ≥ 3.11 (testato con 3.13), Node.js ≥ 20 (testato con 22). Facoltativo: `uv`.
+Python ≥ 3.11 (testato con 3.13), Node.js ≥ 20 (testato con 22).
+
+**Windows:** installa Python da https://www.python.org/downloads spuntando «Add python.exe to PATH»,
+Node.js LTS da https://nodejs.org e Git da https://git-scm.com, poi usa il terminale **Git Bash**
+(va bene anche MSYS2/UCRT64). Gli script trovano da soli il Python ufficiale di Windows.
 
 ## Avvio rapido
 ```bash
@@ -43,9 +47,9 @@ scripts/dev.sh            # backend 127.0.0.1:8000 · frontend http://127.0.0.1:
 Documentazione API interattiva: http://127.0.0.1:8000/docs
 
 ```bash
-backend/.venv/bin/python scripts/seed_demo.py          # dati DEMO etichettati (progetti, eventi senza fonti)
-backend/.venv/bin/python scripts/backup_db.py          # backup consistente in nexus/backups/
-backend/.venv/bin/python scripts/generate_briefing.py  # Daily Briefing (programmabile con cron)
+scripts/py.sh scripts/seed_demo.py          # dati DEMO etichettati (progetti, eventi senza fonti)
+scripts/py.sh scripts/backup_db.py          # backup consistente in nexus/backups/
+scripts/py.sh scripts/generate_briefing.py  # Daily Briefing (programmabile con cron)
 ```
 
 ### Modalità multi-utente (SaaS)
