@@ -5,7 +5,7 @@ source "$(dirname "$0")/_env.sh"
 
 echo "==> Python"
 if ! PY="$(find_python)"; then
-  echo "ERRORE: serve Python 3.11 o successivo." >&2
+  echo "ERRORE: serve Python 3.13 (oppure 3.12 o 3.11). Le versioni più recenti non sono ancora supportate da tutte le librerie." >&2
   if is_windows; then
     echo "Installalo da https://www.python.org/downloads spuntando «Add python.exe to PATH»," >&2
     echo "poi chiudi e riapri il terminale e rilancia scripts/setup.sh" >&2
@@ -15,6 +15,11 @@ fi
 echo "    uso: $PY ($($PY --version 2>&1))"
 
 echo "==> Backend (ambiente virtuale)"
+# Un ambiente creato con un Python non supportato viene ricreato.
+if VPY="$(venv_python)" && ! "$VPY" -c 'import sys; sys.exit(0 if (3, 11) <= sys.version_info[:2] <= (3, 13) else 1)' 2>/dev/null; then
+  echo "    ambiente con una versione di Python non supportata: lo ricreo"
+  rm -rf "$VENV"
+fi
 # Un ambiente rimasto a metà da un tentativo precedente viene ricreato.
 if [[ -d "$VENV" ]] && ! { VPY="$(venv_python)" && "$VPY" -c 'import sys' 2>/dev/null; }; then
   echo "    ambiente incompleto: lo ricreo"

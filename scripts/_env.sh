@@ -9,14 +9,15 @@ is_windows() {
   case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*) return 0 ;; *) return 1 ;; esac
 }
 
-# Interprete Python di sistema adatto (>= 3.11). Su Windows serve il Python ufficiale
+# Interprete Python di sistema adatto (3.11–3.13: alcune librerie, es. onnxruntime per PyMuPDF,
+# non sono ancora disponibili per versioni più recenti). Su Windows serve il Python ufficiale
 # (python.org): quello di MSYS2 non ha i pacchetti precompilati per numpy/pandas.
 find_python() {
   local cand out
   for cand in "py -3.13" "py -3.12" "py -3.11" "py -3" python3 python; do
     out="$($cand -c 'import sys; print(sys.platform, sys.version_info[0], sys.version_info[1])' 2>/dev/null)" || continue
     read -r plat major minor <<<"$out"
-    [[ "$major" == 3 && "$minor" -ge 11 ]] || continue
+    [[ "$major" == 3 && "$minor" -ge 11 && "$minor" -le 13 ]] || continue
     if is_windows && [[ "$plat" != "win32" ]]; then continue; fi
     echo "$cand"
     return 0
