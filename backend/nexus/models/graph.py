@@ -5,7 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database.base import Base, TimestampMixin
 
-ENTITY_TYPES = ("person", "state", "company", "bank", "institution", "event", "document", "theory", "indicator")
+ENTITY_TYPES = ("person", "state", "company", "bank", "institution", "event", "document", "theory", "indicator",
+                "organization", "economic_system", "phenomenon", "concept", "hypothesis")
 RELATION_TYPES = (
     "caused",
     "influenced",
@@ -15,6 +16,10 @@ RELATION_TYPES = (
     "involved_in",
     "replaced",
     "preceded",
+    "consequence_of",
+    "occurred_during",
+    "opposed_to",
+    "participant_in",
 )
 # sourced: supportata da una fonte o da un passaggio di documento (obbligatori)
 # user_hypothesis: ipotesi dichiarata dall'utente · ai_hypothesis: ipotesi generata da un modello AI
@@ -35,6 +40,8 @@ class Entity(TimestampMixin, Base):
     end_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
     event_id: Mapped[int | None] = mapped_column(ForeignKey("historical_events.id", ondelete="CASCADE"), nullable=True)
     document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+    # Indicatore collegato a una serie importata (Discovery Intelligence).
+    series_id: Mapped[int | None] = mapped_column(ForeignKey("series.id", ondelete="SET NULL"), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)
 
 

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     cookie_secure: bool = False  # True dietro HTTPS in produzione
     # Limiti alle operazioni automatiche.
     max_agent_steps: int = 12
+    # Discovery Intelligence: limiti di ogni sessione (tempo, chiamate AI, risultati per tipo).
+    discovery_max_seconds: int = 120
+    discovery_max_llm_calls: int = 3
+    discovery_max_items: int = 60
 
     @property
     def is_sqlite(self) -> bool:

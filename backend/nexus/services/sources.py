@@ -31,7 +31,22 @@ def get_source(db: Session, user: User, source_id: int) -> Source:
     return s
 
 
+def _check_primary(db: Session, user: User, primary_id: int | None, self_id: int | None = None) -> None:
+    """La fonte primaria deve esistere, essere dell'utente e non creare cicli."""
+    seen = {self_id} if self_id else set()
+    cur = primary_id
+    while cur is not None:
+        if cur in seen:
+            raise ValidationFailedError("La fonte primaria indicata crea un ciclo.")
+        seen.add(cur)
+        p = db.get(Source, cur)
+        if p is None or p.owner_id != user.id:
+            raise ValidationFailedError("Fonte primaria inesistente.")
+        cur = p.primary_source_id
+
+
 def create_source(db: Session, user: User, data: SourceIn, is_demo: bool = False) -> Source:
+    _check_primary(db, user, data.primary_source_id)
     s = Source(owner_id=user.id, is_demo=is_demo, **data.model_dump())
     db.add(s)
     db.flush()
@@ -44,6 +59,7 @@ def create_source(db: Session, user: User, data: SourceIn, is_demo: bool = False
 
 def update_source(db: Session, user: User, source_id: int, data: SourceIn) -> Source:
     s = get_source(db, user, source_id)
+    _check_primary(db, user, data.primary_source_id, s.id)
     for k, v in data.model_dump().items():
         setattr(s, k, v)
     # Qualsiasi modifica invalida la verifica precedente.

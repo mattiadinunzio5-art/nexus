@@ -4,6 +4,7 @@ from .activity import ActivityLog
 from .agents import AgentStep, ResearchRun
 from .collab import ProjectComment, SeriesAlert
 from .connector import ConnectorState
+from .discovery import DiscoveryAnalysis, DiscoveryAnomaly, DiscoveryConnection, DiscoveryHypothesis, DiscoverySession
 from .finance import Credential, Observation, Series
 from .document import Document, DocumentChunk
 from .graph import Entity, Relation
@@ -18,6 +19,11 @@ from .studio import Briefing, Note, Report, ReportSection
 from .user import AuthSession, ProjectMember, User
 
 __all__ = [
+    "DiscoveryAnalysis",
+    "DiscoveryAnomaly",
+    "DiscoveryConnection",
+    "DiscoveryHypothesis",
+    "DiscoverySession",
     "ProjectComment",
     "SeriesAlert",
     "ActivityLog",

@@ -12,8 +12,10 @@ from .schemas import CleanStr, ORMModel, UTCDateTime
 Category = Literal["economic", "monetary", "banking", "industrial", "war_geopolitics", "revolution", "financial_crisis", "empires", "capitalism"]
 Reliability = Literal["established", "probable", "disputed", "unverified"]
 KnowledgeKind = Literal["contemporary", "later_discovery", "archival_release", "historiography"]
-EntityType = Literal["person", "state", "company", "bank", "institution", "event", "document", "theory", "indicator"]
-RelationType = Literal["caused", "influenced", "contemporary_of", "related_to", "financed", "involved_in", "replaced", "preceded"]
+EntityType = Literal["person", "state", "company", "bank", "institution", "event", "document", "theory", "indicator",
+                     "organization", "economic_system", "phenomenon", "concept", "hypothesis"]
+RelationType = Literal["caused", "influenced", "contemporary_of", "related_to", "financed", "involved_in", "replaced", "preceded",
+                       "consequence_of", "occurred_during", "opposed_to", "participant_in"]
 Provenance = Literal["sourced", "user_hypothesis", "ai_hypothesis"]
 Short = Annotated[CleanStr, StringConstraints(min_length=1, max_length=200)]
 LongText = Annotated[CleanStr, StringConstraints(max_length=20000)]
