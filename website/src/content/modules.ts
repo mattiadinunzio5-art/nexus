@@ -78,17 +78,19 @@ export const MODULES: ModuleContent[] = [
     whyUseful: [
       'Separates parallel lines of research cleanly.',
       'Reports and notes can be attached to a project and shared with collaborators in multi-user mode.',
-      'Archived projects stay searchable without cluttering your active work.',
+      'Each project has its own comment thread and a history of who changed what.',
     ],
     guide: [
       { title: 'Create a project', detail: 'Open Progetti → “Nuovo progetto”. Give it a clear title, e.g. “The 2008 financial crisis”.' },
       { title: 'Define the research objective', detail: 'Use the description to state the question, the hypotheses you want to test and the scope you intend to cover.' },
       { title: 'Organise the questions', detail: 'Write sub-questions as notes in the Research Studio, attached to the project; each can become a research run in the War Room.' },
       { title: 'Set the period of analysis', detail: 'The period is applied where it matters: as year filters in Historical Intelligence, as the date in the Time Machine and as the range of the series you analyse.' },
+      { title: 'Discuss and track', detail: 'Open the comments icon: members — readers included — can comment, and the history lists every change with its author.' },
+      { title: 'Start from a lesson', detail: 'Lezioni guidate creates a ready project on the 1929 crash, 1970s inflation or the 2008 crisis, with a step-by-step guide.' },
       { title: 'Manage the project', detail: 'Edit, archive or restore it at any time. Deletion is irreversible and always asks for explicit confirmation.' },
     ],
     inputs: ['Title', 'Description with objective and scope', 'Optional: collaborators (multi-user mode)'],
-    outputs: ['A project page listed on the dashboard', 'A shared container for reports, notes and research runs'],
+    outputs: ['A project page listed on the dashboard', 'A shared container for reports, notes and research runs', 'Comments and a change history'],
     example: {
       title: 'Starting a study',
       steps: [
@@ -163,9 +165,10 @@ export const MODULES: ModuleContent[] = [
       { title: 'Let NEXUS validate it', detail: 'DOI format, ISBN check digit and URL are validated on entry.' },
       { title: 'Verify', detail: 'Use “Verifica DOI su Crossref”, or declare that you checked the original. The status and the date of the check are stored.' },
       { title: 'Connect it', detail: 'Link the source to documents, historical events and graph relations; cite it in reports as [@id, p. 12].' },
+      { title: 'Exchange with Zotero', detail: 'Import a BibTeX file from Zotero, Mendeley or JabRef — entries arrive as unverified — and export your bibliography to BibTeX.' },
     ],
-    inputs: ['Bibliographic fields', 'Optional DOI for registry verification'],
-    outputs: ['A formatted citation', 'A verification status: unverified, verified by you, verified on registry, not found', 'Numbered references in exported reports'],
+    inputs: ['Bibliographic fields', 'Optional DOI for registry verification', 'Optional BibTeX file'],
+    outputs: ['A formatted citation', 'A verification status: unverified, verified by you, verified on registry, not found', 'Numbered references in exported reports', 'A BibTeX file'],
     example: {
       title: 'Checking a journal article',
       steps: [
@@ -197,14 +200,15 @@ export const MODULES: ModuleContent[] = [
       'Series with different frequencies are compared only after an explicit resampling you choose.',
     ],
     guide: [
-      { title: 'Import a series', detail: 'Importa serie → pick a suggested series (e.g. inflation, GDP, unemployment, public debt) or enter a code from World Bank, Eurostat, Our World in Data or FRED.' },
+      { title: 'Import a series', detail: 'Importa serie → pick a suggested series (e.g. inflation, GDP, unemployment, public debt) or enter a code from World Bank, Eurostat, the ECB, ISTAT, Our World in Data or FRED.' },
       { title: 'Or upload your own', detail: 'Upload a CSV with date and value columns; the source field is mandatory.' },
       { title: 'Read the series', detail: 'The chart, a data table and the provenance panel show exactly what the source published.' },
       { title: 'Analyse', detail: 'Choose levels (prices, indices) or rates (percentages). NEXUS computes returns, annualised volatility, drawdown, CAGR, moving averages, linear trend, ADF test and autocorrelation.' },
       { title: 'Compare', detail: 'Select up to eight series: NEXUS aligns common dates, rebases them to 100 and computes correlations — on changes by default, because correlations of trending levels are often spurious.' },
+      { title: 'Set alerts', detail: 'Get a notification when the source publishes a new value or the latest value crosses a threshold. Alerts are checked on refresh, with “Controlla ora” or with a script you schedule.' },
     ],
     inputs: ['A source code (e.g. FP.CPI.TOTL.ZG + ITA for World Bank) or a CSV', 'A free FRED API key, only for FRED series', 'Analysis choices: moving-average windows, return type, resampling'],
-    outputs: ['Interactive charts with table view', 'Statistics with the number of observations used', 'Correlation matrix and the resampling procedure applied'],
+    outputs: ['Interactive charts with table view', 'Statistics with the number of observations used', 'Correlation matrix and the resampling procedure applied', 'Notifications on new data or thresholds'],
     example: {
       title: 'Inflation in Italy',
       steps: [
@@ -425,12 +429,13 @@ export const MODULES: ModuleContent[] = [
     kicker: 'Writing',
     tagline: 'From evidence to a finished report.',
     description:
-      'The Research Studio turns your work into professional documents. Reports follow a ten-part structure — title, abstract, introduction, methodology, analysis, evidence, counter-arguments, conclusions, limitations and an automatic bibliography — with charts, tables and verifiable citations, exported to PDF and DOCX.',
+      'The Research Studio turns your work into professional documents. Reports follow a ten-part structure — title, abstract, introduction, methodology, analysis, evidence, counter-arguments, conclusions, limitations and an automatic bibliography — with charts, tables and verifiable citations, exported to PDF, DOCX and LaTeX.',
     mainFunction: 'Organise, write and export your findings with every citation checked.',
     whyUseful: [
       'Citations like [@12, p. 4] become numbered references; citations to non-existent sources are reported.',
       'A report can be approved only when its sections are complete and its citations valid; any later edit returns it to draft.',
       'Drafts are exported with a DRAFT watermark and a notice for unverified sources.',
+      'LaTeX export produces a ZIP ready for Overleaf, with main.tex, references.bib and the figures.',
     ],
     guide: [
       { title: 'Organise', detail: 'Keep notes linked to projects, sources and documents.' },
@@ -438,10 +443,10 @@ export const MODULES: ModuleContent[] = [
       { title: 'Create chapters', detail: 'Add extra chapters after any section and reorder them.' },
       { title: 'Add charts and tables', detail: 'Embed series and simulation charts, or paste a table as CSV.' },
       { title: 'Cite and check', detail: 'Cite sources in the text; the check panel lists empty sections, invalid citations and unverified sources.' },
-      { title: 'Produce the final document', detail: 'Approve, then export to PDF or DOCX. The Daily Briefing summarises your data with dates and sources.' },
+      { title: 'Produce the final document', detail: 'Approve, then export to PDF, DOCX or LaTeX. The Daily Briefing summarises your data with dates and sources.' },
     ],
     inputs: ['Text', 'Bibliography entries', 'Series and simulations to embed'],
-    outputs: ['PDF and DOCX reports with figures, tables and bibliography', 'A Daily Briefing'],
+    outputs: ['PDF, DOCX and LaTeX reports with figures, tables and bibliography', 'A Daily Briefing'],
     example: {
       title: 'From run to report',
       steps: [
@@ -494,7 +499,7 @@ export const MODULES: ModuleContent[] = [
       { slug: 'dashboard', why: 'Source status appears on the dashboard.' },
     ],
     limits: [
-      'Implemented: World Bank, Eurostat, Our World in Data, FRED (with key), Project Gutenberg.',
+      'Implemented: World Bank, Eurostat, European Central Bank, ISTAT, Our World in Data, FRED (with key), Project Gutenberg.',
       'Declared but not yet connected: IMF, OECD, BIS.',
     ],
     visual: 'plug',

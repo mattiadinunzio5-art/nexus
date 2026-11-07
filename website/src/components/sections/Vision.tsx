@@ -1,16 +1,8 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import { Reveal, SectionLabel, WordsReveal } from '../Reveal';
+import { useI18n } from '../../lib/i18n';
 
-const MANIFESTO =
-  'Information is everywhere and nowhere at once — scattered across reports, archives, datasets and memory. Research begins when fragments are connected: a document to its source, an event to its causes, a number to the moment it was known. NEXUS exists to make those connections explicit, verifiable and usable.';
-
-const POINTS = [
-  { n: 'I', title: 'Dispersion', text: 'Documents, data and events live in separate tools and formats. Context is lost the moment they are copied out of their source.' },
-  { n: 'II', title: 'Disconnection', text: 'Linking a statistic to the event behind it, and both to a verifiable reference, is slow manual work that rarely survives the next project.' },
-  { n: 'III', title: 'Integration', text: 'One environment where documents, series, chronologies and relations share the same sources — so every result can be traced back.' },
-  { n: 'IV', title: 'Interpretation', text: 'From collection to understanding: analyses, counter-analyses and scenarios with their assumptions declared, ready to become a report.' },
-];
 
 function Word({ children, progress, range }: { children: string; progress: MotionValue<number>; range: [number, number] }) {
   const opacity = useTransform(progress, range, [0.16, 1]);
@@ -23,14 +15,17 @@ function Word({ children, progress, range }: { children: string; progress: Motio
 
 export function Vision() {
   const ref = useRef<HTMLParagraphElement>(null);
+  const { t } = useI18n();
+  const MANIFESTO = t.vision.manifesto;
+  const POINTS = t.vision.points;
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.85', 'end 0.45'] });
   const words = MANIFESTO.split(' ');
   return (
-    <section id="vision" className="relative bg-void py-28 md:py-40" aria-label="The Vision">
+    <section id="vision" className="relative bg-void py-28 md:py-40" aria-label={t.vision.label}>
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8">
-        <SectionLabel n="01">The Vision</SectionLabel>
-        <WordsReveal as="h2" text="Knowledge Is Not Information. It Is Connection." className="max-w-5xl font-serif text-[clamp(2.6rem,7vw,6.5rem)] leading-[0.95] tracking-tight" />
-        <p ref={ref} className="mt-16 max-w-4xl text-[clamp(1.25rem,2.6vw,2.15rem)] font-light leading-[1.35] text-ivory md:mt-24" aria-label={MANIFESTO}>
+        <SectionLabel n="01">{t.vision.label}</SectionLabel>
+        <WordsReveal as="h2" key={t.vision.title} text={t.vision.title} className="max-w-5xl font-serif text-[clamp(2.6rem,7vw,6.5rem)] leading-[0.95] tracking-tight" />
+        <p key={MANIFESTO} ref={ref} className="mt-16 max-w-4xl text-[clamp(1.25rem,2.6vw,2.15rem)] font-light leading-[1.35] text-ivory md:mt-24" aria-label={MANIFESTO}>
           {words.map((w, i) => (
             <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>{w}</Word>
           ))}

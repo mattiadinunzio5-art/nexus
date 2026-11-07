@@ -11,7 +11,7 @@ export const WORKFLOW: { step: string; detail: string; slug: ModuleSlug }[] = [
   { step: 'AI Research', detail: 'Agents analyse, challenge and synthesise.', slug: 'research-war-room' },
   { step: 'Economic Simulation', detail: 'Test scenarios with explicit assumptions.', slug: 'economic-laboratory' },
   { step: 'Research Studio', detail: 'Structure the findings and cite them.', slug: 'research-studio' },
-  { step: 'Final Report', detail: 'Approve and export to PDF or DOCX.', slug: 'research-studio' },
+  { step: 'Final Report', detail: 'Approve and export to PDF, DOCX or LaTeX.', slug: 'research-studio' },
 ];
 
 export type CaseVisual = 'project' | 'documents' | 'chart' | 'timeline' | 'clock' | 'graph' | 'agents' | 'fan' | 'report';
@@ -40,7 +40,7 @@ export const CASE_STUDY: { phase: string; slug: ModuleSlug; explain: string; exa
     phase: 'Financial analysis',
     slug: 'financial-intelligence',
     explain: 'Rates, yields, growth and unemployment are imported with their provenance and compared on changes, not levels.',
-    example: 'FRED series such as FEDFUNDS and DGS10 (free key) and World Bank GDP growth for the United States, analysed for drawdowns and volatility.',
+    example: 'FRED series such as FEDFUNDS and DGS10 (free key), the ECB main refinancing rate and World Bank GDP growth for the United States, analysed for drawdowns and volatility.',
     visual: 'chart',
   },
   {
@@ -82,17 +82,17 @@ export const CASE_STUDY: { phase: string; slug: ModuleSlug; explain: string; exa
     phase: 'Research Studio',
     slug: 'research-studio',
     explain: 'Findings, charts and citations are assembled into a report that can be approved only when every citation checks out.',
-    example: 'A ten-part report exported to PDF, with numbered references and unverified sources flagged.',
+    example: 'A ten-part report exported to PDF or LaTeX, with numbered references and unverified sources flagged.',
     visual: 'report',
   },
 ];
 
 export const CAPABILITIES: { title: string; text: string; slug: ModuleSlug }[] = [
   { title: 'Historical Research', text: 'Structured events with variable-precision dates, sources and reliability, and a time-aware view without hindsight.', slug: 'historical-intelligence' },
-  { title: 'Financial Intelligence', text: 'Open economic data with full provenance, returns, volatility, drawdowns, stationarity tests and honest comparisons.', slug: 'financial-intelligence' },
+  { title: 'Financial Intelligence', text: 'Open economic data from the World Bank, Eurostat, the ECB, ISTAT and FRED with full provenance, alerts, returns, volatility, drawdowns, stationarity tests and honest comparisons.', slug: 'financial-intelligence' },
   { title: 'Knowledge Mapping', text: 'A graph of people, institutions, events and ideas where every relation carries its evidence.', slug: 'knowledge-graph' },
   { title: 'AI Research', text: 'Supervised multi-agent research with typed claims, counter-analysis and mandatory approval.', slug: 'research-war-room' },
   { title: 'Economic Simulation', text: 'Monte Carlo, debt dynamics, policy rules, regressions and look-ahead-free backtests, assumptions included.', slug: 'economic-laboratory' },
   { title: 'Document Intelligence', text: 'Keyword and semantic search across your archive, answering with located, verbatim quotations.', slug: 'documents' },
-  { title: 'Research Reporting', text: 'Ten-part reports with verifiable citations, charts and tables, exported to PDF and DOCX.', slug: 'research-studio' },
+  { title: 'Research Reporting', text: 'Ten-part reports with verifiable citations, charts and tables, exported to PDF, DOCX and LaTeX.', slug: 'research-studio' },
 ];

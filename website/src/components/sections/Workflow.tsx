@@ -2,15 +2,15 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
-import { WORKFLOW } from '../../content/story';
-import { MODULES_BY_SLUG } from '../../content/modules';
+import { useI18n } from '../../lib/i18n';
 import { Reveal, SectionLabel, WordsReveal } from '../Reveal';
 import { ModuleVisual } from '../ModuleVisual';
 
 function StepCard({ i }: { i: number }) {
+  const { t, p, workflow: WORKFLOW, modulesBySlug: MODULES_BY_SLUG } = useI18n();
   const s = WORKFLOW[i];
   return (
-    <Link to={`/architecture/${s.slug}`} className="group relative flex h-full flex-col justify-between rounded-2xl border border-line bg-coal p-7 transition-colors hover:border-copper/60 hover:bg-coal-2">
+    <Link to={p(`/architecture/${s.slug}`)} className="group relative flex h-full flex-col justify-between rounded-2xl border border-line bg-coal p-7 transition-colors hover:border-copper/60 hover:bg-coal-2">
       <div className="flex items-center justify-between">
         <span className="font-serif text-5xl text-copper">{String(i + 1).padStart(2, '0')}</span>
         <ArrowUpRight className="h-5 w-5 text-mute transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-copper" aria-hidden />
@@ -19,7 +19,7 @@ function StepCard({ i }: { i: number }) {
       <div>
         <h3 className="text-2xl leading-tight">{s.step}</h3>
         <p className="mt-2 text-sm text-mute-2">{s.detail}</p>
-        <p className="mt-5 text-[11px] uppercase tracking-[0.22em] text-mute">Module · {MODULES_BY_SLUG[s.slug].title}</p>
+        <p className="mt-5 text-[11px] uppercase tracking-[0.22em] text-mute">{t.workflow.module} · {MODULES_BY_SLUG[s.slug].title}</p>
       </div>
     </Link>
   );
@@ -27,6 +27,7 @@ function StepCard({ i }: { i: number }) {
 
 export function Workflow() {
   const reduce = useReducedMotion();
+  const { t, p, workflow: WORKFLOW, modulesBySlug: MODULES_BY_SLUG } = useI18n();
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const [distance, setDistance] = useState(0);
@@ -43,13 +44,13 @@ export function Workflow() {
 
   const header = (
     <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8">
-      <SectionLabel n="04">Research Workflow</SectionLabel>
-      <WordsReveal as="h2" text="From a question to a report you can defend." className="max-w-4xl font-serif text-[clamp(2.4rem,6vw,5.5rem)] leading-[0.95] tracking-tight" />
+      <SectionLabel n="04">{t.workflow.label}</SectionLabel>
+      <WordsReveal as="h2" key={t.workflow.title} text={t.workflow.title} className="max-w-4xl font-serif text-[clamp(2.4rem,6vw,5.5rem)] leading-[0.95] tracking-tight" />
     </div>
   );
 
   return (
-    <section id="workflow" className="relative border-t border-line bg-void" aria-label="Research Workflow">
+    <section id="workflow" className="relative border-t border-line bg-void" aria-label={t.workflow.label}>
       {/* Desktop: scorrimento orizzontale guidato dallo scroll verticale */}
       {!reduce && (
         <div ref={wrap} className="relative hidden lg:block" style={{ height: `${Math.max(180, WORKFLOW.length * 38)}vh` }}>
@@ -79,7 +80,7 @@ export function Workflow() {
             <Reveal key={i} delay={0.03}>
               <li className="relative flex gap-5 pb-6">
                 <span className="relative z-10 mt-5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-copper bg-void font-mono text-[10px] text-copper">{i + 1}</span>
-                <Link to={`/architecture/${s.slug}`} className="group flex-1 rounded-2xl border border-line bg-coal p-5 active:bg-coal-2">
+                <Link to={p(`/architecture/${s.slug}`)} className="group flex-1 rounded-2xl border border-line bg-coal p-5 active:bg-coal-2">
                   <p className="text-lg">{s.step}</p>
                   <p className="mt-1 text-sm text-mute-2">{s.detail}</p>
                   <p className="mt-3 flex items-center gap-1 text-[11px] uppercase tracking-[0.2em] text-mute">{MODULES_BY_SLUG[s.slug].title} <ArrowUpRight className="h-3 w-3" aria-hidden /></p>

@@ -22,9 +22,15 @@ website/
 └── src/
     ├── content/       modules.ts (12 modules), story.ts (workflow, 2008 case study, capabilities)
     ├── components/    Navbar, Footer, HeroGraph (canvas), ModuleVisual, Reveal, sections/*
-    ├── pages/         Home, ModulePage (/architecture/:slug), Auth (signin/signup/reset/account), NotFound
-    └── lib/           supabase.ts, auth.tsx, meta.ts
+    ├── pages/         Home, ModulePage (/architecture/:slug), Cases, Auth (signin/signup/reset/account), NotFound
+    └── lib/           supabase.ts, auth.tsx, meta.ts, i18n.tsx, strings.ts
 ```
+
+## Languages and content
+
+- English at `/`, Italian at `/it` (same pages: `/it/architecture/...`, `/it/cases/...`). The EN/IT switch keeps you on the same page.
+- Interface strings: `src/lib/strings.ts`. Module guides: `src/content/modules.ts` (EN) and `modules.it.ts` (IT). Workflow, case study and capabilities: `story.ts` / `story.it.ts`.
+- **Cases of the month**: add an entry to `src/content/cases.ts` (both `en` and `it`, with official sources). The page, the home preview, SEO and sitemap update automatically. Only documented facts — no invented figures.
 
 ## Enable registration (Supabase)
 
@@ -34,8 +40,9 @@ Without these variables the site states honestly that online registration is not
 2. Authentication → Providers → Email: enabled (keep "Confirm email" on).
 3. Authentication → URL Configuration:
    - Site URL: `https://your-domain`
-   - Redirect URLs: `https://your-domain/account`, `https://your-domain/reset-password`
-     (plus `http://localhost:5173/account` and `http://localhost:5173/reset-password` for local testing).
+   - Redirect URLs: `https://your-domain/account`, `https://your-domain/reset-password`,
+     `https://your-domain/it/account`, `https://your-domain/it/reset-password`
+     (plus the same paths on `http://localhost:5173` for local testing).
 4. Project Settings → API: copy **Project URL** and **anon public** key.
 5. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
    Never use the `service_role` key in the website.

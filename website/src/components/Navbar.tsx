@@ -2,18 +2,36 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useAuth } from '../lib/auth';
+import { counterpart, useI18n } from '../lib/i18n';
 
-export const NAV = [
-  { label: 'Vision', to: '/#vision' },
-  { label: 'Architecture', to: '/#architecture' },
-  { label: 'Workflow', to: '/#workflow' },
-  { label: 'Case Study', to: '/#case-study' },
-  { label: 'Access', to: '/#access' },
-];
+export function useNav() {
+  const { t, p } = useI18n();
+  return [
+    { label: t.nav.vision, to: p('/#vision') },
+    { label: t.nav.architecture, to: p('/#architecture') },
+    { label: t.nav.workflow, to: p('/#workflow') },
+    { label: t.nav.caseStudy, to: p('/#case-study') },
+    { label: t.nav.cases, to: p('/cases') },
+    { label: t.nav.access, to: p('/#access') },
+  ];
+}
+
+function LangSwitch({ className = '' }: { className?: string }) {
+  const { t, lang } = useI18n();
+  const { pathname, hash } = useLocation();
+  return (
+    <Link to={counterpart(pathname, hash)} hrefLang={lang === 'en' ? 'it' : 'en'} lang={lang === 'en' ? 'it' : 'en'}
+      className={`rounded-full border border-line px-3 py-2 text-[12px] font-medium text-mute-2 transition hover:border-ivory hover:text-ivory ${className}`}
+      aria-label={`${t.language}: ${t.switchTo}`}>
+      {t.switchToShort}
+    </Link>
+  );
+}
 
 export function Logo({ className = '' }: { className?: string }) {
+  const { p } = useI18n();
   return (
-    <Link to="/" className={`group flex items-center gap-2.5 ${className}`} aria-label="NEXUS — home">
+    <Link to={p('/')} className={`group flex items-center gap-2.5 ${className}`} aria-label="NEXUS — home">
       <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
         <path d="M9 23V9l14 14V9" fill="none" stroke="#D97736" strokeWidth="1.8" strokeLinecap="round" />
         {[[9, 9], [23, 23], [9, 23], [23, 9]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="2.1" fill="#F3F0E9" />)}
@@ -30,6 +48,8 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const { session } = useAuth();
   const { pathname, hash } = useLocation();
+  const { t, p } = useI18n();
+  const NAV = useNav();
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -49,25 +69,26 @@ export function Navbar() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${scrolled || open ? 'border-b border-line/70 bg-void/80 backdrop-blur-xl' : 'border-b border-transparent'}`}
       >
-        <nav className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 sm:px-8" aria-label="Main">
+        <nav className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 sm:px-8" aria-label={t.navMain}>
           <Logo />
           <ul className="hidden items-center gap-1 rounded-full border border-line/80 bg-coal/60 p-1 backdrop-blur md:flex">
             {NAV.map((n) => (
               <li key={n.to}>
-                <Link to={n.to} className={`block rounded-full px-4 py-1.5 text-[13px] transition-colors hover:bg-ivory hover:text-void ${hash === n.to.slice(1) ? 'bg-ivory text-void' : 'text-mute-2'}`}>
+                <Link to={n.to} className={`block rounded-full px-4 py-1.5 text-[13px] transition-colors hover:bg-ivory hover:text-void ${n.to.endsWith(hash) && hash ? 'bg-ivory text-void' : pathname === n.to ? 'bg-ivory text-void' : 'text-mute-2'}`}>
                   {n.label}
                 </Link>
               </li>
             ))}
           </ul>
           <div className="flex items-center gap-2">
-            <NavLink to={session ? '/account' : '/signin'} className="hidden rounded-full bg-ivory px-4 py-2 text-[13px] font-medium text-void transition hover:bg-copper sm:block">
-              {session ? 'Account' : 'Sign in'}
+            <LangSwitch />
+            <NavLink to={p(session ? '/account' : '/signin')} className="hidden rounded-full bg-ivory px-4 py-2 text-[13px] font-medium text-void transition hover:bg-copper sm:block">
+              {session ? t.account : t.signIn}
             </NavLink>
             <button
               onClick={() => setOpen((o) => !o)}
               className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-full border border-line md:hidden"
-              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-label={open ? t.closeMenu : t.openMenu}
               aria-expanded={open}
               aria-controls="mobile-menu"
             >
@@ -97,8 +118,8 @@ export function Navbar() {
                 </motion.li>
               ))}
             </ul>
-            <Link to={session ? '/account' : '/signin'} className="rounded-full bg-ivory py-4 text-center font-medium text-void">
-              {session ? 'Account' : 'Sign in'}
+            <Link to={p(session ? '/account' : '/signin')} className="rounded-full bg-ivory py-4 text-center font-medium text-void">
+              {session ? t.account : t.signIn}
             </Link>
           </motion.div>
         )}

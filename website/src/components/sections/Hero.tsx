@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { HeroGraph } from '../HeroGraph';
+import { useI18n } from '../../lib/i18n';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  const { t, p } = useI18n();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const graphScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.35]);
   const graphOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
@@ -30,7 +32,7 @@ export function Hero() {
           transition={{ duration: 0.8, ease: EASE, delay: 0.2 }}
           className="mb-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-mute-2"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-copper" aria-hidden /> Research. Intelligence. Knowledge.
+          <span className="h-1.5 w-1.5 rounded-full bg-copper" aria-hidden /> {t.hero.eyebrow}
         </motion.p>
 
         <motion.h1 id="hero-title" style={{ y: titleY }} className="select-none text-[clamp(5.2rem,24vw,23rem)] font-semibold leading-[0.78] tracking-[-0.06em]" aria-label="NEXUS">
@@ -55,18 +57,18 @@ export function Hero() {
             transition={{ duration: 1, ease: EASE, delay: 0.75 }}
             className="font-serif text-[clamp(2rem,4.6vw,4.2rem)] italic leading-[1.02] text-balance"
           >
-            Transforming Information Into Intelligence.
+            {t.hero.tagline}
           </motion.p>
           <motion.div initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: EASE, delay: 0.9 }}>
             <p className="max-w-md text-[15px] leading-relaxed text-mute-2">
-              An integrated research environment designed to collect, connect, analyze and simulate complex knowledge.
+              {t.hero.intro}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/#vision" className="group inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void transition hover:bg-copper">
-                Explore NEXUS <ArrowDownRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:translate-y-0.5" aria-hidden />
+              <Link to={p('/#vision')} className="group inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void transition hover:bg-copper">
+                {t.hero.explore} <ArrowDownRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:translate-y-0.5" aria-hidden />
               </Link>
-              <Link to="/#access" className="group inline-flex items-center gap-2 rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">
-                Enter the Platform <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+              <Link to={p('/#access')} className="group inline-flex items-center gap-2 rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">
+                {t.hero.enter} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </Link>
             </div>
           </motion.div>
@@ -75,9 +77,9 @@ export function Hero() {
 
       <div className="relative z-10 border-t border-line/60">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 text-[10px] uppercase tracking-[0.28em] text-mute sm:px-8">
-          <span>12 modules</span>
-          <span className="flex items-center gap-2"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-copper opacity-60 motion-reduce:hidden" /><span className="relative inline-flex h-2 w-2 rounded-full bg-copper" /></span>Scroll</span>
-          <span className="hidden sm:inline">Open data · Verifiable sources</span>
+          <span>{t.hero.modules}</span>
+          <span className="flex items-center gap-2"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-copper opacity-60 motion-reduce:hidden" /><span className="relative inline-flex h-2 w-2 rounded-full bg-copper" /></span>{t.hero.scroll}</span>
+          <span className="hidden sm:inline">{t.hero.strip}</span>
         </div>
       </div>
     </section>

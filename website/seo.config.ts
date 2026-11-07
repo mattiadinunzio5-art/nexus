@@ -2,18 +2,32 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
 import { MODULES } from './src/content/modules';
+import { MODULES_IT } from './src/content/modules.it';
+import { CASES } from './src/content/cases';
+import { STRINGS } from './src/lib/strings';
 
-const DEFAULT_DESC =
-  'NEXUS is an integrated research environment to collect, connect, analyze and simulate complex historical, economic and financial knowledge — with verifiable sources.';
+type Lang = 'en' | 'it';
+export interface Page { path: string; title: string; description: string; index: boolean; lang: Lang; alt: string }
 
-interface Page { path: string; title: string; description: string; index: boolean }
+const it = (p: string) => (p === '/' ? '/it' : `/it${p}`);
 
-export const PAGES: Page[] = [
-  { path: '/', title: 'NEXUS — Research. Intelligence. Knowledge.', description: DEFAULT_DESC, index: true },
-  ...MODULES.map((m) => ({ path: `/architecture/${m.slug}`, title: `${m.title} — guide — NEXUS`, description: `${m.tagline} ${m.mainFunction}`, index: true })),
-  { path: '/signin', title: 'Sign in — NEXUS', description: 'Sign in to your NEXUS account.', index: false },
-  { path: '/signup', title: 'Create account — NEXUS', description: 'Create your NEXUS account.', index: false },
-];
+function pagesFor(lang: Lang): Page[] {
+  const t = STRINGS[lang];
+  const mods = lang === 'it' ? MODULES_IT : MODULES;
+  const loc = (p: string) => (lang === 'it' ? it(p) : p);
+  const alt = (p: string) => (lang === 'it' ? p : it(p));
+  const page = (p: string, title: string, description: string, index = true): Page => ({ path: loc(p), title, description, index, lang, alt: alt(p) });
+  return [
+    page('/', t.meta.homeTitle, t.meta.description),
+    ...mods.map((m) => page(`/architecture/${m.slug}`, `${m.title} — ${t.mod.guide} — NEXUS`, `${m.tagline} ${m.mainFunction}`)),
+    page('/cases', `${t.cases.pageTitle} — NEXUS`, t.cases.pageDescription),
+    ...CASES.map((c) => page(`/cases/${c.slug}`, `${c[lang].title} — NEXUS`, c[lang].dek)),
+    page('/signin', `${t.auth.signInTitle} — NEXUS`, t.auth.signInSub, false),
+    page('/signup', `${t.auth.createAccount} — NEXUS`, t.auth.signUpSub, false),
+  ];
+}
+
+export const PAGES: Page[] = [...pagesFor('en'), ...pagesFor('it')];
 
 /** URL pubblico: SITE_URL esplicito, oppure l'indirizzo di produzione fornito da Vercel in build. */
 export function siteUrl(): string | null {
@@ -26,15 +40,24 @@ export function siteUrl(): string | null {
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function renderHead(html: string, page: Page, base: string | null): string {
-  const url = base ? base + (page.path === '/' ? '/' : page.path) : null;
   let out = html
+    .replace(/<html lang="[a-z]+">/, `<html lang="${page.lang}">`)
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`)
     .replace(/(<meta name="description" content=")[^"]*(")/, `$1${esc(page.description)}$2`)
     .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${esc(page.title)}$2`)
     .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${esc(page.description)}$2`);
-  const extra: string[] = [];
-  if (url) {
-    extra.push(`<link rel="canonical" href="${url}" />`, `<meta property="og:url" content="${url}" />`);
+  const extra: string[] = [`<meta property="og:locale" content="${page.lang === 'it' ? 'it_IT' : 'en_US'}" />`];
+  if (base) {
+    const url = base + page.path;
+    const other = base + page.alt;
+    const en = page.lang === 'en' ? url : other;
+    extra.push(
+      `<link rel="canonical" href="${url}" />`,
+      `<meta property="og:url" content="${url}" />`,
+      `<link rel="alternate" hreflang="${page.lang}" href="${url}" />`,
+      `<link rel="alternate" hreflang="${page.lang === 'it' ? 'en' : 'it'}" href="${other}" />`,
+      `<link rel="alternate" hreflang="x-default" href="${en}" />`,
+    );
     out = out.replace(/(<meta property="og:image" content=")\/og-image\.png(")/, `$1${base}/og-image.png$2`);
   }
   if (!page.index) extra.push('<meta name="robots" content="noindex" />');
@@ -55,11 +78,14 @@ export function seoPages(): Plugin {
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, renderHead(template, page, base));
       }
-      const robots = ['User-agent: *', 'Allow: /', 'Disallow: /account', 'Disallow: /reset-password'];
+      const robots = ['User-agent: *', 'Allow: /', 'Disallow: /account', 'Disallow: /reset-password', 'Disallow: /it/account', 'Disallow: /it/reset-password'];
       if (base) {
         const today = new Date().toISOString().slice(0, 10);
-        const urls = PAGES.filter((p) => p.index).map((p) => `  <url><loc>${base}${p.path === '/' ? '/' : p.path}</loc><lastmod>${today}</lastmod></url>`);
-        fs.writeFileSync(path.join(outDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+        const urls = PAGES.filter((p) => p.index).map((p) =>
+          `  <url><loc>${base}${p.path}</loc><lastmod>${today}</lastmod>` +
+          `<xhtml:link rel="alternate" hreflang="${p.lang === 'it' ? 'en' : 'it'}" href="${base}${p.alt}"/></url>`);
+        fs.writeFileSync(path.join(outDir, 'sitemap.xml'),
+          `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
         robots.push(`Sitemap: ${base}/sitemap.xml`);
       } else {
         this.warn('SITE_URL non impostato: sitemap.xml non generata e URL canonici omessi (su Vercel vengono ricavati automaticamente).');

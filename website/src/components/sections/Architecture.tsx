@@ -2,24 +2,25 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
-import { MODULES } from '../../content/modules';
+import { useI18n } from '../../lib/i18n';
 import { ModuleVisual } from '../ModuleVisual';
 import { Reveal, SectionLabel, WordsReveal } from '../Reveal';
 
 export function Architecture() {
   const [active, setActive] = useState(0);
+  const { t, p, modules: MODULES } = useI18n();
   const m = MODULES[active];
   return (
-    <section id="architecture" className="relative border-t border-line bg-void py-28 md:py-36" aria-label="The Architecture">
+    <section id="architecture" className="relative border-t border-line bg-void py-28 md:py-36" aria-label={t.arch.label}>
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8">
         <div className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-end">
           <div>
-            <SectionLabel n="03">The Architecture</SectionLabel>
-            <WordsReveal as="h2" text="Twelve modules. One body of knowledge." className="font-serif text-[clamp(2.6rem,6.5vw,6rem)] leading-[0.95] tracking-tight" />
+            <SectionLabel n="03">{t.arch.label}</SectionLabel>
+            <WordsReveal as="h2" key={t.arch.title} text={t.arch.title} className="font-serif text-[clamp(2.6rem,6.5vw,6rem)] leading-[0.95] tracking-tight" />
           </div>
           <Reveal>
             <p className="text-[15px] leading-relaxed text-mute-2">
-              Each module has a full guide: what it does, why it matters, how to use it step by step, what it needs, what it produces, a concrete example and how it connects to the rest. Select a module to preview it, open it to read the guide.
+              {t.arch.intro}
             </p>
           </Reveal>
         </div>
@@ -30,7 +31,7 @@ export function Architecture() {
             {MODULES.map((mod, i) => (
               <li key={mod.slug} className="border-b border-line">
                 <Link
-                  to={`/architecture/${mod.slug}`}
+                  to={p(`/architecture/${mod.slug}`)}
                   onMouseEnter={() => setActive(i)}
                   onFocus={() => setActive(i)}
                   className="group flex items-baseline gap-6 py-4"
@@ -64,8 +65,8 @@ export function Architecture() {
                     <p className="text-[11px] uppercase tracking-[0.24em] text-copper">{m.index} · {m.kicker}</p>
                     <h3 className="mt-3 font-serif text-4xl">{m.tagline}</h3>
                     <p className="mt-4 text-sm leading-relaxed text-mute-2">{m.description}</p>
-                    <Link to={`/architecture/${m.slug}`} className="group mt-7 inline-flex items-center gap-2 rounded-full bg-ivory px-5 py-2.5 text-sm font-medium text-void transition hover:bg-copper">
-                      Open the {m.title} guide <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                    <Link to={p(`/architecture/${m.slug}`)} className="group mt-7 inline-flex items-center gap-2 rounded-full bg-ivory px-5 py-2.5 text-sm font-medium text-void transition hover:bg-copper">
+                      {t.arch.open(m.title)} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
                     </Link>
                   </div>
                 </motion.div>
@@ -79,7 +80,7 @@ export function Architecture() {
           {MODULES.map((mod, i) => (
             <Reveal key={mod.slug} delay={Math.min(i, 3) * 0.04}>
               <li>
-                <Link to={`/architecture/${mod.slug}`} className="group flex items-center gap-4 overflow-hidden rounded-2xl border border-line bg-coal p-4 active:bg-coal-2">
+                <Link to={p(`/architecture/${mod.slug}`)} className="group flex items-center gap-4 overflow-hidden rounded-2xl border border-line bg-coal p-4 active:bg-coal-2">
                   <div className="h-20 w-28 shrink-0 rounded-xl bg-void/70 p-1.5"><ModuleVisual kind={mod.visual} className="h-full w-full" /></div>
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-[11px] text-copper">{mod.index}</p>

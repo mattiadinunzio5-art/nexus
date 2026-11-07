@@ -13,16 +13,16 @@
 - Ordine: 1) pagina Pricing + waitlist sul sito; 2) versione online multi-utente con limiti per piano; 3) integrazione Paddle (richiede account e dati fiscali dell'autore).
 - Prima di vendere: partita IVA / commercialista, Termini, Privacy, diritto di recesso 14 giorni.
 
-## Funzioni nuove (aggiornamento futuro)
+## Funzioni nuove — FATTE (novembre 2026)
 
-- **Collaborazione**: progetti condivisi con commenti, ruoli e cronologia delle modifiche (gruppi di ricerca, tesi).
-- **Avvisi**: notifica quando esce un nuovo dato FRED o una serie seguita supera una soglia.
-- **Nuove fonti dati**: BCE, Eurostat, Banca Mondiale, ISTAT (gratuite).
-- **Lezioni guidate**: percorsi pronti (crisi 1929, 2008, inflazione anni '70) per studenti e docenti.
-- **Export LaTeX + citazioni BibTeX/Zotero** per tesi e articoli.
-- **App installabile (PWA)** da browser, senza store.
+- **Collaborazione**: commenti e cronologia nei progetti (ruoli già presenti). ✅
+- **Avvisi**: nuovo dato o soglia superata su qualsiasi serie; script `scripts/check_alerts.py` da pianificare. ✅
+- **Nuove fonti dati**: BCE e ISTAT aggiunti (Eurostat e Banca Mondiale c'erano già). ✅
+- **Lezioni guidate**: crisi 1929, inflazione anni '70, crisi 2008. ✅
+- **Export LaTeX + BibTeX** (import/export, compatibile Zotero). ✅
+- **App installabile (PWA)**: attiva in HTTPS o localhost; su iPhone «Aggiungi a Home». ✅
 
-## Sito (aggiornamento futuro)
+## Sito — FATTO (novembre 2026)
 
-- **Casi del mese / blog**: articoli realizzati con NEXUS, utili anche per la SEO.
-- **Versione italiana** del sito accanto all'inglese.
+- **Casi del mese**: sezione e pagine `/cases`, 2 casi di metodo (2008, inflazione italiana). ✅
+- **Versione italiana** su `/it`, con selettore EN/IT, SEO e hreflang. ✅

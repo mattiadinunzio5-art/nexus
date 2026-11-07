@@ -7,6 +7,7 @@ import { CaseStudy } from '../components/sections/CaseStudy';
 import { Capabilities } from '../components/sections/Capabilities';
 import { Access } from '../components/sections/Access';
 import { usePageMeta } from '../lib/meta';
+import { CasesTeaser } from './Cases';
 
 export function Home() {
   usePageMeta(null);
@@ -19,6 +20,7 @@ export function Home() {
       <Workflow />
       <CaseStudy />
       <Capabilities />
+      <CasesTeaser />
       <Access />
     </>
   );

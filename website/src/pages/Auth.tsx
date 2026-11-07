@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { authErrorText, EMAIL_RX, passwordProblems, useAuth } from '../lib/auth';
 import { getSupabase } from '../lib/supabase';
 import { usePageMeta } from '../lib/meta';
+import { useI18n } from '../lib/i18n';
 
 const input = 'w-full rounded-xl border border-line bg-void px-4 py-3 text-[15px] text-ivory placeholder:text-mute focus:border-copper focus:outline-none';
 
@@ -19,10 +20,11 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
 }
 
 function NotConfigured() {
+  const { t, p } = useI18n();
   return (
     <div role="status" className="space-y-4 text-sm leading-relaxed text-mute-2">
-      <p><strong className="text-ivory">Online accounts are not active yet.</strong> The authentication service has not been configured for this site, so no sign-in can take place here.</p>
-      <p>You can already use NEXUS on your own computer — <Link to="/#access" className="text-copper underline-offset-4 hover:underline">see how</Link>.</p>
+      <p><strong className="text-ivory">{t.auth.notActive}</strong> {t.auth.notActiveText}</p>
+      <p>{t.auth.useLocal} <Link to={p('/#access')} className="text-copper underline-offset-4 hover:underline">{t.auth.seeHow}</Link>.</p>
     </div>
   );
 }
@@ -38,14 +40,17 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 function Submit({ busy, children }: { busy: boolean; children: ReactNode }) {
-  return <button type="submit" disabled={busy} className="w-full rounded-full bg-ivory py-3 text-sm font-medium text-void transition hover:bg-copper disabled:opacity-60">{busy ? 'Please wait…' : children}</button>;
+  const { t } = useI18n();
+  return <button type="submit" disabled={busy} className="w-full rounded-full bg-ivory py-3 text-sm font-medium text-void transition hover:bg-copper disabled:opacity-60">{busy ? t.auth.wait : children}</button>;
 }
 
 export function SignIn() {
-  usePageMeta('Sign in');
+  const { t, p } = useI18n();
+  const a = t.auth;
+  usePageMeta(a.signInTitle);
   const { configured, session } = useAuth();
   const nav = useNavigate();
-  const from = (useLocation().state as { from?: string } | null)?.from ?? '/account';
+  const from = (useLocation().state as { from?: string } | null)?.from ?? p('/account');
   const [f, setF] = useState({ email: '', password: '' });
   const [err, setErr] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -54,29 +59,29 @@ export function SignIn() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     const v: Record<string, string> = {};
-    if (!EMAIL_RX.test(f.email.trim())) v.email = 'Enter a valid email address.';
-    if (!f.password) v.password = 'Enter your password.';
+    if (!EMAIL_RX.test(f.email.trim())) v.email = a.badEmail;
+    if (!f.password) v.password = a.noPassword;
     setErr(v);
     const supabase = await getSupabase();
     if (Object.keys(v).length || !supabase) return;
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: f.email.trim(), password: f.password });
     setBusy(false);
-    if (error) setErr({ form: authErrorText(error.message) });
+    if (error) setErr({ form: authErrorText(error.message, a.errors) });
     else nav(from, { replace: true });
   }
 
   return (
-    <Shell title="Sign in" subtitle="Welcome back to NEXUS.">
+    <Shell title={a.signInTitle} subtitle={a.signInSub}>
       {!configured ? <NotConfigured /> : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Field label="Email" error={err.email}><input className={input} type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
-          <Field label="Password" error={err.password}><input className={input} type="password" autoComplete="current-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
+          <Field label={a.email} error={err.email}><input className={input} type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
+          <Field label={a.password} error={err.password}><input className={input} type="password" autoComplete="current-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
           {err.form && <p role="alert" className="text-sm text-[#e8846a]">{err.form}</p>}
-          <Submit busy={busy}>Sign in</Submit>
+          <Submit busy={busy}>{a.signInTitle}</Submit>
           <div className="flex justify-between text-xs">
-            <Link to="/forgot-password" className="text-mute-2 hover:text-ivory">Forgot password?</Link>
-            <Link to="/signup" className="text-copper hover:underline">Create account</Link>
+            <Link to={p('/forgot-password')} className="text-mute-2 hover:text-ivory">{a.forgot}</Link>
+            <Link to={p('/signup')} className="text-copper hover:underline">{a.createAccount}</Link>
           </div>
         </form>
       )}
@@ -85,43 +90,45 @@ export function SignIn() {
 }
 
 export function SignUp() {
-  usePageMeta('Create account');
+  const { t, p } = useI18n();
+  const a = t.auth;
+  usePageMeta(a.createAccount);
   const { configured, session } = useAuth();
   const [f, setF] = useState({ email: '', password: '', confirm: '' });
   const [err, setErr] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  if (session) return <Navigate to="/account" replace />;
+  if (session) return <Navigate to={p('/account')} replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     const v: Record<string, string> = {};
-    if (!EMAIL_RX.test(f.email.trim())) v.email = 'Enter a valid email address.';
-    const p = passwordProblems(f.password);
-    if (p.length) v.password = `Password needs ${p.join(' and ')}.`;
-    if (f.confirm !== f.password) v.confirm = 'Passwords do not match.';
+    if (!EMAIL_RX.test(f.email.trim())) v.email = a.badEmail;
+    const probs = passwordProblems(f.password, a.pwProblems);
+    if (probs.length) v.password = a.pwNeeds(probs);
+    if (f.confirm !== f.password) v.confirm = a.mismatch;
     setErr(v);
     const supabase = await getSupabase();
     if (Object.keys(v).length || !supabase) return;
     setBusy(true);
-    const { error } = await supabase.auth.signUp({ email: f.email.trim(), password: f.password, options: { emailRedirectTo: `${window.location.origin}/account` } });
+    const { error } = await supabase.auth.signUp({ email: f.email.trim(), password: f.password, options: { emailRedirectTo: `${window.location.origin}${p('/account')}` } });
     setBusy(false);
-    if (error) setErr({ form: authErrorText(error.message) });
+    if (error) setErr({ form: authErrorText(error.message, a.errors) });
     else setDone(true);
   }
 
   return (
-    <Shell title="Create account" subtitle="Join NEXUS.">
+    <Shell title={a.createAccount} subtitle={a.signUpSub}>
       {!configured ? <NotConfigured /> : done ? (
-        <p role="status" className="text-sm leading-relaxed text-mute-2"><strong className="block text-ivory">Check your inbox.</strong> If email confirmation is enabled, we sent a link to <span className="text-ivory">{f.email}</span>. Open it to activate your account, then sign in.</p>
+        <p role="status" className="text-sm leading-relaxed text-mute-2"><strong className="block text-ivory">{a.inbox}</strong> {a.inboxText(f.email)}</p>
       ) : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Field label="Email" error={err.email}><input className={input} type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
-          <Field label="Password (min. 10 characters, letters and numbers or symbols)" error={err.password}><input className={input} type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
-          <Field label="Confirm password" error={err.confirm}><input className={input} type="password" autoComplete="new-password" value={f.confirm} onChange={(e) => setF({ ...f, confirm: e.target.value })} /></Field>
+          <Field label={a.email} error={err.email}><input className={input} type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
+          <Field label={a.pwHint} error={err.password}><input className={input} type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
+          <Field label={a.confirm} error={err.confirm}><input className={input} type="password" autoComplete="new-password" value={f.confirm} onChange={(e) => setF({ ...f, confirm: e.target.value })} /></Field>
           {err.form && <p role="alert" className="text-sm text-[#e8846a]">{err.form}</p>}
-          <Submit busy={busy}>Create account</Submit>
-          <p className="text-center text-xs text-mute-2">Already registered? <Link to="/signin" className="text-copper hover:underline">Sign in</Link></p>
+          <Submit busy={busy}>{a.createAccount}</Submit>
+          <p className="text-center text-xs text-mute-2">{a.already} <Link to={p('/signin')} className="text-copper hover:underline">{a.signInTitle}</Link></p>
         </form>
       )}
     </Shell>
@@ -129,7 +136,9 @@ export function SignUp() {
 }
 
 export function ForgotPassword() {
-  usePageMeta('Reset password');
+  const { t, p } = useI18n();
+  const a = t.auth;
+  usePageMeta(a.resetTitle);
   const { configured } = useAuth();
   const [email, setEmail] = useState('');
   const [err, setErr] = useState('');
@@ -138,25 +147,25 @@ export function ForgotPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!EMAIL_RX.test(email.trim())) return setErr('Enter a valid email address.');
+    if (!EMAIL_RX.test(email.trim())) return setErr(a.badEmail);
     const supabase = await getSupabase();
     if (!supabase) return;
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${p('/reset-password')}` });
     setBusy(false);
-    if (error) setErr(authErrorText(error.message));
+    if (error) setErr(authErrorText(error.message, a.errors));
     else setSent(true);
   }
 
   return (
-    <Shell title="Reset password" subtitle="We will email you a link to choose a new password.">
+    <Shell title={a.resetTitle} subtitle={a.resetSub}>
       {!configured ? <NotConfigured /> : sent ? (
-        <p role="status" className="text-sm leading-relaxed text-mute-2">If an account exists for <span className="text-ivory">{email}</span>, a reset link is on its way.</p>
+        <p role="status" className="text-sm leading-relaxed text-mute-2">{a.resetSent(email)}</p>
       ) : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Field label="Email" error={err}><input className={input} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-          <Submit busy={busy}>Send reset link</Submit>
-          <p className="text-center text-xs"><Link to="/signin" className="text-mute-2 hover:text-ivory">Back to sign in</Link></p>
+          <Field label={a.email} error={err}><input className={input} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          <Submit busy={busy}>{a.sendLink}</Submit>
+          <p className="text-center text-xs"><Link to={p('/signin')} className="text-mute-2 hover:text-ivory">{a.backSignIn}</Link></p>
         </form>
       )}
     </Shell>
@@ -164,7 +173,9 @@ export function ForgotPassword() {
 }
 
 export function ResetPassword() {
-  usePageMeta('Choose a new password');
+  const { t, p } = useI18n();
+  const a = t.auth;
+  usePageMeta(a.newMeta);
   const { configured, session, loading } = useAuth();
   const nav = useNavigate();
   const [pw, setPw] = useState({ a: '', b: '' });
@@ -173,28 +184,28 @@ export function ResetPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const p = passwordProblems(pw.a);
-    if (p.length) return setErr(`Password needs ${p.join(' and ')}.`);
-    if (pw.a !== pw.b) return setErr('Passwords do not match.');
+    const probs = passwordProblems(pw.a, a.pwProblems);
+    if (probs.length) return setErr(a.pwNeeds(probs));
+    if (pw.a !== pw.b) return setErr(a.mismatch);
     const supabase = await getSupabase();
     if (!supabase) return;
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pw.a });
     setBusy(false);
-    if (error) setErr(authErrorText(error.message));
-    else nav('/account', { replace: true });
+    if (error) setErr(authErrorText(error.message, a.errors));
+    else nav(p('/account'), { replace: true });
   }
 
   return (
-    <Shell title="New password" subtitle="Choose a new password for your account.">
-      {!configured ? <NotConfigured /> : loading ? <p className="text-sm text-mute-2">Checking your reset link…</p> : !session ? (
-        <p role="alert" className="text-sm leading-relaxed text-mute-2">This reset link is invalid or has expired. <Link to="/forgot-password" className="text-copper hover:underline">Request a new one</Link>.</p>
+    <Shell title={a.newTitle} subtitle={a.newSub}>
+      {!configured ? <NotConfigured /> : loading ? <p className="text-sm text-mute-2">{a.checking}</p> : !session ? (
+        <p role="alert" className="text-sm leading-relaxed text-mute-2">{a.invalidLink} <Link to={p('/forgot-password')} className="text-copper hover:underline">{a.requestNew}</Link>.</p>
       ) : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Field label="New password"><input className={input} type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></Field>
-          <Field label="Confirm new password"><input className={input} type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
+          <Field label={a.newPw}><input className={input} type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></Field>
+          <Field label={a.confirmNew}><input className={input} type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
           {err && <p role="alert" className="text-sm text-[#e8846a]">{err}</p>}
-          <Submit busy={busy}>Save password</Submit>
+          <Submit busy={busy}>{a.save}</Submit>
         </form>
       )}
     </Shell>
@@ -205,22 +216,25 @@ export function ResetPassword() {
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { configured, session, loading } = useAuth();
   const { pathname } = useLocation();
-  if (!configured) return <Navigate to="/signin" replace />;
-  if (loading) return <div className="min-h-[100svh] bg-void pt-40 text-center text-sm text-mute">Loading…</div>;
-  if (!session) return <Navigate to="/signin" replace state={{ from: pathname }} />;
+  const { t, p } = useI18n();
+  if (!configured) return <Navigate to={p('/signin')} replace />;
+  if (loading) return <div className="min-h-[100svh] bg-void pt-40 text-center text-sm text-mute">{t.auth.loading}</div>;
+  if (!session) return <Navigate to={p('/signin')} replace state={{ from: pathname }} />;
   return <>{children}</>;
 }
 
 export function Account() {
-  usePageMeta('Your account');
+  const { t, p } = useI18n();
+  const a = t.auth;
+  usePageMeta(a.accountTitle);
   const { session } = useAuth();
   const nav = useNavigate();
   return (
-    <Shell title="Your account" subtitle={session?.user.email ?? ''}>
+    <Shell title={a.accountTitle} subtitle={session?.user.email ?? ''}>
       <div className="space-y-5 text-sm leading-relaxed text-mute-2">
-        <p>Your NEXUS account is active. The hosted platform is not online yet: today NEXUS runs on your own computer, free and open-source.</p>
-        <Link to="/#access" className="block rounded-full border border-line py-3 text-center text-ivory hover:border-ivory">How to run NEXUS</Link>
-        <button onClick={async () => { await (await getSupabase())?.auth.signOut(); nav('/', { replace: true }); }} className="w-full rounded-full bg-ivory py-3 font-medium text-void hover:bg-copper">Sign out</button>
+        <p>{a.accountText}</p>
+        <Link to={p('/#access')} className="block rounded-full border border-line py-3 text-center text-ivory hover:border-ivory">{a.howRun}</Link>
+        <button onClick={async () => { await (await getSupabase())?.auth.signOut(); nav(p('/'), { replace: true }); }} className="w-full rounded-full bg-ivory py-3 font-medium text-void hover:bg-copper">{a.signOut}</button>
       </div>
     </Shell>
   );

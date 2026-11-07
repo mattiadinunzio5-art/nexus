@@ -1,28 +1,34 @@
 import { useEffect } from 'react';
+import { counterpart, useI18n } from './i18n';
 
 export const SITE_NAME = 'NEXUS';
-export const DEFAULT_DESCRIPTION =
-  'NEXUS is an integrated research environment to collect, connect, analyze and simulate complex historical, economic and financial knowledge — with verifiable sources.';
 
 function setMeta(selector: string, attr: string, value: string) {
   let el = document.head.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
   if (!el) {
     el = selector.startsWith('link') ? document.createElement('link') : document.createElement('meta');
-    const m = selector.match(/\[(name|property|rel)="([^"]+)"\]/);
-    if (m) el.setAttribute(m[1], m[2]);
+    for (const m of selector.matchAll(/\[([a-z]+)="([^"]+)"\]/g)) el.setAttribute(m[1], m[2]);
     document.head.appendChild(el);
   }
   el.setAttribute(attr, value);
 }
 
-/** Titolo, descrizione, canonical e Open Graph per pagina (anche pre-generati in build: seo.config.ts). */
-export function usePageMeta(title: string | null, description = DEFAULT_DESCRIPTION) {
+/** Titolo, descrizione, lingua, canonical, hreflang e Open Graph per pagina (anche pre-generati in build: seo.config.ts). */
+export function usePageMeta(title: string | null, description?: string) {
+  const { t, lang } = useI18n();
+  const desc = description ?? t.meta.description;
   useEffect(() => {
-    const full = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Research. Intelligence. Knowledge.`;
+    const full = title ? `${title} — ${SITE_NAME}` : t.meta.homeTitle;
+    const { origin, pathname } = window.location;
+    const other = counterpart(pathname, '');
     document.title = full;
-    setMeta('meta[name="description"]', 'content', description);
+    document.documentElement.lang = lang;
+    setMeta('meta[name="description"]', 'content', desc);
     setMeta('meta[property="og:title"]', 'content', full);
-    setMeta('meta[property="og:description"]', 'content', description);
-    setMeta('link[rel="canonical"]', 'href', window.location.origin + window.location.pathname);
-  }, [title, description]);
+    setMeta('meta[property="og:description"]', 'content', desc);
+    setMeta('meta[property="og:locale"]', 'content', lang === 'it' ? 'it_IT' : 'en_US');
+    setMeta('link[rel="canonical"]', 'href', origin + pathname);
+    setMeta(`link[rel="alternate"][hreflang="${lang}"]`, 'href', origin + pathname);
+    setMeta(`link[rel="alternate"][hreflang="${lang === 'it' ? 'en' : 'it'}"]`, 'href', origin + other);
+  }, [title, desc, lang, t]);
 }

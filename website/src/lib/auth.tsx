@@ -1,3 +1,4 @@
+import { STRINGS } from './strings';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { authConfigured, getSupabase } from './supabase';
@@ -31,20 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export const EMAIL_RX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-export function passwordProblems(pw: string): string[] {
+export function passwordProblems(pw: string, labels = { length: 'at least 10 characters', mix: 'letters and at least one number or symbol' }): string[] {
   const p: string[] = [];
-  if (pw.length < 10) p.push('at least 10 characters');
-  if (!/[A-Za-z]/.test(pw) || !/[^A-Za-z]/.test(pw)) p.push('letters and at least one number or symbol');
+  if (pw.length < 10) p.push(labels.length);
+  if (!/[A-Za-z]/.test(pw) || !/[^A-Za-z]/.test(pw)) p.push(labels.mix);
   return p;
 }
 
 /** Messaggi d'errore di Supabase resi comprensibili. */
-export function authErrorText(message: string): string {
+export function authErrorText(message: string, e = STRINGS.en.auth.errors): string {
   const m = message.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'Email or password is incorrect.';
-  if (m.includes('email not confirmed')) return 'Please confirm your email address first — check your inbox.';
-  if (m.includes('already registered')) return 'An account with this email already exists. Try signing in.';
-  if (m.includes('rate limit') || m.includes('too many')) return 'Too many attempts. Please wait a minute and try again.';
-  if (m.includes('fetch') || m.includes('network')) return 'The authentication service could not be reached. Check your connection.';
+  if (m.includes('invalid login credentials')) return e.invalid;
+  if (m.includes('email not confirmed')) return e.unconfirmed;
+  if (m.includes('already registered')) return e.exists;
+  if (m.includes('rate limit') || m.includes('too many')) return e.rate;
+  if (m.includes('fetch') || m.includes('network')) return e.network;
   return message;
 }
