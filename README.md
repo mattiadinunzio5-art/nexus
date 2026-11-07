@@ -95,3 +95,7 @@ nexus/
 ├── docs/               architettura, roadmap, API
 └── scripts/            setup, avvio, test, seed, backup, briefing, test responsive
 ```
+
+## Website
+
+The public website lives in [`website/`](website/README.md).

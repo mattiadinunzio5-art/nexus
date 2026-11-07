@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+
+@theme {
+  --color-void: #0b0b0d;
+  --color-coal: #141417;
+  --color-coal-2: #1b1b1f;
+  --color-line: #26262b;
+  --color-ivory: #f3f0e9;
+  --color-mute: #888888;
+  --color-mute-2: #a8a6a1;
+  --color-copper: #d97736;
+  --color-copper-soft: #e89a63;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+  --ease-cine: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  background: var(--color-void);
+  color: var(--color-ivory);
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+::selection { background: var(--color-copper); color: var(--color-void); }
+:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 3px; border-radius: 4px; }
+section[id] { scroll-margin-top: 80px; }
+
+/* Grana sottile su fondo scuro: profondità senza gradienti decorativi. */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.text-balance { text-wrap: balance; }
