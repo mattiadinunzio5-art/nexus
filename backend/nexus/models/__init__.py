@@ -2,6 +2,7 @@
 
 from .activity import ActivityLog
 from .agents import AgentStep, ResearchRun
+from .collab import ProjectComment, SeriesAlert
 from .connector import ConnectorState
 from .finance import Credential, Observation, Series
 from .document import Document, DocumentChunk
@@ -17,6 +18,8 @@ from .studio import Briefing, Note, Report, ReportSection
 from .user import AuthSession, ProjectMember, User
 
 __all__ = [
+    "ProjectComment",
+    "SeriesAlert",
     "ActivityLog",
     "AuthSession",
     "ProjectMember",

@@ -1,4 +1,7 @@
+from datetime import datetime
 from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
 
@@ -21,7 +24,7 @@ def list_series(db: DB, user: CurrentUser, category: SeriesCategory | None = Non
 
 
 @router.post("/series/import", response_model=SeriesDetailOut, status_code=status.HTTP_201_CREATED,
-             summary="Importa una serie da World Bank, FRED, OWID o Eurostat")
+             summary="Importa una serie da World Bank, FRED, OWID, Eurostat, BCE o ISTAT")
 def import_series(data: SeriesImportIn, db: DB, user: CurrentUser, settings: AppSettings):
     return svc.to_out(db, svc.import_series(db, user, settings, data), detail=True)
 
@@ -88,3 +91,55 @@ def analysis(
 @router.post("/compare", summary="Confronto e correlazioni (ricampionamento solo esplicito)")
 def compare(data: CompareIn, db: DB, user: CurrentUser):
     return svc.compare(db, user, data)
+
+
+class AlertIn(BaseModel):
+    series_id: int
+    kind: Literal["new_data", "above", "below"]
+    threshold: float | None = None
+
+
+class AlertOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    series_id: int
+    kind: str
+    threshold: float | None
+    last_seen_date: str | None
+    last_triggered_at: datetime | None
+    active: bool
+
+
+@router.get("/alerts", response_model=list[AlertOut], summary="Avvisi sulle serie")
+def list_alerts(db: DB, user: CurrentUser, series_id: int | None = None):
+    from ...services import alerts
+
+    return alerts.list_for_user(db, user, series_id)
+
+
+@router.post("/alerts", response_model=AlertOut, status_code=status.HTTP_201_CREATED, summary="Crea un avviso")
+def create_alert(data: AlertIn, db: DB, user: CurrentUser):
+    from ...services import alerts
+
+    return alerts.create(db, user, data.series_id, data.kind, data.threshold)
+
+
+@router.patch("/alerts/{alert_id}", response_model=AlertOut, summary="Attiva o sospendi un avviso")
+def update_alert(alert_id: int, active: bool, db: DB, user: CurrentUser):
+    from ...services import alerts
+
+    return alerts.set_active(db, user, alert_id, active)
+
+
+@router.delete("/alerts/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_alert(alert_id: int, db: DB, user: CurrentUser) -> None:
+    from ...services import alerts
+
+    alerts.delete(db, user, alert_id)
+
+
+@router.post("/alerts/check", summary="Aggiorna le serie con avvisi attivi e valuta gli avvisi")
+def check_alerts(db: DB, user: CurrentUser, settings: AppSettings) -> dict:
+    from ...services import alerts
+
+    return alerts.check_all(db, user, settings)

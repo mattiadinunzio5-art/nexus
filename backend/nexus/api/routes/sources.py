@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, File, UploadFile, status
 
 from ...services import sources as svc
 from ..deps import DB, CurrentUser
@@ -15,6 +15,28 @@ def list_sources(db: DB, user: CurrentUser, q: str | None = None):
 @router.post("", response_model=SourceOut, status_code=status.HTTP_201_CREATED)
 def create_source(data: SourceIn, db: DB, user: CurrentUser):
     return svc.to_out(svc.create_source(db, user, data))
+
+
+@router.get("/export.bib", summary="Esporta la bibliografia in BibTeX (per Zotero, LaTeX, Mendeley)")
+def export_bibtex(db: DB, user: CurrentUser):
+    from fastapi import Response
+
+    return Response(svc.export_bibtex(db, user), media_type="application/x-bibtex; charset=utf-8",
+                    headers={"Content-Disposition": "attachment; filename=nexus-bibliografia.bib"})
+
+
+@router.post("/import/bibtex", summary="Importa fonti da un file BibTeX (entrano come non verificate)")
+async def import_bibtex(db: DB, user: CurrentUser, file: UploadFile = File(...)) -> dict:
+    raw = await file.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        from ...core.errors import ValidationFailedError
+
+        raise ValidationFailedError("File troppo grande (massimo 5 MB).")
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+    return svc.import_bibtex(db, user, text)
 
 
 @router.get("/{source_id}", response_model=SourceOut)

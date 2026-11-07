@@ -286,7 +286,15 @@ def build_view(db: Session, user: User, report_id: int) -> export.ReportView:
 
 def export_report(db: Session, user: User, report_id: int, fmt: str) -> tuple[bytes, str]:
     v = build_view(db, user, report_id)
-    data = export.to_pdf(v) if fmt == "pdf" else export.to_docx(v)
+    if fmt == "latex":
+        from ..studio.bibtex import cite_key, source_to_bibtex
+
+        r = get_report(db, user, report_id)
+        bib, _, _ = _bibliography(db, _owner(db, r), r)
+        taken: set[str] = set()
+        data = export.to_latex_zip(v, "\n".join(source_to_bibtex(s, cite_key(s.authors, s.year, s.title, taken)) for s in bib))
+    else:
+        data = export.to_pdf(v) if fmt == "pdf" else export.to_docx(v)
     activity.record(db, user=user, actor="user", action=f"report.export_{fmt}", entity_type="report", entity_id=report_id,
                     summary=f"Esportato «{v.title}» in {fmt.upper()} ({v.status})")
     db.commit()

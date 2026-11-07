@@ -12,6 +12,7 @@ from .routes import (
     graph,
     history,
     lab,
+    lessons,
     modules,
     notifications,
     projects,
@@ -23,5 +24,5 @@ from .routes import (
 )
 
 api_router = APIRouter(prefix="/api")
-for r in (system, modules, dashboard, projects, activity, notifications, connectors, search, documents, sources, research, history, graph, finance, credentials, agents, lab, studio, auth):
+for r in (system, modules, dashboard, projects, activity, notifications, connectors, search, documents, sources, research, history, graph, finance, credentials, agents, lab, lessons, studio, auth):
     api_router.include_router(r.router)
