@@ -368,6 +368,11 @@ export const ENTITY_TYPES = {
   document: 'Documento',
   theory: 'Teoria economica',
   indicator: 'Indicatore',
+  organization: 'Organizzazione',
+  economic_system: 'Sistema economico',
+  phenomenon: 'Fenomeno',
+  concept: 'Concetto',
+  hypothesis: 'Ipotesi',
 } as const;
 export type EntityType = keyof typeof ENTITY_TYPES;
 
@@ -380,6 +385,10 @@ export const RELATION_TYPES = {
   involved_in: 'È stato coinvolto in',
   replaced: 'Ha sostituito',
   preceded: 'Ha preceduto',
+  consequence_of: 'È conseguenza di',
+  occurred_during: 'È avvenuto durante',
+  opposed_to: 'Si contrappone a',
+  participant_in: 'Ha partecipato a',
 } as const;
 export type RelationType = keyof typeof RELATION_TYPES;
 
@@ -668,4 +677,69 @@ export interface Lesson extends LessonSummary {
   series: { label: string; category: string; params: Record<string, unknown> }[];
   readings: { title: string; authors: string[]; year: number; publisher: string }[];
   steps: { title: string; detail: string; module: string }[];
+}
+
+// --- Discovery Intelligence ------------------------------------------------------
+
+export type DiscoveryLevel = 'low' | 'medium' | 'high';
+export interface DiscoveryElement { type: 'event' | 'series' | 'entity'; id: number; label: string }
+export interface DiscoveryEvidence { kind: string; label: string; detail: string; ref?: Record<string, number> }
+
+export interface DiscoveryConnection {
+  id: number; session_id: number | null; kind: string; kind_label: string; title: string; elements: DiscoveryElement[]; period: string;
+  evidence: DiscoveryEvidence[]; sources: number[]; reliability: DiscoveryLevel; reliability_reasons: string[]; explanation: string;
+  caveats: string[]; score: number; status: 'new' | 'accepted' | 'dismissed'; graph_relation_id: number | null; created_at: string;
+}
+
+export type HypothesisStatus = 'to_verify' | 'verifying' | 'confirmed' | 'rejected' | 'inconclusive';
+export interface VerificationCheck { check: string; outcome: string; detail: string; passages?: { label: string; text: string; document_id: number }[] }
+export interface DiscoveryHypothesis {
+  id: number; session_id: number | null; connection_id: number | null; title: string; description: string; phenomena: string[];
+  motivation: string; supporting: string[]; contrary: string[]; missing: string[]; method: string[]; confidence: DiscoveryLevel;
+  status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string }[];
+  decision_note: string; decided_at: string | null; origin: string; graph_entity_id: number | null; created_at: string;
+}
+
+export interface DiscoveryAnomaly {
+  id: number; kind: string; title: string; what_changed: string; reference: string; period: string; data: Record<string, unknown>;
+  alternatives: string[]; refs: { series_id?: number; series_ids?: number[]; event_ids?: number[] }; relevance: number;
+  verifiability: DiscoveryLevel; status: 'open' | 'explained' | 'dismissed'; note: string; created_at: string;
+}
+
+export interface DiscoveryStep {
+  ordinal: number; step: string; label: string; status: string; executor: string; summary: string; counts: Record<string, number>;
+  error: string | null; duration_ms: number; model: string;
+}
+export interface DiscoveryLead { kind: string; text: string; ref: Record<string, number> }
+export interface DiscoverySession {
+  id: number; mode: 'guided' | 'autonomous'; query: string; status: 'queued' | 'running' | 'paused' | 'stopped' | 'completed' | 'failed';
+  cursor: number; steps_total: number; plan: string[]; scope: Record<string, unknown>; steps: DiscoveryStep[];
+  result: { synthesis?: { text: string; executor: string; note?: string; references: string[] }; leads?: DiscoveryLead[]; counts?: Record<string, number> };
+  limits: Record<string, number | string>; llm_calls: number; elapsed_ms: number; error: string | null; created_at: string;
+}
+
+export interface CausalLink { from: string; to: string; relation_type: string; class: string; label: string; evidence: string; alternatives: string[] }
+export interface CausalChainResult { start: string; end: string; paths: { nodes: string[]; links: CausalLink[]; strength: string; strength_label: string }[]; common_causes: string[]; notes: string[] }
+export interface TransmissionStep {
+  from: string; to: string; class: string; label: string; evidence: string | null; uncertainty: string; variables: string[]; alternatives: string[];
+  statistic: { r: number; p: number; p_adj: number; lag: number; n: number; freq: string } | null;
+}
+export interface ForesightVariable {
+  series_id: number; name: string; unit: string; favorable: 'up' | 'down'; initial: { date: string; value: number };
+  optimistic: number; central: number; adverse: number; fan: { step: number; p10: number; p50: number; p90: number }[]; source: string;
+}
+export interface ForesightResult {
+  horizon_years: number; variables: ForesightVariable[]; excluded: string[];
+  scenarios: Record<'optimistic' | 'central' | 'adverse', { title: string; definition: string; values: string[] }>;
+  initial_conditions: string[]; triggers: string[]; consequences: { from: string; to: string; relation: string; documented: boolean }[];
+  indicators_to_monitor: { series_id: number; name: string; adverse_threshold: number; optimistic_threshold: number }[];
+  uncertainties: string[]; method: string; probability_note: string;
+}
+export interface DiscoveryAnalysis<T = unknown> { id: number; kind: 'causal_chain' | 'transmission' | 'foresight'; title: string; params: Record<string, unknown>; result: T; created_at: string }
+
+export interface DiscoveryOverview {
+  connections: number; connections_new: number; hypotheses: number; hypotheses_by_status: Record<HypothesisStatus, number>; anomalies_open: number;
+  running: { id: number; mode: string; query: string; status: string; cursor: number; steps_total: number }[];
+  latest_connections: DiscoveryConnection[]; latest_hypotheses: DiscoveryHypothesis[]; latest_anomalies: DiscoveryAnomaly[];
+  archive: { events: number; series: number; entities: number };
 }

@@ -32,7 +32,25 @@ def _own(db: Session, user: User, model, oid: int, label: str):
 # --- Sessioni ------------------------------------------------------------------------------------
 
 
+def _recover_stale(db: Session, user: User) -> None:
+    """Sessioni rimaste «in corso» dopo un riavvio del server: oltre il doppio del limite di tempo vengono chiuse."""
+    from datetime import timedelta
+
+    now = utcnow()
+    for s in db.scalars(select(DiscoverySession).where(DiscoverySession.owner_id == user.id, DiscoverySession.status.in_(("queued", "running")))):
+        ref = s.updated_at or s.created_at
+        if ref.tzinfo is None:
+            from datetime import UTC
+
+            ref = ref.replace(tzinfo=UTC)
+        if now - ref > timedelta(seconds=2 * (s.limits.get("max_seconds") or 120) + 60):
+            s.status, s.finished_at = "failed", now
+            s.error = "Sessione interrotta (probabile riavvio del server): i risultati già salvati restano disponibili."
+    db.commit()
+
+
 def create_session(db: Session, user: User, settings: Settings, mode: str, query: str) -> DiscoverySession:
+    _recover_stale(db, user)
     if mode == "guided" and not query.strip():
         raise ValidationFailedError("Scrivi la domanda da analizzare.")
     if db.scalar(select(DiscoverySession).where(DiscoverySession.owner_id == user.id, DiscoverySession.status.in_(("queued", "running")))):

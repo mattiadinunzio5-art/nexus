@@ -123,6 +123,13 @@ def _mentions(text: str, title: str) -> bool:
 
 def event_connections(db: Session, events: list[HistoricalEvent], known_pairs: set[frozenset]) -> list[Candidate]:
     out: list[Candidate] = []
+    # Un attore presente in quasi tutti gli eventi (es. la banca centrale di riferimento) non distingue nulla:
+    # come nella ricerca testuale, gli attori troppo frequenti non contano.
+    df: dict[str, int] = {}
+    for e in events:
+        for k in _actors(e):
+            df[k] = df.get(k, 0) + 1
+    common_actors = {k for k, n in df.items() if len(events) >= 4 and n > max(2, len(events) // 2)}
     for a, b in combinations(events, 2):
         if frozenset((("event", a.id), ("event", b.id))) in known_pairs:
             continue  # già collegati nel grafo: non è una scoperta
@@ -146,7 +153,7 @@ def event_connections(db: Session, events: list[HistoricalEvent], known_pairs: s
                 reliability=level, reliability_reasons=reasons,
             ))
             continue
-        shared = {k: v for k, v in _actors(a).items() if k in _actors(b)}
+        shared = {k: v for k, v in _actors(a).items() if k in _actors(b) and k not in common_actors}
         ca = {country_key(c) for c in a.countries or []}
         cb = {country_key(c) for c in b.countries or []}
         countries = ca & cb
@@ -226,10 +233,16 @@ def series_frame(s: Series) -> pd.Series:
     return analytics.to_pandas([(o.date, o.value) for o in s.observations]).dropna()
 
 
+WINDOW = {"A": 1, "Q": 2, "M": 3, "W": 4, "D": 10}
+PERIOD_DAYS = {"A": 370, "Q": 95, "M": 33, "W": 8, "D": 5}
+
+
 def event_data_connections(db: Session, events: list[HistoricalEvent], series: list[Series], require_country: bool = True,
-                           window: int = 2, z_min: float = 2.0) -> list[Candidate]:
+                           window: int | None = None, z_min: float = 2.0) -> list[Candidate]:
     out = []
+    fixed_window = window
     for s in series:
+        window = fixed_window or WINDOW.get(s.frequency, 2)
         v = series_frame(s)
         if len(v) < MIN_OBS:
             continue
@@ -248,7 +261,9 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
             t = pd.Timestamp(year=max(1, e.start_year), month=e.start_month or 1, day=1) if e.start_year > 0 else None
             if t is None or t < v.index[0] or t > v.index[-1]:
                 continue
-            after = d[d.index >= t].iloc[:window]
+            # I dati devono cadere davvero nella finestra dopo l'evento (serie irregolari, es. «date dei cambiamenti»).
+            limit = t + pd.Timedelta(days=PERIOD_DAYS.get(s.frequency, 33) * (window + 1))
+            after = d[(d.index >= t) & (d.index <= limit)].iloc[:window]
             before = v[v.index < t]
             if len(after) < window or before.empty:
                 continue
@@ -308,6 +323,8 @@ def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_
     frames = {s.id: series_frame(s) for s in series}
     out = []
     for a, b in combinations(series, 2):
+        if a.category == b.category and a.category != "other" and a.country and b.country and country_key(a.country) == country_key(b.country):
+            continue  # due misure dello stesso fenomeno nello stesso paese: il confronto spetta al controllo delle discrepanze
         fa, fb = frames[a.id], frames[b.id]
         if len(fa) < MIN_OBS or len(fb) < MIN_OBS:
             continue
@@ -320,7 +337,8 @@ def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_
         lead, follow = (a, b) if res["lag"] >= 0 else (b, a)
         lag = abs(res["lag"])
         sign = "nella stessa direzione" if res["r"] > 0 else "in direzione opposta"
-        unit = {"A": "anni", "Q": "trimestri", "M": "mesi", "W": "settimane", "D": "giorni"}[res["freq"]]
+        unit = ({"A": "anno", "Q": "trimestre", "M": "mese", "W": "settimana", "D": "giorno"} if lag == 1 else
+                {"A": "anni", "Q": "trimestri", "M": "mesi", "W": "settimane", "D": "giorni"})[res["freq"]]
         x, y = frames[a.id], frames[b.id]
         start = max(x.index[0], y.index[0]).year
         end = min(x.index[-1], y.index[-1]).year

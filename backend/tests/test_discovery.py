@@ -271,3 +271,87 @@ def test_transmission_and_foresight(client, db, user):
     r = client.post("/api/discovery/foresight", json={"variables": [{"series_id": short.id}], "horizon_years": 1})
     assert r.status_code == 422 and "almeno 20" in r.json()["error"]["message"]
     assert len(client.get("/api/discovery/analyses").json()) == 2
+
+
+def test_ubiquitous_actors_and_same_phenomenon_series_are_not_discoveries(db, user):
+    evs = [_event(db, user, f"Evento {i}", 2000 + i * 3, institutions=["Banca Centrale Europea"] + (["Fondo X"] if i < 2 else [])) for i in range(5)]
+    cands = cx.event_connections(db, evs, set())
+    assert [frozenset(e["id"] for e in c.elements) for c in cands] == [frozenset({evs[0].id, evs[1].id})]  # solo l'attore raro conta
+    rng = np.random.default_rng(2)
+    x = np.cumsum(rng.normal(size=40))
+    a = _series(db, user, "Inflazione IT (WB)", x, category="inflation", country="ITA")
+    b = _series(db, user, "Inflazione IT (Eurostat)", x + rng.normal(scale=0.05, size=40), category="inflation", country="Italy")
+    assert cx.series_connections(db, [a, b]) == []
+
+
+def test_event_data_change_ignores_data_far_after_the_event(db, user):
+    # Serie «date dei cambiamenti»: nessun dato per anni dopo l'evento, poi un salto.
+    s = Series(owner_id=user.id, name="Tasso di policy", category="rates", country="Italy", connector="ecb", source_series_id="x",
+               source_label="BCE", unit="%", frequency="D", params={})
+    dates = [f"20{10 + i // 4:02d}-{(i % 4) * 3 + 1:02d}-15" for i in range(40)]
+    vals = [1.0 + 0.01 * (i % 2) for i in range(40)]
+    vals[-1] = 4.0
+    s.observations = [Observation(date=d, value=v) for d, v in zip(dates, vals)]
+    db.add(s)
+    db.commit()
+    e = _event(db, user, "Evento lontano dal salto", 2019, start_month=12, countries=["Italia"])
+    assert cx.event_data_connections(db, [e], [s]) == []
+
+
+class _FakeLLM:
+    provider, model = "fake", "fake-1"
+
+    def __init__(self, refs):
+        self.refs, self.calls = refs, 0
+
+    def complete(self, system, user, max_tokens=1500):
+        from nexus.agents.llm import LLMResult
+
+        self.calls += 1
+        if "concepts" in user:
+            return LLMResult(text='{"concepts": ["Bretton Woods", "dollar", "interest rates"]}', provider="fake", model="fake-1")
+        return LLMResult(text='{"summary": "Sintesi [%s]", "references": %s}' % (",".join(self.refs), str(self.refs).replace("'", '"')),
+                         provider="fake", model="fake-1")
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_ai_synthesis_only_with_existing_references_and_call_budget(client, db, user, monkeypatch, valid):
+    _archive(db, user)
+    from nexus.services import ai
+
+    fake = _FakeLLM([])
+    monkeypatch.setattr(ai, "client_for", lambda *a, **k: fake)
+    r = client.post("/api/discovery/sessions", json={"mode": "guided", "query": "Bretton Woods, dollaro e tassi"}).json()
+    from nexus.models import DiscoveryConnection
+
+    ids = [f"C{c.id}" for c in db.scalars(select(DiscoveryConnection))]
+    assert r["limits"]["max_llm_calls"] == 3
+    # Rieseguo la sintesi con riferimenti validi o inventati.
+    fake.refs = ids[:2] if valid else ["C9999"]
+    from nexus.discovery import core
+    from nexus.models import DiscoverySession
+
+    s = db.get(DiscoverySession, r["id"])
+    db.refresh(s)
+    assert s.steps[0]["executor"] == "ai" and fake.calls <= 3
+    runner = core.Runner(db, s, user, client.app.state.settings, fake)
+    import time
+
+    runner.step_synthesis(time.perf_counter())
+    syn = s.result["synthesis"]
+    assert syn["executor"] == ("ai" if valid else "local")
+    if valid:
+        assert set(syn["references"]) <= set(ids) and "verifica ogni affermazione" in syn["note"]
+
+
+def test_stale_running_session_is_recovered(client, db, user):
+    from datetime import UTC, datetime, timedelta
+
+    s = DiscoverySession(owner_id=user.id, mode="autonomous", status="running", limits={"max_seconds": 10})
+    db.add(s)
+    db.commit()
+    s.updated_at = datetime.now(UTC) - timedelta(hours=1)
+    db.commit()
+    assert client.post("/api/discovery/sessions", json={"mode": "autonomous"}).status_code == 201
+    db.refresh(s)
+    assert s.status == "failed" and "riavvio" in s.error

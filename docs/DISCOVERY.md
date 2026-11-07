@@ -63,3 +63,20 @@ Nuove tabelle: `discovery_sessions`, `discovery_connections`, `discovery_hypothe
 - La sintesi AI è facoltativa; senza provider si usa la sintesi locale (marcata come tale).
 - La qualità dipende dall'archivio dell'utente: con pochi eventi, serie o fonti i risultati sono pochi, e la
   sessione lo segnala.
+
+## Stato dell'implementazione (novembre 2026)
+
+| Componente | Stato | Note |
+|---|---|---|
+| A. Intelligence Core | Implementato | Sessioni guidate e autonome in background; pausa/ripresa/arresto tra i passi; limiti di tempo, chiamate AI e risultati; recupero delle sessioni interrotte da un riavvio |
+| B. Discovery Engine | Implementato | 5 rilevatori; attori troppo comuni ignorati; misure dello stesso fenomeno escluse; finestre temporali reali per serie irregolari |
+| C. Hypothesis Generator | Implementato | Ipotesi da regole (non da AI); verifica automatica con 4 controlli; esito deciso dall'utente con motivazione obbligatoria |
+| D. Anomaly Detection | Implementato in parte | Variazioni anomale, deviazioni dal trend, discrepanze tra fonti, incongruenze cronologiche. Non implementato: «eventi con caratteristiche ricorrenti» come anomalia dedicata |
+| E. Causal Intelligence | Implementato | Catene nel grafo con classificazione per anello, cause alternative e comuni; catene di trasmissione tra serie |
+| F. Strategic Foresight | Implementato | Bootstrap univariato: le variabili non sono modellate congiuntamente |
+| G. Knowledge Graph | Esteso | Nuovi tipi (organizzazione, sistema economico, fenomeno, concetto, ipotesi) e relazioni; deduplicazione per nome/alias; nodi per serie e ipotesi |
+| Valutazione fonti | Implementato in parte | Autorevolezza, originalità, data, indipendenza, contraddizioni. La pertinenza non è un punteggio separato: è data dall'ambito della ricerca |
+
+Servizi esterni: nessuno obbligatorio. Un provider AI (Ollama, compatibile OpenAI o Anthropic) migliora
+l'interpretazione della domanda e la sintesi. Non esiste un'API di ricerca web: le evidenze vengono solo
+dall'archivio dell'utente (documenti, bibliografia, eventi, serie, grafo).

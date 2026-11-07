@@ -16,6 +16,7 @@ import { useContextPanel } from '../state/AppState';
 const TYPE_COLOR: Record<EntityType, string> = {
   person: '#c6a75e', state: '#6fae8a', company: '#8aa6d2', bank: '#d2a24c', institution: '#b9bcc2',
   event: '#f2f1ed', document: '#9a9ea6', theory: '#c48ac6', indicator: '#6fb5b5',
+  organization: '#a3b18a', economic_system: '#d28a6f', phenomenon: '#e0b84f', concept: '#9f8fd6', hypothesis: '#d26a5c',
 };
 const EDGE_STYLE: Record<Provenance, { stroke: string; dash?: string }> = {
   sourced: { stroke: '#7d818a' },

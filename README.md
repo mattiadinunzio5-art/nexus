@@ -67,6 +67,9 @@ la War Room lavora in modalità locale e dichiara gli agenti non eseguiti.
 
 ## Novità
 
+- **Discovery Intelligence** (nuova sezione): connessioni tra eventi, serie ed entità, ipotesi con verifica, anomalie,
+  catene causali e scenari, con evidenze e fonti. Architettura e limiti in [`docs/DISCOVERY.md`](docs/DISCOVERY.md).
+
 - **Fonti BCE e ISTAT** (oltre a World Bank, FRED, Eurostat, OWID): in Financial Intelligence → Importa serie → Da fonte aperta, indica dataflow e chiave SDMX.
 - **Avvisi sulle serie**: nella pagina di una serie, «Avvisi» (nuovo dato o soglia superata). Per controllarli in automatico pianifica
   `scripts/py.sh scripts/check_alerts.py` (cron su Linux/macOS, Utilità di pianificazione su Windows: istruzioni nello script).

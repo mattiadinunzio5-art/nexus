@@ -49,7 +49,8 @@ SYNONYMS = {
     "monetario": ["monetary"], "monetaria": ["monetary"], "pil": ["gdp", "growth"], "crescita": ["growth", "gdp"],
     "cambio": ["exchange", "currency"], "valute": ["currency", "exchange"], "petrolio": ["oil", "wti"], "salari": ["wages"],
     "borsa": ["stock", "equity"], "credito": ["credit", "loans"], "investimenti": ["investment"], "guerra": ["war"],
-    "commercio": ["trade"], "finanziaria": ["financial"], "finanziarie": ["financial"], "mercati": ["markets"], "oro": ["gold"],
+    "commercio": ["trade"], "bce": ["ecb", "refinancing", "european central bank"], "fed": ["federal", "fedfunds"],
+    "politica": ["policy"], "euro": ["euro", "eur", "u2"], "italia": ["italy", "ita"], "europa": ["euro", "europe"], "finanziaria": ["financial"], "finanziarie": ["financial"], "mercati": ["markets"], "oro": ["gold"],
 }
 
 SYSTEM = (
