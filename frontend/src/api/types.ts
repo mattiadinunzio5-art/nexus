@@ -622,3 +622,50 @@ export interface User { id: number; email: string; display_name: string; role: s
 export interface Plan { id: string; name: string; price_note: string; max_projects: number | null; max_documents: number | null; max_storage_mb: number | null; max_series: number | null; ai_runs_per_day: number | null }
 export interface AdminUser { id: number; email: string; display_name: string; role: string; plan: string; is_active: boolean; is_local: boolean; created_at: string; last_login_at: string | null; usage: Record<string, number> }
 export interface Member { user_id: number; email: string; display_name: string; role: 'owner' | 'editor' | 'viewer' }
+
+// --- Roadmap: avvisi, collaborazione, lezioni ---------------------------------
+
+export type AlertKind = 'new_data' | 'above' | 'below';
+
+export interface SeriesAlert {
+  id: number;
+  series_id: number;
+  kind: AlertKind;
+  threshold: number | null;
+  last_seen_date: string | null;
+  last_triggered_at: string | null;
+  active: boolean;
+}
+
+export interface ProjectComment {
+  id: number;
+  project_id: number;
+  body: string;
+  created_at: string;
+  author: { user_id: number; display_name: string } | null;
+}
+
+export interface ProjectHistoryItem {
+  id: number;
+  action: string;
+  summary: string;
+  actor: string;
+  created_at: string;
+  user: string | null;
+}
+
+export interface LessonSummary {
+  id: string;
+  title: string;
+  level: string;
+  duration: string;
+  summary: string;
+}
+
+export interface Lesson extends LessonSummary {
+  goals: string[];
+  key_dates: { date: string; event: string }[];
+  series: { label: string; category: string; params: Record<string, unknown> }[];
+  readings: { title: string; authors: string[]; year: number; publisher: string }[];
+  steps: { title: string; detail: string; module: string }[];
+}

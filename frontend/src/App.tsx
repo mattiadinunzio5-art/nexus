@@ -11,6 +11,7 @@ import { TimeMachinePage } from './pages/TimeMachine';
 import { GraphPage } from './pages/Graph';
 import { BriefingPage, ReportEditorPage, StudioPage } from './pages/Studio';
 import { LabPage, SimulationPage } from './pages/Lab';
+import { LessonDetailPage, LessonsPage } from './pages/Lessons';
 import { RunDetailPage, WarRoomPage } from './pages/WarRoom';
 import { ComparePage, FinancialPage, SeriesDetailPage } from './pages/Financial';
 import { NotFoundPage } from './pages/NotFound';
@@ -50,6 +51,8 @@ export function App() {
           <Route path="studio" element={<StudioPage />} />
           <Route path="studio/reports/:reportId" element={<ReportEditorPage />} />
           <Route path="briefing" element={<BriefingPage />} />
+          <Route path="lessons" element={<LessonsPage />} />
+          <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
           <Route path="lab" element={<LabPage />} />
           <Route path="lab/simulations/:simId" element={<SimulationPage />} />
           <Route path="war-room" element={<WarRoomPage />} />

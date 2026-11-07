@@ -65,6 +65,18 @@ un endpoint compatibile OpenAI, Anthropic API (a pagamento, modello predefinito
 `claude-opus-5-5`). Poi selezionalo in **Sistema → Provider AI**. Senza provider,
 la War Room lavora in modalità locale e dichiara gli agenti non eseguiti.
 
+## Novità
+
+- **Fonti BCE e ISTAT** (oltre a World Bank, FRED, Eurostat, OWID): in Financial Intelligence → Importa serie → Da fonte aperta, indica dataflow e chiave SDMX.
+- **Avvisi sulle serie**: nella pagina di una serie, «Avvisi» (nuovo dato o soglia superata). Per controllarli in automatico pianifica
+  `scripts/py.sh scripts/check_alerts.py` (cron su Linux/macOS, Utilità di pianificazione su Windows: istruzioni nello script).
+- **Collaborazione**: nei progetti, icona commenti → commenti e cronologia delle modifiche (la condivisione richiede la modalità multi-utente).
+- **LaTeX e BibTeX**: nello Studio, export «LaTeX» (ZIP per Overleaf con main.tex e references.bib); in Bibliografia, import/export BibTeX
+  (Zotero, Mendeley, JabRef). Le fonti importate entrano come non verificate.
+- **Lezioni guidate**: crisi del 1929, inflazione anni '70, crisi del 2008.
+- **App installabile (PWA)**: dalla build di produzione servita in HTTPS o su localhost, il browser offre «Installa app».
+  Su iPhone, Safari → Condividi → «Aggiungi a Home» funziona anche dalla rete locale.
+
 ## Test
 ```bash
 scripts/test.sh                                                     # pytest + typecheck + vitest

@@ -11,6 +11,7 @@ import {
   Database,
   FlaskConical,
   FolderKanban,
+  GraduationCap,
   History,
   Landmark,
   LayoutDashboard,
@@ -47,6 +48,7 @@ export const MODULE_NAV: NavItem[] = [
 export const MAIN_NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/briefing', label: 'Daily Briefing', icon: Newspaper },
+  { to: '/lessons', label: 'Lezioni guidate', icon: GraduationCap },
 ];
 
 export const ARCHIVE_NAV: NavItem[] = [
