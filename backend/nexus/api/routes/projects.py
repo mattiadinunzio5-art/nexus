@@ -74,3 +74,35 @@ def remove_member(project_id: int, member_user_id: int, db: DB, user: CurrentUse
     from ...services import sharing
 
     return sharing.remove_member(db, user, project_id, member_user_id)
+
+
+class CommentIn(BaseModel):
+    body: str
+
+
+@router.get("/{project_id}/comments", summary="Commenti del progetto")
+def list_comments(project_id: int, db: DB, user: CurrentUser) -> list[dict]:
+    from ...services import collab
+
+    return collab.list_comments(db, user, project_id)
+
+
+@router.post("/{project_id}/comments", status_code=status.HTTP_201_CREATED, summary="Aggiungi un commento")
+def add_comment(project_id: int, data: CommentIn, db: DB, user: CurrentUser) -> dict:
+    from ...services import collab
+
+    return collab.add_comment(db, user, project_id, data.body)
+
+
+@router.delete("/{project_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Elimina un commento")
+def delete_comment(project_id: int, comment_id: int, db: DB, user: CurrentUser) -> None:
+    from ...services import collab
+
+    collab.delete_comment(db, user, project_id, comment_id)
+
+
+@router.get("/{project_id}/history", summary="Cronologia delle modifiche del progetto")
+def project_history(project_id: int, db: DB, user: CurrentUser) -> list[dict]:
+    from ...services import collab
+
+    return collab.history(db, user, project_id)

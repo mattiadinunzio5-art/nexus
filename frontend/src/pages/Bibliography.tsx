@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { BadgeCheck, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { api, ApiError } from '../api/client';
 import type { Source, SourceInput } from '../api/types';
 import { VERIFICATION } from '../components/research';
@@ -68,6 +68,7 @@ export function BibliographyPage() {
   const [editing, setEditing] = useState<Source | 'new'>();
   const [toDelete, setToDelete] = useState<Source>();
   const [actionError, setActionError] = useState<Error>();
+  const [importMsg, setImportMsg] = useState<string>();
 
   useContextPanel(
     <div className="space-y-2 text-steel-300">
@@ -75,6 +76,7 @@ export function BibliographyPage() {
       <p>NEXUS non crea fonti in automatico: ogni scheda è inserita da te. Ogni modifica azzera la verifica.</p>
       <p><strong className="text-paper">Verifica su registro</strong>: controlla il DOI su Crossref e segnala discrepanze di titolo o anno.</p>
       <p><strong className="text-paper">Verifica manuale</strong>: dichiari di aver controllato la fonte originale.</p>
+      <p><strong className="text-paper">BibTeX</strong>: importa da Zotero, Mendeley o JabRef (le fonti entrano come non verificate) ed esporta per LaTeX.</p>
     </div>,
     [],
   );
@@ -91,7 +93,25 @@ export function BibliographyPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Archivio" title="Bibliografia" actions={!editing && <Button variant="primary" onClick={() => setEditing('new')}><Plus className="size-4" aria-hidden /> Nuova fonte</Button>} />
+      <PageHeader eyebrow="Archivio" title="Bibliografia" actions={!editing && <>
+        <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800 focus-within:ring-2 focus-within:ring-gold-500">
+          <Upload className="size-4" aria-hidden /> Importa BibTeX
+          <input type="file" accept=".bib,text/x-bibtex,text/plain" className="sr-only" onChange={async (e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (!f) return;
+            const form = new FormData();
+            form.append('file', f);
+            await act(async () => {
+              const r = await api.importBibtex(form);
+              setImportMsg(`Importate ${r.created} fonti, tutte da verificare.${r.skipped.length ? ` Scartate ${r.skipped.length}: ${r.skipped.map((x) => `${x.key} (${x.reason})`).join('; ')}` : ''}`);
+            });
+          }} />
+        </label>
+        {!!data?.length && <a href={api.bibtexUrl()} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><Download className="size-4" aria-hidden /> Esporta BibTeX</a>}
+        <Button variant="primary" onClick={() => setEditing('new')}><Plus className="size-4" aria-hidden /> Nuova fonte</Button>
+      </>} />
+      {importMsg && <p role="status" className="mb-4 text-sm text-ok">{importMsg}</p>}
       {editing && (
         <Card title={editing === 'new' ? 'Nuova fonte' : 'Modifica fonte'} className="mb-6">
           <SourceForm

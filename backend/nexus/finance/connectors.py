@@ -134,14 +134,15 @@ class HttpFetcher:
         self.cache = cache
         self.client = client or httpx.Client(timeout=timeout, follow_redirects=True, headers={"User-Agent": USER_AGENT})
 
-    def get(self, url: str, params: dict | None = None, cache_key: str | None = None, force: bool = False) -> tuple[str, bool, datetime]:
+    def get(self, url: str, params: dict | None = None, cache_key: str | None = None, force: bool = False,
+            headers: dict | None = None) -> tuple[str, bool, datetime]:
         key = cache_key or (url + "?" + json.dumps(params or {}, sort_keys=True))
         if not force:
             hit = self.cache.get(key)
             if hit:
                 return hit[0], True, datetime.fromtimestamp(hit[1], UTC)
         try:
-            r = self.client.get(url, params=params)
+            r = self.client.get(url, params=params, headers=headers)
         except httpx.HTTPError as exc:
             stale = self.cache.get(key, allow_stale=True)
             if stale:
@@ -334,6 +335,90 @@ def fetch_eurostat(f: HttpFetcher, dataset: str, filters: dict[str, str], force:
         source_url=f"https://ec.europa.eu/eurostat/databrowser/view/{dataset}/default/table", license_note=EUROSTAT_LICENSE,
         source_last_updated=d.get("updated", ""), observations=obs, description="; ".join(f"{k}: {v}" for k, v in labels.items()),
         country=labels.get("geo", ""), from_cache=cached, retrieved_at=when,
+    )
+
+
+# --- SDMX (BCE, ISTAT) ----------------------------------------------------------
+
+ECB_LICENSE = "Banca Centrale Europea: riutilizzo consentito citando la fonte. Verificare: https://www.ecb.europa.eu/services/disclaimer/html/index.en.html"
+ISTAT_LICENSE = "ISTAT: dati rilasciati con licenza CC BY 4.0. Verificare: https://www.istat.it/note-legali/"
+_SDMX_FLOW = re.compile(r"[A-Za-z0-9_]{1,60}")
+_SDMX_KEY = re.compile(r"[A-Za-z0-9_+]*(\.[A-Za-z0-9_+]*){0,15}")
+_SDMX_NON_DIM = {"TIME_PERIOD", "OBS_VALUE", "DATAFLOW", "KEY"}
+
+
+def parse_sdmx_csv(text: str) -> tuple[list[tuple[str, float | None]], dict[str, str]]:
+    """SDMX-CSV con una sola serie. Restituisce osservazioni (periodo grezzo) e attributi della prima riga."""
+    rows = list(csv.DictReader(io.StringIO(text)))
+    if not rows or "TIME_PERIOD" not in rows[0] or "OBS_VALUE" not in rows[0]:
+        raise ConnectorError("Risposta SDMX vuota o non riconosciuta.")
+    if "KEY" in rows[0]:
+        keys = {r["KEY"] for r in rows}
+    else:
+        # Le dimensioni sono le colonne prima di TIME_PERIOD (escluso DATAFLOW).
+        cols = list(rows[0].keys())
+        dims = [c for c in cols[: cols.index("TIME_PERIOD")] if c not in _SDMX_NON_DIM]
+        keys = {tuple(r[d] for d in dims) for r in rows}
+    if len(keys) > 1:
+        raise ConnectorError(f"La chiave seleziona {len(keys)} serie: specifica un solo valore per ogni dimensione.")
+    obs = [(r["TIME_PERIOD"], _to_float(r["OBS_VALUE"])) for r in rows]
+    return obs, rows[0]
+
+
+_SDMX_FREQ = {"A": "A", "Q": "Q", "M": "M", "W": "W", "D": "D", "B": "D"}
+_SDMX_UNITS = {"PCPA": "% annuo", "PCCH": "variazione %", "PC": "%", "EUR": "EUR", "IX": "indice"}
+
+
+def _sdmx_series(raw: list[tuple[str, float | None]], label: str, declared: str = "") -> tuple[list[tuple[str, float | None]], str]:
+    obs, freqs = [], set()
+    for period, v in raw:
+        iso, fr = parse_period(period)
+        freqs.add(fr)
+        obs.append((iso, v))
+    if len(freqs) > 1:
+        raise ConnectorError(f"Frequenze miste nella risposta {label}.")
+    freq = freqs.pop() if freqs else "A"
+    if declared in _SDMX_FREQ:
+        return obs, _SDMX_FREQ[declared]
+    if freq == "D":
+        freq = infer_frequency([d for d, _ in obs])
+    return obs, freq
+
+
+def _check_sdmx(flow: str, key: str) -> None:
+    if not _SDMX_FLOW.fullmatch(flow):
+        raise ConnectorError("Codice dataflow non valido.")
+    if not key or not _SDMX_KEY.fullmatch(key):
+        raise ConnectorError("Chiave della serie non valida (formato: valori separati da punti, es. M.U2.EUR).")
+
+
+def fetch_ecb(f: HttpFetcher, flow: str, key: str, force: bool = False) -> FetchResult:
+    _check_sdmx(flow, key)
+    url = f"https://data-api.ecb.europa.eu/service/data/{flow}/{key}"
+    txt, cached, when = f.get(url, {"format": "csvdata"}, force=force)
+    raw, attrs = parse_sdmx_csv(txt)
+    obs, freq = _sdmx_series(raw, "BCE", attrs.get("FREQ", ""))
+    return FetchResult(
+        name=(attrs.get("TITLE") or f"{flow}.{key}")[:300], unit=_SDMX_UNITS.get(attrs.get("UNIT", ""), attrs.get("UNIT", "")), frequency=freq,
+        source_label=f"Banca Centrale Europea, ECB Data Portal — {flow}.{key}",
+        source_url=f"https://data.ecb.europa.eu/data/datasets/{flow}/{flow}.{key}", license_note=ECB_LICENSE,
+        source_last_updated="", observations=obs, description=attrs.get("TITLE_COMPL", "")[:4000],
+        country=attrs.get("REF_AREA", ""), from_cache=cached, retrieved_at=when,
+    )
+
+
+def fetch_istat(f: HttpFetcher, flow: str, key: str, force: bool = False) -> FetchResult:
+    _check_sdmx(flow, key)
+    url = f"https://esploradati.istat.it/SDMXWS/rest/data/{flow}/{key}/ALL/"
+    txt, cached, when = f.get(url, None, force=force, headers={"Accept": "application/vnd.sdmx.data+csv;version=1.0.0"})
+    raw, attrs = parse_sdmx_csv(txt)
+    obs, freq = _sdmx_series(raw, "ISTAT", attrs.get("FREQ", ""))
+    return FetchResult(
+        name=f"ISTAT {flow} — {key}"[:300], unit=attrs.get("UNIT_MEAS", ""), frequency=freq,
+        source_label=f"ISTAT, IstatData — dataflow {flow}, chiave {key}",
+        source_url="https://esploradati.istat.it/databrowser/", license_note=ISTAT_LICENSE,
+        source_last_updated="", observations=obs, description="", country=attrs.get("REF_AREA", ""),
+        from_cache=cached, retrieved_at=when,
     )
 
 

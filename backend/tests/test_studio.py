@@ -175,3 +175,50 @@ def test_dashboard_and_search_include_reports(client):
     d = client.get("/api/dashboard").json()["reports"]
     assert d["available"] and d["items"][0]["subtitle"] == "bozza"
     assert any(h["type"] == "report" for h in client.get("/api/search?q=debito").json()["hits"])
+
+
+def test_latex_export_zip(client):
+    import zipfile
+
+    src = client.post("/api/sources", json={"title": "Debito & crescita 100%", "authors": ["Rossi, Anna"], "year": 2010}).json()
+    rep = _fill(client, _report(client), {**ALL, "analysis": f"Il debito_pubblico è cresciuto [@{src['id']}].\n\n- uno\n- due"})
+    sec = next(s for s in rep["sections"] if s["key"] == "evidence")
+    client.put(f"/api/reports/{rep['id']}/sections/{sec['id']}", json={"embeds": [
+        {"type": "series", "series_id": _series(client), "caption": "Debito/PIL"},
+        {"type": "table", "caption": "Tab", "columns": ["Anno", "Valore"], "rows": [["2020", "155"]]}]})
+    r = client.get(f"/api/reports/{rep['id']}/export/latex")
+    assert r.status_code == 200 and r.headers["content-type"] == "application/zip" and ".zip" in r.headers["content-disposition"]
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    names = set(z.namelist())
+    assert {"main.tex", "references.bib", "figures/figura1.png"} <= names
+    tex = z.read("main.tex").decode()
+    assert r"\begin{document}" in tex and r"debito\_pubblico" in tex and r"\begin{itemize}" in tex and r"\bibitem{ref1}" in tex
+    assert r"Debito \& crescita 100\%" in tex and "BOZZA" in tex and r"\begin{tabular}{ll}" in tex
+    assert "@misc{rossi2010," in z.read("references.bib").decode()
+
+
+def test_bibtex_roundtrip_and_import(client):
+    client.post("/api/sources", json={"source_type": "article", "title": "Il {debito} & la lira", "authors": ["Rossi, Anna", "Bianchi, Luca"],
+                                      "year": 1999, "container": "Rivista di storia", "doi": "10.1000/xyz123"})
+    bib = client.get("/api/sources/export.bib")
+    assert bib.status_code == 200 and "@article{rossi1999," in bib.text and "author = {Rossi, Anna and Bianchi, Luca}" in bib.text
+    zotero = """@book{keynes1936,
+  title = {The General Theory of Employment, Interest and Money},
+  author = {Keynes, John Maynard},
+  year = {1936},
+  publisher = {Macmillan},
+}
+@article{dup, title = "Doppione", doi = {https://doi.org/10.1000/XYZ123}, year = 2001}
+@online{web1, title={Sito {FRED}}, url={https://fred.stlouisfed.org/}, urldate={2026-01-05}}
+@misc{bad, author = {Senza Titolo}}
+"""
+    r = client.post("/api/sources/import/bibtex", files={"file": ("zotero.bib", zotero.encode())})
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert out["created"] == 2 and {s["key"] for s in out["skipped"]} == {"dup", "bad"}
+    srcs = {s["title"]: s for s in client.get("/api/sources").json()}
+    k = srcs["The General Theory of Employment, Interest and Money"]
+    assert k["authors"] == ["Keynes, John Maynard"] and k["year"] == 1936 and k["source_type"] == "book"
+    assert k["verification_status"] == "unverified"
+    assert srcs["Sito FRED"]["accessed_at"] == "2026-01-05" and srcs["Sito FRED"]["source_type"] == "web"
+    assert client.post("/api/sources/import/bibtex", files={"file": ("x.bib", b"niente")}).status_code == 422

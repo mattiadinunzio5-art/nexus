@@ -14,9 +14,9 @@ Frequency = Literal["D", "W", "M", "Q", "A"]
 
 
 class SeriesImportIn(BaseModel):
-    connector: Literal["world-bank", "fred", "owid", "eurostat"]
+    connector: Literal["world-bank", "fred", "owid", "eurostat", "ecb", "istat"]
     category: SeriesCategory = "other"
-    # world-bank: indicator + country · fred: series_id · owid: slug + entity · eurostat: dataset + filters
+    # world-bank: indicator + country · fred: series_id · owid: slug + entity · eurostat: dataset + filters · ecb/istat: dataset (dataflow) + key
     indicator: str | None = None
     country: str | None = None
     series_id: str | None = None
@@ -24,10 +24,11 @@ class SeriesImportIn(BaseModel):
     entity: str | None = None
     dataset: str | None = None
     filters: dict[str, str] = Field(default_factory=dict)
+    key: str | None = None
 
     @model_validator(mode="after")
     def _required(self):
-        need = {"world-bank": ("indicator", "country"), "fred": ("series_id",), "owid": ("slug", "entity"), "eurostat": ("dataset",)}
+        need = {"world-bank": ("indicator", "country"), "fred": ("series_id",), "owid": ("slug", "entity"), "eurostat": ("dataset",), "ecb": ("dataset", "key"), "istat": ("dataset", "key")}
         missing = [f for f in need[self.connector] if not getattr(self, f)]
         if missing:
             raise ValueError(f"Campi obbligatori per {self.connector}: {', '.join(missing)}")

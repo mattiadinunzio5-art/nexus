@@ -266,3 +266,26 @@ def test_constant_growth_correlation_is_reported_as_undefined():
     y = series_input([3, 6, 12, 24, 48], "A", sid=2)
     res = analytics.compare([x, y], None, "last", "returns")
     assert res["correlation"]["1"]["2"] is None  # varianza nulla: non un numero inventato
+
+
+def test_ecb_sdmx_csv(tmp_path):
+    csv_txt = ("KEY,FREQ,REF_AREA,TIME_PERIOD,OBS_VALUE,TITLE,UNIT\n"
+               "ICP.M.U2.N.000000.4.ANR,M,U2,2025-11,2.1,HICP - Overall index,PCCH\n"
+               "ICP.M.U2.N.000000.4.ANR,M,U2,2025-12,1.9,HICP - Overall index,PCCH\n")
+    r = connectors.fetch_ecb(fetcher(tmp_path, lambda req: httpx.Response(200, text=csv_txt)), "ICP", "M.U2.N.000000.4.ANR")
+    assert r.observations == [("2025-11-01", 2.1), ("2025-12-01", 1.9)] and r.frequency == "M"
+    assert r.name == "HICP - Overall index" and r.unit == "variazione %" and r.country == "U2"
+    with pytest.raises(connectors.ConnectorError, match="non valida"):
+        connectors.fetch_ecb(fetcher(tmp_path, lambda req: httpx.Response(200, text=csv_txt)), "ICP", "M/../x")
+
+
+def test_istat_sdmx_csv_rejects_multiple_series(tmp_path):
+    seen = {}
+
+    def h(req):
+        seen["accept"] = req.headers.get("accept")
+        return httpx.Response(200, text="DATAFLOW,FREQ,REF_AREA,TIME_PERIOD,OBS_VALUE,UNIT_MEAS\nIT1:X(1.0),A,IT,2020,1.5,\nIT1:X(1.0),A,FR,2020,2.5,\n")
+
+    with pytest.raises(connectors.ConnectorError, match="2 serie"):
+        connectors.fetch_istat(fetcher(tmp_path, h), "X", "A..")
+    assert "sdmx.data+csv" in seen["accept"]

@@ -26,6 +26,8 @@ class SourceIn(BaseModel):
     url: Annotated[CleanStr, StringConstraints(max_length=1000)] = ""
     accessed_at: Annotated[CleanStr, StringConstraints(max_length=10, pattern=r"^(\d{4}-\d{2}-\d{2})?$")] = ""
     notes: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
+    # Fonte primaria ripresa da questa fonte (es. un articolo che riporta un rapporto ufficiale).
+    primary_source_id: int | None = None
 
     @field_validator("doi")
     @classmethod
@@ -66,6 +68,7 @@ class SourceOut(ORMModel):
     verification_status: VerificationStatus
     verification_note: str
     verified_at: UTCDateTime | None
+    primary_source_id: int | None = None
     is_demo: bool
     citation: str = ""
     created_at: UTCDateTime

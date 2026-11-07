@@ -11,6 +11,8 @@ import { TimeMachinePage } from './pages/TimeMachine';
 import { GraphPage } from './pages/Graph';
 import { BriefingPage, ReportEditorPage, StudioPage } from './pages/Studio';
 import { LabPage, SimulationPage } from './pages/Lab';
+import { LessonDetailPage, LessonsPage } from './pages/Lessons';
+import { AnomaliesPage, CausalPage, ConnectionDetailPage, ConnectionsPage, DiscoveryDashboardPage, DiscoveryGraphPage, DiscoverySearchPage, ForesightPage, HypothesesPage, HypothesisDetailPage } from './pages/Discovery';
 import { RunDetailPage, WarRoomPage } from './pages/WarRoom';
 import { ComparePage, FinancialPage, SeriesDetailPage } from './pages/Financial';
 import { NotFoundPage } from './pages/NotFound';
@@ -50,6 +52,18 @@ export function App() {
           <Route path="studio" element={<StudioPage />} />
           <Route path="studio/reports/:reportId" element={<ReportEditorPage />} />
           <Route path="briefing" element={<BriefingPage />} />
+          <Route path="lessons" element={<LessonsPage />} />
+          <Route path="discovery" element={<DiscoveryDashboardPage />} />
+          <Route path="discovery/search" element={<DiscoverySearchPage />} />
+          <Route path="discovery/connections" element={<ConnectionsPage />} />
+          <Route path="discovery/connections/:connectionId" element={<ConnectionDetailPage />} />
+          <Route path="discovery/hypotheses" element={<HypothesesPage />} />
+          <Route path="discovery/hypotheses/:hypothesisId" element={<HypothesisDetailPage />} />
+          <Route path="discovery/anomalies" element={<AnomaliesPage />} />
+          <Route path="discovery/causal" element={<CausalPage />} />
+          <Route path="discovery/foresight" element={<ForesightPage />} />
+          <Route path="discovery/graph" element={<DiscoveryGraphPage />} />
+          <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
           <Route path="lab" element={<LabPage />} />
           <Route path="lab/simulations/:simId" element={<SimulationPage />} />
           <Route path="war-room" element={<WarRoomPage />} />

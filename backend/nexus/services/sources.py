@@ -31,7 +31,22 @@ def get_source(db: Session, user: User, source_id: int) -> Source:
     return s
 
 
+def _check_primary(db: Session, user: User, primary_id: int | None, self_id: int | None = None) -> None:
+    """La fonte primaria deve esistere, essere dell'utente e non creare cicli."""
+    seen = {self_id} if self_id else set()
+    cur = primary_id
+    while cur is not None:
+        if cur in seen:
+            raise ValidationFailedError("La fonte primaria indicata crea un ciclo.")
+        seen.add(cur)
+        p = db.get(Source, cur)
+        if p is None or p.owner_id != user.id:
+            raise ValidationFailedError("Fonte primaria inesistente.")
+        cur = p.primary_source_id
+
+
 def create_source(db: Session, user: User, data: SourceIn, is_demo: bool = False) -> Source:
+    _check_primary(db, user, data.primary_source_id)
     s = Source(owner_id=user.id, is_demo=is_demo, **data.model_dump())
     db.add(s)
     db.flush()
@@ -44,6 +59,7 @@ def create_source(db: Session, user: User, data: SourceIn, is_demo: bool = False
 
 def update_source(db: Session, user: User, source_id: int, data: SourceIn) -> Source:
     s = get_source(db, user, source_id)
+    _check_primary(db, user, data.primary_source_id, s.id)
     for k, v in data.model_dump().items():
         setattr(s, k, v)
     # Qualsiasi modifica invalida la verifica precedente.
@@ -96,3 +112,52 @@ def verify_source(db: Session, user: User, source_id: int, method: str, note: st
     db.commit()
     db.refresh(s)
     return s
+
+
+# --- BibTeX (Zotero, Mendeley, JabRef) -------------------------------------------------------
+
+
+def export_bibtex(db: Session, user: User, ids: list[int] | None = None) -> str:
+    from ..studio.bibtex import cite_key, source_to_bibtex
+
+    items = list_sources(db, user)
+    if ids:
+        items = [x for x in items if x.id in set(ids)]
+    taken: set[str] = set()
+    return "\n".join(source_to_bibtex(x, cite_key(x.authors, x.year, x.title, taken)) for x in items)
+
+
+def import_bibtex(db: Session, user: User, text: str) -> dict:
+    from pydantic import ValidationError
+
+    from ..studio.bibtex import entry_to_source, parse_bibtex
+
+    try:
+        entries = parse_bibtex(text)
+    except ValueError as exc:
+        raise ValidationFailedError(f"File BibTeX non leggibile: {exc}") from exc
+    if not entries:
+        raise ValidationFailedError("Nessuna voce BibTeX trovata nel file.")
+    existing_doi = {x.doi.lower() for x in list_sources(db, user) if x.doi}
+    created, skipped = [], []
+    for e in entries:
+        fields = entry_to_source(e)
+        label = e.get("key") or fields["title"][:60] or "?"
+        if fields["doi"] and fields["doi"].lower() in existing_doi:
+            skipped.append({"key": label, "reason": "DOI già presente nella bibliografia"})
+            continue
+        try:
+            data = SourceIn(**fields)
+        except ValidationError as exc:
+            skipped.append({"key": label, "reason": exc.errors()[0]["msg"][:200]})
+            continue
+        src = Source(owner_id=user.id, **data.model_dump())
+        db.add(src)
+        db.flush()
+        created.append(src.id)
+        if data.doi:
+            existing_doi.add(data.doi.lower())
+    activity.record(db, user=user, actor="user", action="source.import_bibtex", entity_type="source", entity_id=None,
+                    summary=f"Importate {len(created)} fonti da BibTeX ({len(skipped)} scartate), tutte da verificare")
+    db.commit()
+    return {"created": len(created), "skipped": skipped}

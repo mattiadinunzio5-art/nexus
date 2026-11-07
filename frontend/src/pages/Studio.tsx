@@ -211,6 +211,7 @@ export function ReportEditorPage() {
         actions={<>
           <a href={api.exportUrl(r.id, 'pdf')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> PDF</a>
           <a href={api.exportUrl(r.id, 'docx')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> DOCX</a>
+          <a href={api.exportUrl(r.id, 'latex')} title="ZIP con main.tex, references.bib e figure (compilabile su Overleaf)" className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> LaTeX</a>
           {r.status === 'draft'
             ? <Button variant="primary" onClick={async () => { try { saved(await api.setReportStatus(r.id, 'approved')); } catch (e) { setErr(errorText(e)); } }}>Approva</Button>
             : <Button onClick={async () => saved(await api.setReportStatus(r.id, 'draft'))}>Riporta in bozza</Button>}

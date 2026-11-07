@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../api/client';
-import { FREQUENCY_LABEL, SERIES_CATEGORIES, type Comparison, type Preset, type SeriesDetail } from '../api/types';
+import { FREQUENCY_LABEL, SERIES_CATEGORIES, type AlertKind, type Comparison, type Preset, type SeriesDetail } from '../api/types';
 import { DrawdownChart, formatNumber, mergePoints, SERIES_COLORS, TimeChart } from '../components/charts';
 import { Badge, DemoBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -16,14 +16,14 @@ import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
 
-const CONNECTORS = { 'world-bank': 'World Bank', eurostat: 'Eurostat', owid: 'Our World in Data', fred: 'FRED' } as const;
+const CONNECTORS = { 'world-bank': 'World Bank', eurostat: 'Eurostat', ecb: 'BCE (ECB Data Portal)', istat: 'ISTAT', owid: 'Our World in Data', fred: 'FRED' } as const;
 const pct = (v: unknown) => (typeof v === 'number' ? `${formatNumber(v * 100, 4)}%` : '—');
 
 function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
   const presets = useAsync(() => api.presets(), []);
   const [mode, setMode] = useState<'preset' | 'custom' | 'csv'>('preset');
   const [preset, setPreset] = useState('');
-  const [c, setC] = useState({ connector: 'world-bank', category: 'other', indicator: '', country: '', series_id: '', slug: '', entity: '', dataset: '', filters: '' });
+  const [c, setC] = useState({ connector: 'world-bank', category: 'other', indicator: '', country: '', series_id: '', slug: '', entity: '', dataset: '', filters: '', key: '' });
   const [csv, setCsv] = useState({ name: '', source_label: '', source_url: '', unit: '', category: 'other' });
   const [file, setFile] = useState<File>();
   const [busy, setBusy] = useState(false);
@@ -90,6 +90,8 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
           {c.connector === 'world-bank' && <><Field label="Codice indicatore" hint="es. FP.CPI.TOTL.ZG"><Input {...bind('indicator')} /></Field><Field label="Paese (ISO3)" hint="es. ITA, DEU, USA"><Input {...bind('country')} /></Field></>}
           {c.connector === 'fred' && <Field label="ID serie FRED" hint="es. UNRATE"><Input {...bind('series_id')} /></Field>}
           {c.connector === 'owid' && <><Field label="Slug del grafico" hint="dall'URL ourworldindata.org/grapher/…"><Input {...bind('slug')} /></Field><Field label="Paese / entità" hint="es. Italy"><Input {...bind('entity')} /></Field></>}
+          {c.connector === 'ecb' && <><Field label="Dataflow" hint="es. FM, ICP, EXR"><Input {...bind('dataset')} /></Field><Field label="Chiave della serie" hint="es. M.U2.N.000000.4.ANR — dal portale data.ecb.europa.eu"><Input {...bind('key')} /></Field></>}
+          {c.connector === 'istat' && <><Field label="Dataflow" hint="es. 144_125_DF_DCSP_NICDUE_1 — da esploradati.istat.it"><Input {...bind('dataset')} /></Field><Field label="Chiave della serie" hint="un valore per dimensione, separati da punti"><Input {...bind('key')} /></Field></>}
           {c.connector === 'eurostat' && <><Field label="Codice dataset" hint="es. prc_hicp_aind"><Input {...bind('dataset')} /></Field><Field label="Filtri" hint="es. geo=IT coicop=CP00 unit=RCH_A_AVG"><Input {...bind('filters')} /></Field></>}
         </div>
       )}
@@ -270,9 +272,77 @@ export function SeriesDetailPage() {
           {a.data.drawdown_series && <Card title="Drawdown" className="lg:col-span-2"><DrawdownChart data={a.data.drawdown_series} ariaLabel="Drawdown dal massimo precedente" /></Card>}
         </div>
       )}
+      {d.connector !== 'upload' && <AlertsCard seriesId={id} unit={d.unit} />}
       <ConfirmDialog open={deleting} title="Eliminare la serie?" message="La serie e tutte le sue osservazioni verranno eliminate." confirmLabel="Elimina"
         onCancel={() => setDeleting(false)} onConfirm={async () => { await api.deleteSeries(id); navigate('/financial'); }} />
     </>
+  );
+}
+
+const ALERT_LABEL: Record<AlertKind, string> = { new_data: 'Nuovo dato pubblicato', above: 'Valore sopra la soglia', below: 'Valore sotto la soglia' };
+
+function AlertsCard({ seriesId, unit }: { seriesId: number; unit: string }) {
+  const list = useAsync(() => api.alerts(seriesId), [seriesId]);
+  const [kind, setKind] = useState<AlertKind>('new_data');
+  const [threshold, setThreshold] = useState('');
+  const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
+  const [busy, setBusy] = useState(false);
+
+  async function act(fn: () => Promise<unknown>, ok?: string) {
+    setBusy(true);
+    setMsg(undefined);
+    try {
+      await fn();
+      if (ok) setMsg({ ok: true, text: ok });
+      await list.reload();
+    } catch (e) {
+      setMsg({ ok: false, text: errorText(e) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function add(e: FormEvent) {
+    e.preventDefault();
+    const t = threshold.trim() === '' ? null : Number(threshold.replace(',', '.'));
+    if (kind !== 'new_data' && (t === null || Number.isNaN(t))) return setMsg({ ok: false, text: 'Indica una soglia numerica.' });
+    void act(() => api.createAlert({ series_id: seriesId, kind, threshold: kind === 'new_data' ? null : t }), 'Avviso creato.');
+  }
+
+  return (
+    <Card title="Avvisi" className="mt-4">
+      <p className="mb-3 text-xs text-steel-400">
+        Ricevi una notifica quando la fonte pubblica un nuovo dato o quando l'ultimo valore supera una soglia. Gli avvisi si controllano quando la serie viene aggiornata:
+        con «Controlla ora», con «Aggiorna dalla fonte» o pianificando <code>scripts/check_alerts.py</code> (vedi README).
+      </p>
+      <form onSubmit={add} className="mb-3 flex flex-wrap items-end gap-3">
+        <Field label="Tipo"><Select value={kind} onChange={(e) => setKind(e.target.value as AlertKind)}>{Object.entries(ALERT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
+        {kind !== 'new_data' && <Field label={`Soglia${unit ? ` (${unit})` : ''}`}><Input inputMode="decimal" value={threshold} onChange={(e) => setThreshold(e.target.value)} className="w-32" /></Field>}
+        <Button type="submit" disabled={busy}>Aggiungi avviso</Button>
+        <Button type="button" disabled={busy || !list.data?.some((a) => a.active)} onClick={() => act(async () => {
+          const r = await api.checkAlerts();
+          setMsg({ ok: r.errors.length === 0, text: `Serie controllate: ${r.checked}.${r.errors.length ? ` Errori: ${r.errors.map((x) => x.error).join('; ')}` : ' Eventuali avvisi scattati sono nelle notifiche.'}` });
+        })}><RefreshCw className={`size-4 ${busy ? 'animate-spin' : ''}`} aria-hidden /> Controlla ora</Button>
+      </form>
+      {msg && <p role="status" className={`mb-2 text-sm ${msg.ok ? 'text-ok' : 'text-bad'}`}>{msg.text}</p>}
+      {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
+      {list.data && list.data.length === 0 && <p className="text-sm text-steel-400">Nessun avviso su questa serie.</p>}
+      <ul className="divide-y divide-ink-800">
+        {list.data?.map((a) => (
+          <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+            <span>
+              {ALERT_LABEL[a.kind]}{a.threshold !== null ? ` ${formatNumber(a.threshold)}${unit ? ` ${unit}` : ''}` : ''}
+              <span className="ml-2 text-xs text-steel-500">ultimo dato valutato: {a.last_seen_date ?? '—'}{a.last_triggered_at ? ` · scattato il ${formatDateTime(a.last_triggered_at)}` : ''}</span>
+              {!a.active && <span className="ml-2"><Badge>sospeso</Badge></span>}
+            </span>
+            <span className="flex gap-2">
+              <Button disabled={busy} onClick={() => act(() => api.setAlertActive(a.id, !a.active))}>{a.active ? 'Sospendi' : 'Riattiva'}</Button>
+              <Button disabled={busy} onClick={() => act(() => api.deleteAlert(a.id))} aria-label="Elimina avviso"><Trash2 className="size-4" /></Button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

@@ -9,7 +9,7 @@ def test_list_connectors_initial_state(client):
     assert {c["id"] for c in items} == {c.id for c in CONNECTORS}
     assert all(c["last_status"] == "unknown" and c["last_checked_at"] is None for c in items)
     implemented = {c["id"] for c in items if c["implemented"]}
-    assert implemented == {"fred", "world-bank", "owid", "eurostat", "gutenberg"}
+    assert implemented == {"fred", "world-bank", "owid", "eurostat", "ecb", "istat", "gutenberg"}
     # IMF, OECD e BIS sono dichiarati ma non ancora implementati: non risultano attivi.
     assert {c["id"] for c in items if not c["implemented"]} == {"imf", "oecd", "bis"}
     assert all(c["terms_url"].startswith("https://") for c in items)

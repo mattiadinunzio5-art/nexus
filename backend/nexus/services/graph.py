@@ -55,6 +55,13 @@ def create_entity(db: Session, user: User, data: EntityIn, is_demo: bool = False
         d = db.get(Document, data.document_id)
         if d is None or d.owner_id != user.id:
             raise ValidationFailedError("Documento inesistente.")
+    from ..discovery.kg import find_entity
+
+    dup = find_entity(db, user, data.name, data.entity_type) or next(
+        (x for a in data.aliases if (x := find_entity(db, user, a, data.entity_type))), None)
+    if dup:
+        raise ValidationFailedError(f"Entità già presente nel grafo: «{dup.name}» (#{dup.id}). Usa quella o aggiungi un alias.",
+                                    details={"existing_id": dup.id})
     e = Entity(owner_id=user.id, is_demo=is_demo, **data.model_dump())
     db.add(e)
     db.flush()
@@ -69,6 +76,11 @@ def update_entity(db: Session, user: User, entity_id: int, data: EntityIn) -> En
     e = get_entity(db, user, entity_id)
     if e.event_id is not None:
         raise ValidationFailedError("Questa entità rappresenta un evento: modificala dalla scheda evento.")
+    from ..discovery.kg import find_entity
+
+    dup = find_entity(db, user, data.name, data.entity_type, exclude_id=e.id)
+    if dup:
+        raise ValidationFailedError(f"Esiste già un'entità con questo nome: «{dup.name}» (#{dup.id}).", details={"existing_id": dup.id})
     for k, v in data.model_dump().items():
         setattr(e, k, v)
     db.commit()

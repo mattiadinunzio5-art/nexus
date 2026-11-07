@@ -38,4 +38,6 @@ class Source(TimestampMixin, Base):
     verification_status: Mapped[str] = mapped_column(String(20), default="unverified", nullable=False)
     verification_note: Mapped[str] = mapped_column(Text, default="", nullable=False)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Fonte primaria da cui questa fonte riprende le informazioni (per valutare l'indipendenza delle conferme).
+    primary_source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id", ondelete="SET NULL"), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)

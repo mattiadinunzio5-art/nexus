@@ -69,12 +69,13 @@ def set_status(report_id: int, db: DB, user: CurrentUser, value: Literal["approv
     return svc.set_status(db, user, report_id, value)
 
 
-@router.get("/reports/{report_id}/export/{fmt}", summary="Esporta in PDF o DOCX")
-def export_report(report_id: int, fmt: Literal["pdf", "docx"], db: DB, user: CurrentUser):
+@router.get("/reports/{report_id}/export/{fmt}", summary="Esporta in PDF, DOCX o LaTeX (ZIP con main.tex e references.bib)")
+def export_report(report_id: int, fmt: Literal["pdf", "docx", "latex"], db: DB, user: CurrentUser):
     data, title = svc.export_report(db, user, report_id, fmt)
-    media = "application/pdf" if fmt == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    media = {"pdf": "application/pdf", "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+             "latex": "application/zip"}[fmt]
     name = "".join(c if c.isalnum() or c in " -_" else "_" for c in title)[:80].strip() or "rapporto"
-    return Response(data, media_type=media, headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}.{fmt}"})
+    return Response(data, media_type=media, headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}.{'zip' if fmt == 'latex' else fmt}"})
 
 
 @router.delete("/reports/{report_id}", status_code=status.HTTP_204_NO_CONTENT)

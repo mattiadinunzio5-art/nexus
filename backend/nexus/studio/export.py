@@ -189,3 +189,79 @@ def to_docx(v: ReportView) -> bytes:
     buf = io.BytesIO()
     d.save(buf)
     return buf.getvalue()
+
+
+# --- LaTeX ---------------------------------------------------------------------------------------
+
+
+def to_latex_zip(v: ReportView, bibtex: str) -> bytes:
+    """Pacchetto ZIP: main.tex, references.bib e figure PNG. Compilabile con pdflatex (es. Overleaf)."""
+    import zipfile
+
+    from .bibtex import latex_escape as e
+
+    lines = [
+        r"\documentclass[11pt,a4paper]{article}",
+        r"\usepackage[utf8]{inputenc}",
+        r"\usepackage[T1]{fontenc}",
+        r"\usepackage{lmodern}",
+        r"\usepackage{graphicx}",
+        r"\usepackage{booktabs}",
+        r"\usepackage[hidelinks]{hyperref}",
+        r"\usepackage[margin=2.5cm]{geometry}",
+        "",
+        rf"\title{{{e(v.title)}" + (rf"\\ \large {e(v.subtitle)}" if v.subtitle else "") + "}",
+        rf"\author{{{e(v.author)}}}",
+        rf"\date{{Generato da NEXUS il {e(v.generated_at)} --- Stato: {e(v.status)}}}",
+        "",
+        r"\begin{document}",
+        r"\maketitle",
+    ]
+    for n in v.notices:
+        lines.append(rf"\noindent\fbox{{\parbox{{\linewidth}}{{\small {e(n)}}}}}\par\medskip")
+    files: dict[str, bytes] = {}
+    fig_n = 0
+    for s in v.sections:
+        lines += ["", rf"\section{{{e(s.title)}}}"]
+        if not s.paragraphs and not s.figures and not s.tables:
+            lines.append(r"\textit{[Sezione non compilata]}")
+        for p in s.paragraphs:
+            rows = p.split("\n")
+            if all(r.lstrip().startswith(("- ", "• ")) for r in rows):
+                lines.append(r"\begin{itemize}")
+                lines += [rf"  \item {e(r.lstrip()[2:])}" for r in rows]
+                lines.append(r"\end{itemize}")
+            else:
+                lines += [e(" ".join(rows)), ""]
+        for f in s.figures:
+            if f.png:
+                fig_n += 1
+                name = f"figures/figura{fig_n}.png"
+                files[name] = f.png
+                lines += [r"\begin{figure}[h]", r"\centering", rf"\includegraphics[width=\linewidth]{{{name}}}",
+                          rf"\caption{{{e(f.caption)}" + (rf" \\ \footnotesize {e(f.note)}" if f.note else "") + "}", r"\end{figure}"]
+            else:
+                lines.append(rf"\textit{{[Figura non disponibile: {e(f.caption)}]}}")
+        for t in s.tables:
+            cols = "l" * max(1, len(t.columns))
+            lines += [r"\begin{table}[h]", r"\centering", rf"\caption{{{e(t.caption)}}}", rf"\begin{{tabular}}{{{cols}}}", r"\toprule",
+                      " & ".join(e(c) for c in t.columns) + r" \\", r"\midrule"]
+            lines += [" & ".join(e(str(c)) for c in row) + r" \\" for row in t.rows]
+            lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    if v.bibliography:
+        lines += ["", r"\begin{thebibliography}{99}"]
+        for b in v.bibliography:
+            flag = "" if b.verified else rf" \textit{{[{e(b.status_label)}]}}"
+            lines.append(rf"\bibitem{{ref{b.number}}} {e(b.citation)}{flag}")
+        lines.append(r"\end{thebibliography}")
+    lines += [r"\end{document}", ""]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("main.tex", "\n".join(lines))
+        z.writestr("references.bib", bibtex)
+        z.writestr("LEGGIMI.txt", "Compila main.tex con pdflatex (ad esempio su Overleaf: Nuovo progetto > Carica progetto > questo ZIP).\n"
+                   "Le citazioni nel testo sono numerate [n] come nella bibliografia. references.bib contiene le stesse fonti in BibTeX\n"
+                   "per Zotero, JabRef o biblatex. Le fonti non verificate sono indicate.\n")
+        for name, data in files.items():
+            z.writestr(name, data)
+    return buf.getvalue()

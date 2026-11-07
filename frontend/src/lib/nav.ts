@@ -11,10 +11,12 @@ import {
   Database,
   FlaskConical,
   FolderKanban,
+  GraduationCap,
   History,
   Landmark,
   LayoutDashboard,
   Network,
+  Radar,
   Settings,
   Swords,
   type LucideIcon,
@@ -34,6 +36,7 @@ export interface NavItem {
  * (core/modules.py), che resta la fonte di verità per stato e contenuti.
  */
 export const MODULE_NAV: NavItem[] = [
+  { to: '/discovery', label: 'Discovery Intelligence', icon: Radar, code: '◆' },
   { to: '/history', label: 'Historical Intelligence', icon: Landmark, code: 'A', moduleId: 'historical' },
   { to: '/financial', moduleId: 'financial', label: 'Financial Intelligence', icon: ChartLine, code: 'B' },
   { to: '/time-machine', label: 'Time Machine', icon: History, code: 'C', moduleId: 'time-machine' },
@@ -47,6 +50,7 @@ export const MODULE_NAV: NavItem[] = [
 export const MAIN_NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/briefing', label: 'Daily Briefing', icon: Newspaper },
+  { to: '/lessons', label: 'Lezioni guidate', icon: GraduationCap },
 ];
 
 export const ARCHIVE_NAV: NavItem[] = [

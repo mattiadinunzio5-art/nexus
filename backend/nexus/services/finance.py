@@ -22,6 +22,8 @@ PRESETS = [
     Preset(connector="eurostat", label="Tasso di disoccupazione 15-74 anni — Italia", category="unemployment", params={"dataset": "une_rt_a", "filters": {"geo": "IT", "age": "Y15-74", "sex": "T", "unit": "PC_ACT"}}),
     Preset(connector="world-bank", label="Saldo esterno beni e servizi (% PIL) — Italia", category="trade_balance", params={"indicator": "NE.RSB.GNFS.ZS", "country": "ITA"}),
     Preset(connector="eurostat", label="HICP, variazione media annua — Italia", category="inflation", params={"dataset": "prc_hicp_aind", "filters": {"geo": "IT", "coicop": "CP00", "unit": "RCH_A_AVG"}}),
+    Preset(connector="ecb", label="Tasso BCE sulle operazioni di rifinanziamento principali — area euro", category="rates", params={"dataset": "FM", "key": "B.U2.EUR.4F.KR.MRR_FR.LEV"}),
+    Preset(connector="ecb", label="Inflazione HICP area euro (% annua, BCE)", category="inflation", params={"dataset": "ICP", "key": "M.U2.N.000000.4.ANR"}),
     Preset(connector="owid", label="Inflazione dei prezzi al consumo — Italy (OWID)", category="inflation", params={"slug": "inflation-of-consumer-prices", "entity": "Italy"}),
     Preset(connector="fred", label="Tasso effettivo Fed Funds (FRED, richiede chiave)", category="rates", params={"series_id": "FEDFUNDS"}),
     Preset(connector="fred", label="Rendimento Treasury 10 anni (FRED, richiede chiave)", category="bonds", params={"series_id": "DGS10"}),
@@ -40,6 +42,8 @@ def _ext_id(data: SeriesImportIn) -> str:
         return data.series_id or ""
     if data.connector == "owid":
         return f"{data.slug}:{data.entity}"
+    if data.connector in ("ecb", "istat"):
+        return f"{data.dataset}/{data.key}"
     return f"{data.dataset}?" + "&".join(f"{k}={v}" for k, v in sorted(data.filters.items()))
 
 
@@ -53,6 +57,10 @@ def _fetch(db: Session, user: User, settings: Settings, data: SeriesImportIn, fo
             return connectors.fetch_fred(f, data.series_id.strip(), key, force)
         if data.connector == "owid":
             return connectors.fetch_owid(f, data.slug.strip(), data.entity.strip(), force)
+        if data.connector == "ecb":
+            return connectors.fetch_ecb(f, data.dataset.strip(), data.key.strip(), force)
+        if data.connector == "istat":
+            return connectors.fetch_istat(f, data.dataset.strip(), data.key.strip(), force)
         return connectors.fetch_eurostat(f, data.dataset.strip(), data.filters, force)
     except connectors.ConnectorError as exc:
         _record_state(db, data.connector, "unreachable" if "raggiungibile" in str(exc) else "degraded", str(exc))
@@ -137,9 +145,17 @@ def refresh(db: Session, user: User, settings: Settings, series_id: int) -> Seri
         raise ValidationFailedError("Le serie caricate da CSV non hanno una fonte da cui aggiornarsi.")
     data = SeriesImportIn(category=s.category, **s.params)
     res = _fetch(db, user, settings, data, force=True)
+    # Le vecchie osservazioni vanno eliminate prima di inserire le nuove (vincolo univoco serie+data).
+    s.observations.clear()
+    db.flush()
     _apply(s, res)
+    db.flush()
+    from . import alerts
+
+    fired = alerts.evaluate(db, s)
     activity.record(db, user=user, actor="user", action="series.refresh", entity_type="series", entity_id=s.id,
-                    summary=f"Aggiornata la serie «{s.name}»" + (" (fonte offline: usata la cache)" if res.from_cache else ""))
+                    summary=f"Aggiornata la serie «{s.name}»" + (" (fonte offline: usata la cache)" if res.from_cache else "")
+                    + (f" — {fired} avvisi scattati" if fired else ""))
     db.commit()
     db.refresh(s)
     return s

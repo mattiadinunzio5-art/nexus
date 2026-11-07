@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, Pencil, Plus, Share2, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, MessageSquare, Pencil, Plus, Share2, Trash2 } from 'lucide-react';
 import { useAuth } from '../state/Auth';
 import { Badge } from '../components/ui/Badge';
 import { Input, Select } from '../components/ui/Form';
@@ -101,9 +101,78 @@ function SharePanel({ projectId }: { projectId: number }) {
   );
 }
 
+function CollabPanel({ projectId }: { projectId: number }) {
+  const comments = useAsync(() => api.comments(projectId), [projectId]);
+  const history = useAsync(() => api.projectHistory(projectId), [projectId]);
+  const [body, setBody] = useState('');
+  const [err, setErr] = useState<string>();
+  const [tab, setTab] = useState<'comments' | 'history'>('comments');
+
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    setErr(undefined);
+    try {
+      await api.addComment(projectId, body);
+      setBody('');
+      await Promise.all([comments.reload(), history.reload()]);
+    } catch (x) {
+      setErr(errorText(x));
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-md border border-ink-700 p-3" data-testid="collab-panel">
+      <div className="mb-3 flex gap-1" role="tablist">
+        {([['comments', 'Commenti'], ['history', 'Cronologia']] as const).map(([k, v]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`rounded-md px-3 py-1 text-sm ${tab === k ? 'bg-ink-800 text-paper' : 'text-steel-400 hover:text-paper'}`}>{v}</button>
+        ))}
+      </div>
+      {tab === 'comments' ? (
+        <>
+          {comments.error && <ErrorBox error={comments.error} onRetry={comments.reload} />}
+          {comments.data?.length === 0 && <p className="mb-2 text-sm text-steel-400">Nessun commento. Chi ha accesso al progetto, anche in sola lettura, può commentare.</p>}
+          <ul className="mb-3 space-y-2">
+            {comments.data?.map((c) => (
+              <li key={c.id} className="rounded-md bg-ink-950 p-2 text-sm">
+                <div className="mb-1 flex items-center gap-2 text-[11px] text-steel-500">
+                  <span className="font-medium text-steel-300">{c.author?.display_name ?? 'Utente rimosso'}</span>
+                  <span>{formatDateTime(c.created_at)}</span>
+                  <button className="ml-auto hover:text-bad" onClick={async () => { setErr(undefined); try { await api.deleteComment(projectId, c.id); await comments.reload(); } catch (x) { setErr(errorText(x)); } }}>elimina</button>
+                </div>
+                <p className="whitespace-pre-line text-steel-200">{c.body}</p>
+              </li>
+            ))}
+          </ul>
+          <form onSubmit={send} className="flex flex-wrap gap-2">
+            <textarea aria-label="Nuovo commento" rows={2} maxLength={5000} className={`${inputCls} min-w-48 flex-1`} placeholder="Scrivi un commento…" value={body} onChange={(e) => setBody(e.target.value)} />
+            <Button type="submit" disabled={!body.trim()}>Invia</Button>
+          </form>
+        </>
+      ) : (
+        <>
+          {history.error && <ErrorBox error={history.error} onRetry={history.reload} />}
+          {history.data?.length === 0 && <p className="text-sm text-steel-400">Nessuna modifica registrata.</p>}
+          <ol className="space-y-1 text-sm">
+            {history.data?.map((h) => (
+              <li key={h.id} className="flex flex-wrap gap-x-2 text-steel-300">
+                <span className="text-[11px] text-steel-500">{formatDateTime(h.created_at)}</span>
+                <span className="text-[11px] text-steel-400">{h.user ?? (h.actor === 'ai' ? 'AI' : 'Sistema')}</span>
+                <span className="min-w-0 basis-full sm:basis-auto">{h.summary}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+      {err && <p role="alert" className="mt-2 text-sm text-bad">{err}</p>}
+    </div>
+  );
+}
+
 export function ProjectsPage() {
   const { mode } = useAuth();
   const [sharing, setSharing] = useState<number>();
+  const [discussing, setDiscussing] = useState<number>();
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<ProjectStatus>('active');
   const [creating, setCreating] = useState(params.get('new') === '1');
@@ -221,6 +290,9 @@ export function ProjectsPage() {
                     {mode === 'multi' && (p.my_role ?? 'owner') === 'owner' && (
                       <Button variant="ghost" className="px-2" onClick={() => setSharing(sharing === p.id ? undefined : p.id)} aria-label={`Condividi ${p.title}`}><Share2 className="size-4" /></Button>
                     )}
+                    <Button variant="ghost" className="px-2" onClick={() => setDiscussing(discussing === p.id ? undefined : p.id)} aria-label={`Commenti e cronologia di ${p.title}`} aria-expanded={discussing === p.id}>
+                      <MessageSquare className="size-4" />
+                    </Button>
                     <Button variant="ghost" className="px-2" onClick={() => setEditingId(p.id)} aria-label={`Modifica ${p.title}`}>
                       <Pencil className="size-4" />
                     </Button>
@@ -238,6 +310,7 @@ export function ProjectsPage() {
                     </Button>
                   </div>
                   {sharing === p.id && <div className="basis-full"><SharePanel projectId={p.id} /></div>}
+                  {discussing === p.id && <div className="basis-full"><CollabPanel projectId={p.id} /></div>}
                 </div>
               )}
             </li>
