@@ -12,3 +12,17 @@
 - Pagamenti: Paddle (merchant of record: fatture, IVA UE, rimborsi). Niente Stripe. Alternativa: PayPal.
 - Ordine: 1) pagina Pricing + waitlist sul sito; 2) versione online multi-utente con limiti per piano; 3) integrazione Paddle (richiede account e dati fiscali dell'autore).
 - Prima di vendere: partita IVA / commercialista, Termini, Privacy, diritto di recesso 14 giorni.
+
+## Funzioni nuove (aggiornamento futuro)
+
+- **Collaborazione**: progetti condivisi con commenti, ruoli e cronologia delle modifiche (gruppi di ricerca, tesi).
+- **Avvisi**: notifica quando esce un nuovo dato FRED o una serie seguita supera una soglia.
+- **Nuove fonti dati**: BCE, Eurostat, Banca Mondiale, ISTAT (gratuite).
+- **Lezioni guidate**: percorsi pronti (crisi 1929, 2008, inflazione anni '70) per studenti e docenti.
+- **Export LaTeX + citazioni BibTeX/Zotero** per tesi e articoli.
+- **App installabile (PWA)** da browser, senza store.
+
+## Sito (aggiornamento futuro)
+
+- **Casi del mese / blog**: articoli realizzati con NEXUS, utili anche per la SEO.
+- **Versione italiana** del sito accanto all'inglese.
