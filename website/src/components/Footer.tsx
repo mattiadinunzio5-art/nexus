@@ -25,6 +25,10 @@ export function Footer() {
       </div>
       <div className="mx-auto flex max-w-[1440px] flex-wrap justify-between gap-3 border-t border-line px-5 py-6 text-[11px] uppercase tracking-[0.2em] text-mute sm:px-8">
         <span>© {new Date().getFullYear()} NEXUS</span>
+        <span className="flex flex-wrap gap-4">
+          <Link to={p('/privacy')} className="hover:text-ivory">{t.footer.privacy}</Link>
+          <a href="mailto:mattiadinunzio5@gmail.com" className="hover:text-ivory">{t.footer.contact}</a>
+        </span>
         <span>{t.footer.tagline}</span>
       </div>
     </footer>

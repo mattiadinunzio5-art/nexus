@@ -34,7 +34,7 @@ def signup(app, email, name="U"):
 
 def test_auth_required_and_public_endpoints(app):
     c = browser(app)
-    assert c.get("/api/auth/config").json() == {"mode": "multi", "allow_registration": True}
+    assert c.get("/api/auth/config").json() == {"mode": "multi", "allow_registration": True, "demo": True}
     assert c.get("/api/health").status_code == 200
     r = c.get("/api/projects")
     assert r.status_code == 401 and r.json()["error"]["code"] == "unauthorized"

@@ -13,6 +13,14 @@ def health() -> HealthOut:
     return HealthOut(status="ok", version=__version__)
 
 
+@router.get("/health/deep", summary="Verifica backend e database (usata dal controllo automatico giornaliero)")
+def health_deep(db: DB) -> dict:
+    from ...services.system import database_ok
+
+    ok = database_ok(db)
+    return {"status": "ok" if ok else "degraded", "database_ok": ok, "version": __version__}
+
+
 @router.get("/system/status", response_model=SystemStatusOut, summary="Stato di database e modalità AI")
 def system_status(db: DB, settings: AppSettings, user: CurrentUser) -> SystemStatusOut:
     return system.status(db, settings, user)

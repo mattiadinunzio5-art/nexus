@@ -1,0 +1,29 @@
+# Controllo automatico giornaliero della versione online.
+# - Tiene attivo il database Supabase (il piano gratuito si mette in pausa dopo ~7 giorni senza attività).
+# - Segnala con un errore (email di GitHub) se backend, app o sito non rispondono.
+name: Keep-alive online
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # ogni giorno alle 06:17 UTC (7:17 / 8:17 in Italia)
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Sveglia il backend e interroga il database
+        run: |
+          for i in 1 2 3 4 5; do
+            if out=$(curl -fsS -m 90 https://nexus-api-7w2q.onrender.com/api/health/deep); then
+              echo "$out"
+              echo "$out" | grep -q '"database_ok":true' && exit 0
+            fi
+            echo "Tentativo $i non riuscito, riprovo tra 30 secondi"; sleep 30
+          done
+          echo "Backend o database non raggiungibili"; exit 1
+      - name: Controlla app e sito
+        run: |
+          curl -fsS -m 30 -o /dev/null https://nexus-gda2.vercel.app
+          curl -fsS -m 30 -o /dev/null https://nexus-sigma-gules.vercel.app/it

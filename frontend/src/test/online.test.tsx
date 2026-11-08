@@ -47,3 +47,28 @@ describe('online version (Supabase accounts)', () => {
     expect((dash?.[1]?.headers as Record<string, string>).Authorization).toBe('Bearer jwt-di-prova');
   });
 });
+
+describe('public demo (no account)', () => {
+  it('opens the read-only demo from the login screen and sends the demo token', async () => {
+    session = null;
+    localStorage.clear();
+    const demoUser = { id: 9, email: 'demo@nexus-demo.invalid', display_name: 'Visitatore demo', role: 'user', plan: 'free', is_local: false };
+    const { fetchMock } = mockApi({
+      'GET /api/auth/config': { mode: 'supabase', allow_registration: false, demo: true, supabase_url: 'https://x.supabase.co', supabase_anon_key: 'sb_publishable_x', site_url: 'https://nexus.example' },
+      'POST /api/auth/demo': { token: 'demo.123.firma', expires_at: new Date(Date.now() + 3600_000).toISOString() },
+      'GET /api/me': (_u: string, init?: RequestInit) => ((init?.headers as Record<string, string>)?.Authorization === 'Bearer demo.123.firma'
+        ? demoUser : new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'Accesso richiesto.' } }), { status: 401 })),
+      'GET /api/dashboard': dashboard,
+      'GET /api/notifications': [],
+    });
+    renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: 'Prova la demo senza account' }));
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent('Demo in sola lettura');
+    expect(screen.getByRole('link', { name: 'Crea un account gratuito' })).toHaveAttribute('href', 'https://nexus.example/signup');
+    const dash = fetchMock.mock.calls.find(([u]) => String(u) === '/api/dashboard');
+    expect((dash?.[1]?.headers as Record<string, string>).Authorization).toBe('Bearer demo.123.firma');
+    await userEvent.click(screen.getByRole('button', { name: 'Esci dalla demo' }));
+    expect(await screen.findByRole('heading', { name: 'Accedi con il tuo account NEXUS' })).toBeInTheDocument();
+  });
+});

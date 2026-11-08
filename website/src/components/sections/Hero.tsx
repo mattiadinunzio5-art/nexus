@@ -4,6 +4,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { HeroGraph } from '../HeroGraph';
 import { useI18n } from '../../lib/i18n';
+import { demoUrl } from '../../lib/supabase';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -70,6 +71,11 @@ export function Hero() {
               <Link to={p('/#access')} className="group inline-flex items-center gap-2 rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">
                 {t.hero.enter} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </Link>
+              {demoUrl && (
+                <a href={demoUrl} className="group inline-flex items-center gap-2 rounded-full bg-copper px-6 py-3 text-sm font-medium text-void transition hover:bg-ivory">
+                  {t.hero.demo} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                </a>
+              )}
             </div>
           </motion.div>
         </div>

@@ -24,6 +24,8 @@ function pagesFor(lang: Lang): Page[] {
     ...CASES.map((c) => page(`/cases/${c.slug}`, `${c[lang].title} — NEXUS`, c[lang].dek)),
     page('/signin', `${t.auth.signInTitle} — NEXUS`, t.auth.signInSub, false),
     page('/signup', `${t.auth.createAccount} — NEXUS`, t.auth.signUpSub, false),
+    page('/privacy', `${lang === 'it' ? 'Informativa sulla privacy' : 'Privacy policy'} — NEXUS`,
+      lang === 'it' ? 'Quali dati personali tratta NEXUS, perché e con quali diritti.' : 'Which personal data NEXUS processes, why, and your rights.'),
   ];
 }
 

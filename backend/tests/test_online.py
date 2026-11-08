@@ -41,7 +41,7 @@ def as_(token):
 
 def test_config_exposes_only_public_values(online):
     cfg = online.get("/api/auth/config").json()
-    assert cfg == {"mode": "supabase", "allow_registration": False, "supabase_url": "https://example.supabase.co",
+    assert cfg == {"mode": "supabase", "allow_registration": False, "demo": True, "supabase_url": "https://example.supabase.co",
                    "supabase_anon_key": "sb_publishable_test", "site_url": "https://nexus.example"}
 
 

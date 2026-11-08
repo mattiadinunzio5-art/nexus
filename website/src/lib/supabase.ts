@@ -19,3 +19,6 @@ export function getSupabase(): Promise<SupabaseClient> | null {
 
 /** Indirizzo della piattaforma online (Vercel): se assente, la piattaforma si usa solo in locale. */
 export const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/+$/, '') || null;
+
+/** Demo pubblica in sola lettura della piattaforma (nessun account richiesto). */
+export const demoUrl = appUrl ? `${appUrl}/?demo=1` : null;

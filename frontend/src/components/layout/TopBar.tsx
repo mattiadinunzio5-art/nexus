@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Menu, PanelRight, Search } from 'lucide-react';
 import { useAppState } from '../../state/AppState';
+import { FeedbackButton } from './FeedbackButton';
 
 export function TopBar({ onMenu, onTogglePanel, panelOpen }: { onMenu: () => void; onTogglePanel: () => void; panelOpen: boolean }) {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export function TopBar({ onMenu, onTogglePanel, panelOpen }: { onMenu: () => voi
         <span className={`size-2 rounded-full ${backendOnline === undefined ? 'bg-steel-500' : backendOnline ? 'bg-ok' : 'bg-bad'}`} aria-hidden />
         {backendOnline === undefined ? 'Connessione…' : backendOnline ? 'Backend online' : 'Backend offline'}
       </span>
+      <FeedbackButton />
       <Link to="/notifications" className="relative rounded p-1.5 text-steel-300 hover:bg-ink-800" aria-label={`Notifiche (${unreadCount} non lette)`}>
         <Bell className="size-5" />
         {unreadCount > 0 && <span className="absolute right-1 top-1 size-2 rounded-full bg-gold-400" aria-hidden />}
