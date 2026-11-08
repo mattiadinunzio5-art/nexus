@@ -22,7 +22,7 @@ export function NotificationsPage() {
     <>
       <PageHeader
         eyebrow="Workspace"
-        title="Notifiche"
+        title="Notifications"
         actions={unread > 0 && <Button onClick={() => after(api.markAllRead)}>Segna tutte come lette</Button>}
       />
       {loading && !data && <Loading />}

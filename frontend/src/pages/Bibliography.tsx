@@ -93,7 +93,7 @@ export function BibliographyPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Archivio" title="Bibliografia" actions={!editing && <>
+      <PageHeader eyebrow="Archive" title="Bibliography" actions={!editing && <>
         <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800 focus-within:ring-2 focus-within:ring-gold-500">
           <Upload className="size-4" aria-hidden /> Importa BibTeX
           <input type="file" accept=".bib,text/x-bibtex,text/plain" className="sr-only" onChange={async (e) => {

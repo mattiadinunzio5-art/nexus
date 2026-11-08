@@ -52,7 +52,7 @@ export function SourcesPage() {
     <>
       <PageHeader
         eyebrow="Workspace"
-        title="Fonti e connettori"
+        title="Sources & Connectors"
         description="Fonti aperte dichiarate, con stato osservato, termini d'uso e fase di attivazione. Nessun connettore importa ancora dati."
         actions={
           data && (

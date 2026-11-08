@@ -50,21 +50,21 @@ export const MODULE_NAV: NavItem[] = [
 export const MAIN_NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/briefing', label: 'Daily Briefing', icon: Newspaper },
-  { to: '/lessons', label: 'Lezioni guidate', icon: GraduationCap },
+  { to: '/lessons', label: 'Guided Lessons', icon: GraduationCap },
 ];
 
 export const ARCHIVE_NAV: NavItem[] = [
-  { to: '/documents', label: 'Documenti', icon: FileText },
-  { to: '/bibliography', label: 'Bibliografia', icon: BookMarked },
-  { to: '/research', label: "Interroga l'archivio", icon: MessageSquareQuote },
+  { to: '/documents', label: 'Documents', icon: FileText },
+  { to: '/bibliography', label: 'Bibliography', icon: BookMarked },
+  { to: '/research', label: 'Ask the Archive', icon: MessageSquareQuote },
 ];
 
 export const WORKSPACE_NAV: NavItem[] = [
-  { to: '/projects', label: 'Progetti', icon: FolderKanban },
-  { to: '/sources', label: 'Fonti e connettori', icon: Database },
-  { to: '/activity', label: 'Registro attività', icon: Activity },
-  { to: '/notifications', label: 'Notifiche', icon: Bell },
-  { to: '/settings', label: 'Sistema', icon: Settings },
+  { to: '/projects', label: 'Projects', icon: FolderKanban },
+  { to: '/sources', label: 'Sources & Connectors', icon: Database },
+  { to: '/activity', label: 'Activity Log', icon: Activity },
+  { to: '/notifications', label: 'Notifications', icon: Bell },
+  { to: '/settings', label: 'System', icon: Settings },
 ];
 
 /** Percorso della pagina di un modulo (pagina reale se implementato, altrimenti scheda «in preparazione»). */

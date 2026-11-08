@@ -126,7 +126,7 @@ export function DocumentsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Archivio" title="Documenti" description="Importazione, estrazione del testo e indicizzazione per la ricerca nell'archivio." />
+      <PageHeader eyebrow="Archive" title="Documents" description="Importazione, estrazione del testo e indicizzazione per la ricerca nell'archivio." />
       <Card title="Importa documento" className="mb-4"><UploadForm onDone={reload} /></Card>
       <div className="mb-6">
         <button className="text-xs text-gold-300 hover:underline" onClick={() => setShowGutenberg((v) => !v)}>
@@ -139,7 +139,7 @@ export function DocumentsPage() {
           <option value="">Tutte le categorie</option>
           {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
-        <Link to="/research" className="text-sm text-gold-300 hover:underline">Interroga l'archivio →</Link>
+        <Link to="/research" className="text-sm text-gold-300 hover:underline">Ask the Archive →</Link>
       </div>
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}

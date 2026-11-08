@@ -22,8 +22,8 @@ import { GraphPage } from './Graph';
 // --- Elementi comuni ------------------------------------------------------------------------------
 
 const TABS = [
-  ['/discovery', 'Panoramica'], ['/discovery/search', 'Discovery Search'], ['/discovery/connections', 'Connessioni'],
-  ['/discovery/hypotheses', 'Ipotesi'], ['/discovery/anomalies', 'Anomalie'], ['/discovery/causal', 'Catene causali'],
+  ['/discovery', 'Dashboard'], ['/discovery/search', 'Discovery Search'], ['/discovery/connections', 'Connections'],
+  ['/discovery/hypotheses', 'Hypotheses'], ['/discovery/anomalies', 'Anomalies'], ['/discovery/causal', 'Causal Intelligence'],
   ['/discovery/foresight', 'Strategic Foresight'], ['/discovery/graph', 'Knowledge Graph'],
 ] as const;
 
@@ -132,9 +132,9 @@ export function DiscoveryDashboardPage() {
           )}
           <dl className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
-              ['Connessioni', o.data.connections, `${o.data.connections_new} da esaminare`, '/discovery/connections'],
-              ['Ipotesi', o.data.hypotheses, `${o.data.hypotheses_by_status.to_verify} da verificare · ${o.data.hypotheses_by_status.verifying} in verifica`, '/discovery/hypotheses'],
-              ['Anomalie aperte', o.data.anomalies_open, 'ordinate per rilevanza', '/discovery/anomalies'],
+              ['Connections', o.data.connections, `${o.data.connections_new} da esaminare`, '/discovery/connections'],
+              ['Hypotheses', o.data.hypotheses, `${o.data.hypotheses_by_status.to_verify} da verificare · ${o.data.hypotheses_by_status.verifying} in verifica`, '/discovery/hypotheses'],
+              ['Open anomalies', o.data.anomalies_open, 'ordinate per rilevanza', '/discovery/anomalies'],
               ['Analisi in corso', o.data.running.length, o.data.running.length ? o.data.running.map((r) => `#${r.id} ${r.status}`).join(', ') : 'nessuna', '/discovery/search'],
             ].map(([label, value, hint, to]) => (
               <Link key={label as string} to={to as string} className="rounded-lg border border-ink-700 bg-ink-900 p-4 hover:border-gold-500">
@@ -236,10 +236,10 @@ function SessionView({ id, onChange }: { id: number; onChange: () => void }) {
       )}
       {['completed', 'stopped', 'failed'].includes(d.status) && (
         <div className="flex flex-wrap gap-3 text-sm">
-          <Link className="text-gold-300 hover:underline" to={`/discovery/connections?session=${d.id}`}>Connessioni della sessione</Link>
-          <Link className="text-gold-300 hover:underline" to="/discovery/hypotheses">Ipotesi</Link>
-          <Link className="text-gold-300 hover:underline" to="/discovery/anomalies">Anomalie</Link>
-          <Link className="text-gold-300 hover:underline" to="/discovery/causal">Catene causali</Link>
+          <Link className="text-gold-300 hover:underline" to={`/discovery/connections?session=${d.id}`}>Connections della sessione</Link>
+          <Link className="text-gold-300 hover:underline" to="/discovery/hypotheses">Hypotheses</Link>
+          <Link className="text-gold-300 hover:underline" to="/discovery/anomalies">Anomalies</Link>
+          <Link className="text-gold-300 hover:underline" to="/discovery/causal">Causal Intelligence</Link>
         </div>
       )}
     </Card>
@@ -301,7 +301,7 @@ export function ConnectionsPage() {
   const list = useAsync(() => api.discoveryConnections({ kind: kind || undefined, status: status || undefined, session_id: session }), [kind, status, session]);
   const set = (k: string, v: string) => { const p = new URLSearchParams(params); if (v) p.set(k, v); else p.delete(k); setParams(p); };
   return (
-    <Shell title="Connessioni" description="Collegamenti candidati tra eventi, serie ed entità. Ognuno ha elementi, tipo di relazione, periodo, evidenze, fonti e affidabilità motivata.">
+    <Shell title="Connections" description="Collegamenti candidati tra eventi, serie ed entità. Ognuno ha elementi, tipo di relazione, periodo, evidenze, fonti e affidabilità motivata.">
       <div className="mb-4 flex flex-wrap gap-3">
         <Field label="Tipo"><Select value={kind} onChange={(e) => set('kind', e.target.value)}><option value="">Tutti</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
         <Field label="Stato"><Select value={status} onChange={(e) => set('status', e.target.value)}><option value="">Tutti</option><option value="new">Da esaminare</option><option value="accepted">Accettate</option><option value="dismissed">Scartate</option></Select></Field>
@@ -331,8 +331,8 @@ export function ConnectionDetailPage() {
   const c = useAsync(() => api.discoveryConnection(id), [id]);
   const nav = useNavigate();
   const { busy, run, view } = useAction();
-  if (c.loading && !c.data) return <Shell title="Connessione"><Loading /></Shell>;
-  if (c.error) return <Shell title="Connessione"><ErrorBox error={c.error} onRetry={c.reload} /></Shell>;
+  if (c.loading && !c.data) return <Shell title="Connection"><Loading /></Shell>;
+  if (c.error) return <Shell title="Connection"><ErrorBox error={c.error} onRetry={c.reload} /></Shell>;
   const d = c.data as DiscoveryConnection;
   return (
     <Shell title={d.title} description={`${d.kind_label} · ${d.period}`}
@@ -371,7 +371,7 @@ export function HypothesesPage() {
   const [compare, setCompare] = useState<number[]>([]);
   const chosen = useMemo(() => list.data?.filter((h) => compare.includes(h.id)) ?? [], [list.data, compare]);
   return (
-    <Shell title="Ipotesi" description="Ipotesi generate dalle connessioni. Nessuna è una scoperta dimostrata: la verifica automatica raccoglie elementi, l'esito lo decidi tu.">
+    <Shell title="Hypotheses" description="Ipotesi generate dalle connessioni. Nessuna è una scoperta dimostrata: la verifica automatica raccoglie elementi, l'esito lo decidi tu.">
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <Field label="Stato"><Select value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Tutti</option>{Object.entries(H_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select></Field>
         <label className="flex items-center gap-2 pb-2 text-sm text-steel-300"><input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} /> Archiviate</label>
@@ -419,8 +419,8 @@ export function HypothesisDetailPage() {
   const { busy, run, view } = useAction();
   const [decision, setDecision] = useState<HypothesisStatus>('inconclusive');
   const [note, setNote] = useState('');
-  if (h.loading && !h.data) return <Shell title="Ipotesi"><Loading /></Shell>;
-  if (h.error) return <Shell title="Ipotesi"><ErrorBox error={h.error} onRetry={h.reload} /></Shell>;
+  if (h.loading && !h.data) return <Shell title="Hypotheses"><Loading /></Shell>;
+  if (h.error) return <Shell title="Hypotheses"><ErrorBox error={h.error} onRetry={h.reload} /></Shell>;
   const d = h.data as DiscoveryHypothesis;
   const last = d.verification.at(-1);
   const decided = ['confirmed', 'rejected', 'inconclusive'].includes(d.status);
@@ -479,7 +479,7 @@ export function AnomaliesPage() {
   const { busy, run, view } = useAction();
   const KIND: Record<string, string> = { series_change: 'Variazione anomala', trend_deviation: 'Deviazione dal trend', source_discrepancy: 'Discrepanza tra fonti', chronology: 'Incongruenza cronologica' };
   return (
-    <Shell title="Anomalie" description="Variazioni insolite, deviazioni dal trend, fonti in disaccordo e incongruenze cronologiche, ordinate per rilevanza e verificabilità. Con dati insufficienti non viene segnalato nulla.">
+    <Shell title="Anomalies" description="Variazioni insolite, deviazioni dal trend, fonti in disaccordo e incongruenze cronologiche, ordinate per rilevanza e verificabilità. Con dati insufficienti non viene segnalato nulla.">
       <Field label="Stato"><Select value={status} onChange={(e) => setStatus(e.target.value)} className="mb-4 w-auto"><option value="open">Aperte</option><option value="explained">Spiegate</option><option value="dismissed">Scartate</option><option value="">Tutte</option></Select></Field>
       {view}
       {list.loading && <Loading />}
@@ -568,7 +568,7 @@ export function CausalPage() {
   const opts = entities.data?.map((e) => <option key={e.id} value={e.id}>{e.name}</option>);
   const sopts = series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>);
   return (
-    <Shell title="Catene causali" description="Causal Intelligence distingue relazioni causali documentate, relazioni causali ipotizzate e semplici correlazioni, con evidenze, alternative e incertezza.">
+    <Shell title="Causal Intelligence" description="Causal Intelligence distingue relazioni causali documentate, relazioni causali ipotizzate e semplici correlazioni, con evidenze, alternative e incertezza.">
       {view}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card title="Catena tra due elementi del grafo">

@@ -194,7 +194,7 @@ export function ReportEditorPage() {
               <span className="text-steel-300">{s.citation.slice(0, 120)} <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge></span>
             </li>
           ))}
-          {sources.data?.length === 0 && <li className="text-steel-500">Nessuna fonte: aggiungile in <Link to="/bibliography" className="text-gold-300">Bibliografia</Link>.</li>}
+          {sources.data?.length === 0 && <li className="text-steel-500">Nessuna fonte: aggiungile in <Link to="/bibliography" className="text-gold-300">Bibliography</Link>.</li>}
         </ul>
       </div>
     </div>,

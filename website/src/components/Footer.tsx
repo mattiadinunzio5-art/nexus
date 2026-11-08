@@ -19,7 +19,7 @@ export function Footer() {
         <div>
           <p className="mb-4 text-[11px] uppercase tracking-[0.24em] text-mute">{t.footer.modules}</p>
           <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-            {modules.map((m) => <li key={m.slug}><Link to={p(`/architecture/${m.slug}`)} className="text-mute-2 hover:text-ivory">{m.title}</Link></li>)}
+            {modules.map((m) => <li key={m.slug}><Link to={p(`/architecture/${m.slug}`)} className="text-mute-2 hover:text-ivory" translate="no">{m.title}</Link></li>)}
           </ul>
         </div>
       </div>

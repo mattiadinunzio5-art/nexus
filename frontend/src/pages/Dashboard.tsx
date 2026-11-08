@@ -267,7 +267,7 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Panoramica"
+        eyebrow="Overview"
         title="Dashboard"
         description="Stato reale della piattaforma. Le sezioni senza dati lo dichiarano esplicitamente."
         actions={

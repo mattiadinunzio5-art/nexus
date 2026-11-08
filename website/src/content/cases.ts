@@ -158,7 +158,7 @@ export const CASES: CaseArticle[] = [
           heading: 'Come farlo in NEXUS',
           paragraphs: [
             'Financial Intelligence offre una serie pronta «HICP, variazione media annua — Italia» da Eurostat e l’inflazione dei prezzi al consumo per l’Italia della World Bank. Per l’area dell’euro nel suo insieme, importa la serie BCE ICP M.U2.N.000000.4.ANR. Per NIC e FOI usa il connettore ISTAT con il dataflow e la chiave della serie indicati in IstatData.',
-            'Poi usa Confronta: NEXUS allinea le date e, se le frequenze sono diverse, ti chiede come ricampionare. Registra ogni pubblicazione statistica in Bibliografia così il rapporto la cita correttamente.',
+            'Poi usa Confronta: NEXUS allinea le date e, se le frequenze sono diverse, ti chiede come ricampionare. Registra ogni pubblicazione statistica in Bibliography così il rapporto la cita correttamente.',
           ],
         },
       ],

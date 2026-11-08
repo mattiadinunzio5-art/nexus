@@ -43,7 +43,7 @@ export const MODULES_IT: ModuleContent[] = [
   {
     slug: 'projects',
     index: '02',
-    title: 'Progetti',
+    title: 'Projects',
     kicker: 'Organizzazione',
     tagline: 'Una domanda, un posto.',
     description:
@@ -55,12 +55,12 @@ export const MODULES_IT: ModuleContent[] = [
       'Ogni progetto ha i suoi commenti e una cronologia di chi ha cambiato cosa.',
     ],
     guide: [
-      { title: 'Crea un progetto', detail: 'Apri Progetti → «Nuovo progetto». Dagli un titolo chiaro, ad esempio «La crisi finanziaria del 2008».' },
+      { title: 'Crea un progetto', detail: 'Apri Projects → «Nuovo progetto». Dagli un titolo chiaro, ad esempio «La crisi finanziaria del 2008».' },
       { title: 'Definisci l’obiettivo', detail: 'Usa la descrizione per formulare la domanda, le ipotesi da verificare e il perimetro che vuoi coprire.' },
       { title: 'Organizza le domande', detail: 'Scrivi le sotto-domande come appunti nel Research Studio, collegati al progetto; ognuna può diventare una ricerca nella War Room.' },
       { title: 'Stabilisci il periodo di analisi', detail: 'Il periodo si applica dove serve: come filtro sugli anni in Historical Intelligence, come data nella Time Machine e come intervallo delle serie che analizzi.' },
       { title: 'Discuti e tieni traccia', detail: 'Apri l’icona dei commenti: i membri — anche chi ha solo la lettura — possono commentare, e la cronologia elenca ogni modifica con il suo autore.' },
-      { title: 'Parti da una lezione', detail: 'Lezioni guidate crea un progetto pronto sul crollo del 1929, sull’inflazione degli anni Settanta o sulla crisi del 2008, con una guida passo passo.' },
+      { title: 'Parti da una lezione', detail: 'Guided Lessons crea un progetto pronto sul crollo del 1929, sull’inflazione degli anni Settanta o sulla crisi del 2008, con una guida passo passo.' },
       { title: 'Gestisci il progetto', detail: 'Modificalo, archivialo o ripristinalo quando vuoi. L’eliminazione è irreversibile e chiede sempre una conferma esplicita.' },
     ],
     inputs: ['Titolo', 'Descrizione con obiettivo e perimetro', 'Facoltativo: collaboratori (modalità multi-utente)'],
@@ -84,7 +84,7 @@ export const MODULES_IT: ModuleContent[] = [
   {
     slug: 'documents',
     index: '03',
-    title: 'Documenti',
+    title: 'Documents',
     kicker: 'Archivio',
     tagline: 'Le tue fonti, leggibili e ricercabili fino alla pagina.',
     description:
@@ -96,10 +96,10 @@ export const MODULES_IT: ModuleContent[] = [
       'Il testo che sembra un’istruzione per un’AI viene segnalato e trattato solo come dato.',
     ],
     guide: [
-      { title: 'Importa un file', detail: 'Documenti → scegli un file (fino a 25 MB), titolo e autore facoltativi, e una categoria: materiale di ricerca, lavoro personale o dataset.' },
+      { title: 'Importa un file', detail: 'Documents → scegli un file (fino a 25 MB), titolo e autore facoltativi, e una categoria: materiale di ricerca, lavoro personale o dataset.' },
       { title: 'Controlla l’estrazione', detail: 'Apri il documento per leggere i passaggi estratti con la loro posizione (p. 12, § 4–6, righe 1–40). I duplicati sono rilevati in automatico.' },
-      { title: 'Collega la scheda bibliografica', detail: 'Collega il documento alla sua voce in Bibliografia: le citazioni useranno il riferimento completo invece del nome del file.' },
-      { title: 'Cerca e interroga', detail: 'Usa «Interroga l’archivio» per cercare (parole chiave, semantica o ibrida) o per fare una domanda con risposta in citazioni letterali e localizzate.' },
+      { title: 'Collega la scheda bibliografica', detail: 'Collega il documento alla sua voce in Bibliography: le citazioni useranno il riferimento completo invece del nome del file.' },
+      { title: 'Cerca e interroga', detail: 'Usa «Ask the Archive» per cercare (parole chiave, semantica o ibrida) o per fare una domanda con risposta in citazioni letterali e localizzate.' },
       { title: 'Tieni pulito l’archivio', detail: 'Modifica i metadati, scarica l’originale o elimina con conferma esplicita — l’indice si aggiorna di conseguenza.' },
     ],
     inputs: ['PDF (con livello di testo), DOCX, CSV, XLSX, TXT, MD', 'Facoltativi: titolo, autore, categoria', 'Facoltativo: un singolo testo di pubblico dominio da Project Gutenberg tramite ID'],
@@ -123,7 +123,7 @@ export const MODULES_IT: ModuleContent[] = [
   {
     slug: 'bibliography',
     index: '04',
-    title: 'Bibliografia',
+    title: 'Bibliography',
     kicker: 'Provenienza',
     tagline: 'Ogni affermazione riconducibile a una fonte verificabile.',
     description:
@@ -135,7 +135,7 @@ export const MODULES_IT: ModuleContent[] = [
       'Modificare una scheda azzera la verifica: un controllo si riferisce sempre ai dati attuali.',
     ],
     guide: [
-      { title: 'Registra una fonte', detail: 'Bibliografia → «Nuova fonte»: tipo, titolo, autori, anno, editore, rivista, pagine, DOI, ISBN, URL e data di consultazione.' },
+      { title: 'Registra una fonte', detail: 'Bibliography → «Nuova fonte»: tipo, titolo, autori, anno, editore, rivista, pagine, DOI, ISBN, URL e data di consultazione.' },
       { title: 'Lascia che NEXUS la validi', detail: 'Formato del DOI, cifra di controllo dell’ISBN e URL vengono validati all’inserimento.' },
       { title: 'Verifica', detail: 'Usa «Verifica DOI su Crossref» oppure dichiara di aver controllato l’originale. Stato e data della verifica vengono salvati.' },
       { title: 'Collegala', detail: 'Collega la fonte a documenti, eventi storici e relazioni del grafo; citala nei rapporti come [@id, p. 12].' },
@@ -333,7 +333,7 @@ export const MODULES_IT: ModuleContent[] = [
       'Ogni passaggio registra chi l’ha eseguito — il modello AI o il motore locale — con durata e token.',
     ],
     guide: [
-      { title: 'Scegli un provider AI (facoltativo)', detail: 'Sistema → Credenziali: Ollama (gratuito, sul tuo computer), un endpoint compatibile OpenAI o l’API Anthropic con la tua chiave. Senza, NEXUS lavora in modalità locale.' },
+      { title: 'Scegli un provider AI (facoltativo)', detail: 'System → Credenziali: Ollama (gratuito, sul tuo computer), un endpoint compatibile OpenAI o l’API Anthropic con la tua chiave. Senza, NEXUS lavora in modalità locale.' },
       { title: 'Fai la domanda', detail: 'War Room → scrivi la domanda; se vuoi seleziona le serie che l’analista quantitativo deve usare.' },
       { title: 'Segui gli agenti', detail: 'Pianificazione → ricerca → storico, economista, quant → scettico → sintesi. In modalità locale i passaggi che richiedono un modello linguistico sono mostrati come «non eseguiti», mai simulati.' },
       { title: 'Verifica', detail: 'Ogni affermazione rimanda alla prova che cita; i documenti con istruzioni sospette sono segnalati.' },
@@ -440,7 +440,7 @@ export const MODULES_IT: ModuleContent[] = [
   {
     slug: 'sources',
     index: '12',
-    title: 'Fonti e connettori',
+    title: 'Sources & Connectors',
     kicker: 'Integrazioni',
     tagline: 'Dati aperti, collegati con onestà.',
     description:
@@ -452,7 +452,7 @@ export const MODULES_IT: ModuleContent[] = [
       'Le licenze non sono riassunte come certezze: ogni connettore rimanda ai termini ufficiali.',
     ],
     guide: [
-      { title: 'Rivedi le fonti', detail: 'Fonti e connettori elenca ogni fonte con categoria, eventuale chiave richiesta e stato di implementazione.' },
+      { title: 'Rivedi le fonti', detail: 'Sources & Connectors elenca ogni fonte con categoria, eventuale chiave richiesta e stato di implementazione.' },
       { title: 'Controlla la disponibilità', detail: 'Premi «Verifica» su una fonte, oppure «Verifica tutte».' },
       { title: 'Configura le chiavi', detail: 'FRED richiede una chiave personale gratuita, salvata cifrata sul tuo computer e mai più mostrata.' },
       { title: 'Comprendi i limiti', detail: 'Leggi i termini di ogni fonte prima di qualsiasi uso commerciale; i dati di terzi mantengono le loro licenze originali.' },

@@ -34,7 +34,7 @@ export function ActivityPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Workspace" title="Registro attività" description="Tutte le operazioni rilevanti eseguite dall'utente o dal sistema, in ordine cronologico inverso." />
+      <PageHeader eyebrow="Workspace" title="Activity Log" description="Tutte le operazioni rilevanti eseguite dall'utente o dal sistema, in ordine cronologico inverso." />
       <input
         type="search"
         aria-label="Filtra attività"

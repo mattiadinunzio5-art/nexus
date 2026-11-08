@@ -38,7 +38,7 @@ export function Architecture() {
                   aria-describedby={i === active ? 'module-preview' : undefined}
                 >
                   <span className={`w-8 font-mono text-xs transition-colors ${i === active ? 'text-copper' : 'text-mute'}`}>{mod.index}</span>
-                  <span className={`flex-1 text-[clamp(1.6rem,2.6vw,2.6rem)] leading-tight tracking-tight transition-all duration-500 ${i === active ? 'translate-x-2 text-ivory' : 'text-mute group-hover:text-mute-2'}`}>
+                  <span translate="no" className={`flex-1 text-[clamp(1.6rem,2.6vw,2.6rem)] leading-tight tracking-tight transition-all duration-500 ${i === active ? 'translate-x-2 text-ivory' : 'text-mute group-hover:text-mute-2'}`}>
                     {mod.title}
                   </span>
                   <span className={`text-[11px] uppercase tracking-[0.2em] transition-opacity ${i === active ? 'text-copper opacity-100' : 'opacity-0'}`}>{mod.kicker}</span>
@@ -84,7 +84,7 @@ export function Architecture() {
                   <div className="h-20 w-28 shrink-0 rounded-xl bg-void/70 p-1.5"><ModuleVisual kind={mod.visual} className="h-full w-full" /></div>
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-[11px] text-copper">{mod.index}</p>
-                    <p className="text-lg leading-tight">{mod.title}</p>
+                    <p translate="no" className="text-lg leading-tight">{mod.title}</p>
                     <p className="mt-1 line-clamp-2 text-xs text-mute">{mod.tagline}</p>
                   </div>
                   <ArrowUpRight className="h-5 w-5 shrink-0 text-mute" aria-hidden />
