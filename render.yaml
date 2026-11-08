@@ -1,0 +1,38 @@
+# NEXUS — server della piattaforma online su Render (piano gratuito).
+# Database e file su Supabase; i valori segreti si inseriscono nel pannello di Render (sync: false).
+services:
+  - type: web
+    name: nexus-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn nexus.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.9"
+      - key: NEXUS_ENV
+        value: production
+      - key: NEXUS_AUTH_MODE
+        value: supabase
+      - key: NEXUS_STORAGE_BACKEND
+        value: supabase
+      - key: NEXUS_SECRET_KEY
+        generateValue: true
+      - key: NEXUS_DATABASE_URL
+        sync: false
+      - key: NEXUS_SUPABASE_URL
+        sync: false
+      - key: NEXUS_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXUS_SUPABASE_SERVICE_KEY
+        sync: false
+      - key: NEXUS_CORS_ORIGINS
+        sync: false
+      - key: NEXUS_SITE_URL
+        sync: false
+      - key: NEXUS_ADMIN_EMAILS
+        sync: false

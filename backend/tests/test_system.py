@@ -7,7 +7,7 @@ def test_health(client):
 def test_system_status_reports_local_ai_mode(client):
     body = client.get("/api/system/status").json()
     assert body["database_ok"] is True
-    assert body["database"] == "SQLite"
+    assert body["database"] == ("PostgreSQL" if client.app.state.settings.database_url.startswith("postgres") else "SQLite")
     assert body["ai_mode"] == "local"
     assert body["ai_provider"]["id"] == "none"
     # I provider remoti esistono ma richiedono credenziali: senza, la modalità resta locale.

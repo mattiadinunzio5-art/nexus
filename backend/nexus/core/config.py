@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # nexus/backend/nexus/core/config.py -> nexus/
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -30,9 +30,22 @@ class Settings(BaseSettings):
     database_url: str = Field(default=f"sqlite:///{DEFAULT_DB_PATH}")
     auto_migrate: bool = True
     log_level: str = "INFO"
-    cors_origins: list[str] = Field(
+    # Origini ammesse dal browser: elenco JSON oppure indirizzi separati da virgola.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://127.0.0.1:5173", "http://localhost:5173"]
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, v):
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("["):
+                import json
+
+                return json.loads(v)
+            return [x.strip().rstrip("/") for x in v.split(",") if x.strip()]
+        return v
     # Timeout (secondi) per i controlli di raggiungibilità delle fonti esterne.
     connector_timeout: float = 6.0
     # Provider AI: "none" finché l'utente non configura volontariamente credenziali.
@@ -49,7 +62,17 @@ class Settings(BaseSettings):
     # Cache dei connettori (ore) prima di riscaricare una serie.
     connector_cache_hours: int = 24
     # Autenticazione: "local" = utente unico locale; "multi" = account con login.
-    auth_mode: Literal["local", "multi"] = "local"
+    auth_mode: Literal["local", "multi", "supabase"] = "local"
+    # Versione online: account gestiti da Supabase Auth (gli stessi del sito) e file su Supabase Storage.
+    supabase_url: str | None = None
+    supabase_anon_key: str | None = None  # chiave pubblica (publishable/anon)
+    supabase_service_key: str | None = None  # chiave segreta, SOLO sul server (per lo Storage)
+    storage_backend: Literal["local", "supabase"] = "local"
+    storage_bucket: str = "nexus-documents"
+    # Email che diventano amministratori al primo accesso (separate da virgola).
+    admin_emails: str = ""
+    # URL del sito pubblico (link a registrazione e recupero password nella versione online).
+    site_url: str | None = None
     session_hours: int = 24 * 7
     allow_registration: bool = True
     cookie_secure: bool = False  # True dietro HTTPS in produzione
@@ -82,7 +105,8 @@ class Settings(BaseSettings):
         if self.is_sqlite:
             return "SQLite"
         scheme = self.database_url.split(":", 1)[0]
-        return scheme.split("+", 1)[0].capitalize()
+        base = scheme.split("+", 1)[0]
+        return "PostgreSQL" if base in ("postgresql", "postgres") else base.capitalize()
 
 
 @lru_cache

@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { authErrorText, EMAIL_RX, passwordProblems, useAuth } from '../lib/auth';
-import { getSupabase } from '../lib/supabase';
+import { appUrl, getSupabase } from '../lib/supabase';
 import { usePageMeta } from '../lib/meta';
 import { useI18n } from '../lib/i18n';
 
@@ -232,7 +232,8 @@ export function Account() {
   return (
     <Shell title={a.accountTitle} subtitle={session?.user.email ?? ''}>
       <div className="space-y-5 text-sm leading-relaxed text-mute-2">
-        <p>{a.accountText}</p>
+        <p>{appUrl ? a.accountTextOnline : a.accountText}</p>
+        {appUrl && <a href={appUrl} className="block rounded-full bg-copper py-3 text-center font-medium text-void hover:bg-ivory">{t.access.openApp}</a>}
         <Link to={p('/#access')} className="block rounded-full border border-line py-3 text-center text-ivory hover:border-ivory">{a.howRun}</Link>
         <button onClick={async () => { await (await getSupabase())?.auth.signOut(); nav(p('/'), { replace: true }); }} className="w-full rounded-full bg-ivory py-3 font-medium text-void hover:bg-copper">{a.signOut}</button>
       </div>

@@ -52,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
         allow_headers=["Content-Type", "X-Nexus-Client", "Authorization"],
+        expose_headers=["Content-Disposition"],
     )
 
     @app.middleware("http")

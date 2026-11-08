@@ -41,6 +41,15 @@ def get_current_user(request: Request, db: Annotated[Session, Depends(get_db)]) 
         return ensure_local_user(db)
     from ..services import auth
 
+    if settings.auth_mode == "supabase":
+        from ..security import supabase_auth
+
+        token = request_token(request)
+        if not token:
+            raise auth.AuthError("Accesso richiesto.")
+        user = supabase_auth.user_for(db, settings, supabase_auth.verify_token(settings, token))
+        request.state.session_id = None
+        return user
     user, session = auth.user_from_token(db, request_token(request))
     request.state.session_id = session.id
     return user

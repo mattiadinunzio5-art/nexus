@@ -16,3 +16,6 @@ export function getSupabase(): Promise<SupabaseClient> | null {
   );
   return client;
 }
+
+/** Indirizzo della piattaforma online (Vercel): se assente, la piattaforma si usa solo in locale. */
+export const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/+$/, '') || null;

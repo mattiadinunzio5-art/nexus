@@ -8,6 +8,8 @@ alembic==1.20.1
 httpx==0.28.1
 python-multipart==0.0.33
 cryptography==50.0.2
+# PostgreSQL (versione online; in locale si usa SQLite)
+psycopg[binary]==3.3.8
 # Analisi
 pandas==3.1.0
 numpy==2.5.4

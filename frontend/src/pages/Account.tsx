@@ -17,7 +17,7 @@ const LIMIT_LABEL: Record<string, [string, string]> = {
 };
 
 export function AccountPage() {
-  const { user, mode, refresh, logout } = useAuth();
+  const { user, mode, refresh, logout, siteUrl } = useAuth();
   const usage = useAsync(() => api.usage(), []);
   const plans = useAsync(() => api.plans(), []);
   const sessions = useAsync(() => (mode === 'multi' ? api.sessions() : Promise.resolve([])), [mode]);
@@ -29,7 +29,7 @@ export function AccountPage() {
   return (
     <>
       <PageHeader eyebrow="Modulo H" title="Account" description={mode === 'local' ? 'Modalità locale personale: utente unico sul tuo computer, nessun limite.' : 'Profilo, sicurezza, piano e utilizzo.'}
-        actions={mode === 'multi' && <Button onClick={logout}>Esci</Button>} />
+        actions={mode !== 'local' && <Button onClick={logout}>Esci</Button>} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`mb-3 text-sm ${msg.ok ? 'text-ok' : 'text-bad'}`}>{msg.text}</p>}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Profilo">
@@ -55,6 +55,12 @@ export function AccountPage() {
           )}
           {plans.data && <p className="mt-3 text-xs text-steel-500">{plans.data.note}</p>}
         </Card>
+        {mode === 'supabase' && (
+          <Card title="Password e account">
+            <p className="text-sm text-steel-300">Il tuo account è lo stesso del sito NEXUS: password e recupero si gestiscono lì.</p>
+            {siteUrl && <a className="mt-2 inline-block text-sm text-gold-300 hover:underline" href={`${siteUrl.replace(/\/+$/, '')}/forgot-password`}>Cambia o recupera la password</a>}
+          </Card>
+        )}
         {mode === 'multi' && (
           <>
             <Card title="Cambia password">

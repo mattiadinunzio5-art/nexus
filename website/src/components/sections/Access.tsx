@@ -3,6 +3,7 @@ import { ArrowUpRight, Terminal } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { Reveal, SectionLabel, WordsReveal } from '../Reveal';
 import { useI18n } from '../../lib/i18n';
+import { appUrl } from '../../lib/supabase';
 
 const INSTALL = `git clone https://github.com/mattiadinunzio5-art/nexus.git
 cd nexus
@@ -25,7 +26,11 @@ export function Access() {
               <>
                 <h3 className="mt-3 text-2xl">{a.signedIn}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-mute-2">{session.user.email}</p>
-                <div className="mt-auto pt-8"><Link to={p('/account')} className="inline-flex rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void hover:bg-copper">{a.goAccount}</Link></div>
+                {appUrl && <p className="mt-3 text-sm leading-relaxed text-mute-2">{a.onlineText}</p>}
+                <div className="mt-auto flex flex-wrap gap-3 pt-8">
+                  {appUrl && <a href={appUrl} className="inline-flex items-center gap-2 rounded-full bg-copper px-6 py-3 text-sm font-medium text-void hover:bg-ivory">{a.openApp} <ArrowUpRight className="h-4 w-4" aria-hidden /></a>}
+                  <Link to={p('/account')} className="inline-flex rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void hover:bg-copper">{a.goAccount}</Link>
+                </div>
               </>
             ) : configured ? (
               <>

@@ -25,6 +25,8 @@ class User(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     password_hash: Mapped[str | None] = mapped_column(String(300), nullable=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Identificativo dell'account Supabase (versione online: stesso account del sito).
+    external_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
 
 
 class AuthSession(TimestampMixin, Base):

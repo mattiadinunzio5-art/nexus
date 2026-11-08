@@ -77,6 +77,6 @@ describe('discovery intelligence', () => {
   it('is reachable from the main navigation', async () => {
     mockApi({ 'GET /api/notifications': [], 'GET /api/discovery/overview': new Response('{}', { status: 500 }) });
     renderApp('/discovery/anomalies');
-    expect(screen.getAllByRole('link', { name: /Discovery Intelligence/ })[0]).toHaveAttribute('href', '/discovery');
+    expect((await screen.findAllByRole('link', { name: /Discovery Intelligence/ }))[0]).toHaveAttribute('href', '/discovery');
   });
 });

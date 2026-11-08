@@ -61,6 +61,14 @@ import type {
 } from './types';
 
 /** Errore uniforme: riflette il formato {error: {code, message, details}} del backend. */
+export interface AuthConfig {
+  mode: 'local' | 'multi' | 'supabase';
+  allow_registration: boolean;
+  supabase_url?: string | null;
+  supabase_anon_key?: string | null;
+  site_url?: string | null;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -73,7 +81,45 @@ export class ApiError extends Error {
   }
 }
 
-const BASE = '/api';
+// In locale il frontend parla con /api (proxy di Vite). Online VITE_API_URL indica il server della piattaforma.
+const API_ORIGIN = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, '') ?? '';
+const BASE = `${API_ORIGIN}/api`;
+
+/** Versione online: fornisce il token di sessione dell'account (Supabase) da inviare al server. */
+let tokenProvider: (() => Promise<string | null>) | null = null;
+export function setTokenProvider(fn: (() => Promise<string | null>) | null) {
+  tokenProvider = fn;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = tokenProvider ? await tokenProvider() : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Scarica un file dal server (con le credenziali) e lo salva sul dispositivo. */
+export async function downloadFile(path: string, fallbackName = 'download'): Promise<void> {
+  const res = await fetch(BASE + path, { credentials: 'same-origin', headers: { 'X-Nexus-Client': 'web', ...(await authHeaders()) } });
+  if (!res.ok) {
+    let msg = `Errore HTTP ${res.status}`;
+    try {
+      msg = ((await res.json()) as { error?: { message?: string } }).error?.message ?? msg;
+    } catch {
+      /* non JSON */
+    }
+    throw new ApiError(res.status, `http_${res.status}`, msg);
+  }
+  const cd = res.headers.get('content-disposition') ?? '';
+  const m = /filename\*=UTF-8''([^;]+)/i.exec(cd) ?? /filename="?([^";]+)"?/i.exec(cd);
+  const name = m ? decodeURIComponent(m[1]) : fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
 
 /** Query string dai soli parametri valorizzati. */
 export function qs(params: Record<string, string | number | boolean | undefined | null>): string {
@@ -92,6 +138,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: {
         // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
         'X-Nexus-Client': 'web',
+        ...(await authHeaders()),
         ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         ...(init.headers as Record<string, string> | undefined),
       },
@@ -155,7 +202,7 @@ export const api = {
   updateDocument: (id: number, data: Partial<DocumentInfo>) => request<DocumentInfo>(`/documents/${id}`, json('PATCH', data)),
   deleteDocument: (id: number) => request<void>(`/documents/${id}?confirm=true`, { method: 'DELETE' }),
   chunks: (id: number, offset = 0, limit = 50) => request<Chunk[]>(`/documents/${id}/chunks?offset=${offset}&limit=${limit}`),
-  documentFileUrl: (id: number) => `${BASE}/documents/${id}/file`,
+  documentFilePath: (id: number) => `/documents/${id}/file`,
 
   sources: (q?: string) => request<Source[]>(`/sources${qs({ q })}`),
   createSource: (data: Partial<SourceInput>) => request<Source>('/sources', json('POST', data)),
@@ -234,7 +281,7 @@ export const api = {
   deleteSimulation: (id: number) => request<void>(`/lab/simulations/${id}?confirm=true`, { method: 'DELETE' }),
 
   // Fase 8
-  authConfig: () => request<{ mode: 'local' | 'multi'; allow_registration: boolean }>('/auth/config'),
+  authConfig: () => request<AuthConfig>('/auth/config'),
   me: () => request<User>('/me'),
   login: (email: string, password: string) => request<User>('/auth/login', json('POST', { email, password })),
   register: (email: string, password: string, display_name: string) => request<User>('/auth/register', json('POST', { email, password, display_name })),
@@ -264,7 +311,7 @@ export const api = {
   deleteChapter: (id: number, sectionId: number) => request<Report>(`/reports/${id}/chapters/${sectionId}`, { method: 'DELETE' }),
   checkReport: (id: number) => request<ReportCheck>(`/reports/${id}/check`),
   setReportStatus: (id: number, value: 'approved' | 'draft') => request<Report>(`/reports/${id}/status?value=${value}`, { method: 'POST' }),
-  exportUrl: (id: number, fmt: 'pdf' | 'docx' | 'latex') => `${BASE}/reports/${id}/export/${fmt}`,
+  exportPath: (id: number, fmt: 'pdf' | 'docx' | 'latex') => `/reports/${id}/export/${fmt}`,
   deleteReport: (id: number) => request<void>(`/reports/${id}?confirm=true`, { method: 'DELETE' }),
   notes: (project_id?: number) => request<NoteItem[]>(`/notes${qs({ project_id })}`),
   createNote: (data: Partial<NoteItem>) => request<NoteItem>('/notes', json('POST', data)),
@@ -283,7 +330,7 @@ export const api = {
   addComment: (projectId: number, body: string) => request<ProjectComment>(`/projects/${projectId}/comments`, json('POST', { body })),
   deleteComment: (projectId: number, id: number) => request<void>(`/projects/${projectId}/comments/${id}`, { method: 'DELETE' }),
   projectHistory: (projectId: number) => request<ProjectHistoryItem[]>(`/projects/${projectId}/history`),
-  bibtexUrl: () => `${BASE}/sources/export.bib`,
+  bibtexPath: () => '/sources/export.bib',
   importBibtex: (form: FormData) => request<{ created: number; skipped: { key: string; reason: string }[] }>('/sources/import/bibtex', { method: 'POST', body: form }),
   lessons: () => request<LessonSummary[]>('/lessons'),
   lesson: (id: string) => request<Lesson>(`/lessons/${encodeURIComponent(id)}`),

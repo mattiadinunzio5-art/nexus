@@ -27,7 +27,7 @@ describe('research studio', () => {
     expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ body: 'Nuovo abstract', embeds: [] });
     await userEvent.click(screen.getByRole('button', { name: 'Approva' }));
     expect(await screen.findByText('Il rapporto non può essere approvato.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /PDF/ })).toHaveAttribute('href', '/api/reports/2/export/pdf');
+    expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
   });
 
   it('renders a briefing with dates, sources and explicit empty sections', async () => {

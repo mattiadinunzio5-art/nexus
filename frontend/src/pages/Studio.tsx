@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
+import { DownloadButton } from '../components/ui/DownloadButton';
 import { api } from '../api/client';
 import type { Embed, Report, ReportCheck, ReportSection } from '../api/types';
 import { VERIFICATION } from '../components/research';
@@ -209,9 +210,9 @@ export function ReportEditorPage() {
       <PageHeader eyebrow={<Link to="/studio" className="hover:underline">Research Studio</Link>} title={r.title}
         description={`${r.status === 'approved' ? 'Approvato' : 'Bozza'} · aggiornato ${formatDateTime(r.updated_at)}${r.origin.startsWith('research_run') ? ' · da ricerca della War Room' : ''}`}
         actions={<>
-          <a href={api.exportUrl(r.id, 'pdf')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> PDF</a>
-          <a href={api.exportUrl(r.id, 'docx')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> DOCX</a>
-          <a href={api.exportUrl(r.id, 'latex')} title="ZIP con main.tex, references.bib e figure (compilabile su Overleaf)" className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> LaTeX</a>
+          <DownloadButton path={api.exportPath(r.id, 'pdf')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> PDF</DownloadButton>
+          <DownloadButton path={api.exportPath(r.id, 'docx')} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> DOCX</DownloadButton>
+          <DownloadButton path={api.exportPath(r.id, 'latex')} title="ZIP con main.tex, references.bib e figure (compilabile su Overleaf)" className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><FileDown className="size-4" aria-hidden /> LaTeX</DownloadButton>
           {r.status === 'draft'
             ? <Button variant="primary" onClick={async () => { try { saved(await api.setReportStatus(r.id, 'approved')); } catch (e) { setErr(errorText(e)); } }}>Approva</Button>
             : <Button onClick={async () => saved(await api.setReportStatus(r.id, 'draft'))}>Riporta in bozza</Button>}

@@ -287,7 +287,7 @@ export function ProjectsPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1">
-                    {mode === 'multi' && (p.my_role ?? 'owner') === 'owner' && (
+                    {mode !== 'local' && (p.my_role ?? 'owner') === 'owner' && (
                       <Button variant="ghost" className="px-2" onClick={() => setSharing(sharing === p.id ? undefined : p.id)} aria-label={`Condividi ${p.title}`}><Share2 className="size-4" /></Button>
                     )}
                     <Button variant="ghost" className="px-2" onClick={() => setDiscussing(discussing === p.id ? undefined : p.id)} aria-label={`Commenti e cronologia di ${p.title}`} aria-expanded={discussing === p.id}>

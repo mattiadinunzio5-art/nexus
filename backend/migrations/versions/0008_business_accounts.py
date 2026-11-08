@@ -57,7 +57,7 @@ def upgrade() -> None:
 
     # ### end Alembic commands ###
     # L'utente locale della modalità personale non ha limiti d'uso.
-    op.execute("UPDATE users SET plan = 'local' WHERE is_local = 1 OR is_local = true" if op.get_bind().dialect.name != "sqlite" else "UPDATE users SET plan = 'local' WHERE is_local = 1")
+    op.execute("UPDATE users SET plan = 'local' WHERE is_local = true" if op.get_bind().dialect.name != "sqlite" else "UPDATE users SET plan = 'local' WHERE is_local = 1")
 
 
 def downgrade() -> None:
