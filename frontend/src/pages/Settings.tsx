@@ -16,7 +16,7 @@ export function SettingsPage() {
   const s = status.data;
   return (
     <>
-      <PageHeader eyebrow="Workspace" title="Sistema" description="Stato del backend, del database e dei provider AI." />
+      <PageHeader eyebrow="Workspace" title="System" description="Stato del backend, del database e dei provider AI." />
       {status.loading && !s && <Loading />}
       {status.error && <ErrorBox error={status.error} onRetry={status.reload} />}
       {s && (

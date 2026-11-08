@@ -80,7 +80,7 @@ export function ResearchArchivePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Archivio" title="Interroga l'archivio" description="Domande e ricerche sui documenti importati, con collocazione precisa delle fonti." />
+      <PageHeader eyebrow="Archive" title="Ask the Archive" description="Domande e ricerche sui documenti importati, con collocazione precisa delle fonti." />
       <div className="mb-4 flex gap-1" role="tablist">
         {(['ask', 'search'] as const).map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 text-sm ${tab === t ? 'bg-ink-800 text-paper' : 'text-steel-400 hover:text-paper'}`}>

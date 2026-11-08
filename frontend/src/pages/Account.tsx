@@ -89,7 +89,7 @@ export function AdminPage() {
   const update = async (id: number, data: Record<string, unknown>) => { setErr(undefined); try { await api.adminUpdateUser(id, data); await users.reload(); } catch (e) { setErr(errorText(e)); } };
   return (
     <>
-      <PageHeader eyebrow="Modulo H" title="Amministrazione" description="Utenti, ruoli, piani e stato degli account. Nessun pagamento reale: i piani si assegnano qui." />
+      <PageHeader eyebrow="Modulo H" title="Administration" description="Utenti, ruoli, piani e stato degli account. Nessun pagamento reale: i piani si assegnano qui." />
       {stats.data && <p className="mb-4 text-sm text-steel-300">{Object.entries(stats.data).filter(([, v]) => typeof v === 'number').map(([k, v]) => `${k}: ${v}`).join(' · ')}</p>}
       {err && <div className="mb-3"><ErrorBox error={new Error(err)} /></div>}
       {users.loading && !users.data && <Loading />}

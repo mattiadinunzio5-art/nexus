@@ -105,7 +105,7 @@ describe('routes', () => {
   });
   it('italian module page', async () => {
     at('/it/architecture/bibliography');
-    expect(await screen.findByRole('heading', { level: 1, name: /Bibliografia/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /Bibliography/ })).toBeInTheDocument();
     expect(screen.getByText('Funzione principale')).toBeInTheDocument();
   });
   it('cases list and article', async () => {

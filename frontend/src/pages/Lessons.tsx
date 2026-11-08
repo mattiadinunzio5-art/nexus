@@ -13,7 +13,7 @@ import { useContextPanel } from '../state/AppState';
 
 const panel = (
   <div className="space-y-2 text-steel-300">
-    <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Lezioni guidate</h3>
+    <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Guided Lessons</h3>
     <p>Percorsi pronti per studenti e docenti. Ogni lezione crea un progetto con una guida passo passo.</p>
     <p>I dati si scaricano dalle fonti ufficiali quando li importi. Le letture consigliate entrano in bibliografia come <strong className="text-paper">non verificate</strong>.</p>
   </div>
@@ -24,7 +24,7 @@ export function LessonsPage() {
   useContextPanel(panel, []);
   return (
     <>
-      <PageHeader eyebrow="Didattica" title="Lezioni guidate" description="Percorsi di ricerca su grandi episodi della storia economica, con dati reali e fonti da verificare." />
+      <PageHeader eyebrow="Guided Lessons" title="Guided Lessons" description="Percorsi di ricerca su grandi episodi della storia economica, con dati reali e fonti da verificare." />
       {list.loading && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
       <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -71,7 +71,7 @@ export function LessonDetailPage() {
 
   return (
     <>
-      <PageHeader eyebrow={<Link to="/lessons" className="hover:underline">Lezioni guidate</Link>} title={d.title} description={`${d.level} · ${d.duration}`}
+      <PageHeader eyebrow={<Link to="/lessons" className="hover:underline">Guided Lessons</Link>} title={d.title} description={`${d.level} · ${d.duration}`}
         actions={!started && <Button variant="primary" disabled={busy === 'start'} onClick={async () => {
           setBusy('start');
           setErr(undefined);

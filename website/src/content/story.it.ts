@@ -6,7 +6,7 @@ export const WORKFLOW_IT: { step: string; detail: string; slug: ModuleSlug }[] =
   { step: 'Domanda di ricerca', detail: 'Formula cosa vuoi capire.', slug: 'projects' },
   { step: 'Creazione del progetto', detail: 'Dai alla domanda una casa e un perimetro.', slug: 'projects' },
   { step: 'Raccolta dei documenti', detail: 'Importa i testi e i dataset su cui ti basi.', slug: 'documents' },
-  { step: 'Bibliografia', detail: 'Registra e verifica ogni fonte.', slug: 'bibliography' },
+  { step: 'Bibliography', detail: 'Registra e verifica ogni fonte.', slug: 'bibliography' },
   { step: 'Analisi finanziaria e storica', detail: 'Importa le serie, costruisci la cronologia.', slug: 'financial-intelligence' },
   { step: 'Time Machine', detail: 'Leggi il passato senza il senno di poi.', slug: 'time-machine' },
   { step: 'Knowledge Graph', detail: 'Collega attori, eventi e fenomeni.', slug: 'knowledge-graph' },

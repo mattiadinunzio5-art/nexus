@@ -35,7 +35,7 @@ export function ModulePage() {
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:items-end">
           <div>
             <p className="text-[11px] uppercase tracking-[0.28em] text-copper">{t.mod.module} {m.index} · {m.kicker}</p>
-            <WordsReveal key={m.title} as="h1" text={m.title} className="mt-4 text-[clamp(3rem,9vw,8rem)] font-semibold leading-[0.9] tracking-[-0.04em]" />
+            <div translate="no"><WordsReveal key={m.title} as="h1" text={m.title} className="mt-4 text-[clamp(3rem,9vw,8rem)] font-semibold leading-[0.9] tracking-[-0.04em]" /></div>
             <p className="mt-6 font-serif text-[clamp(1.6rem,3vw,2.6rem)] italic leading-tight text-ivory/90">{m.tagline}</p>
           </div>
           <Reveal className="grain relative overflow-hidden rounded-2xl border border-line bg-coal p-6">
@@ -79,7 +79,7 @@ export function ModulePage() {
             {m.connections.map((c) => (
               <li key={c.slug}>
                 <Link to={p(`/architecture/${c.slug}`)} className="group flex h-full flex-col rounded-xl border border-line bg-coal p-5 transition-colors hover:border-copper/50">
-                  <span className="flex items-center justify-between font-medium">{MODULES_BY_SLUG[c.slug].title}<ArrowUpRight className="h-4 w-4 text-mute group-hover:text-copper" aria-hidden /></span>
+                  <span translate="no" className="flex items-center justify-between font-medium">{MODULES_BY_SLUG[c.slug].title}<ArrowUpRight className="h-4 w-4 text-mute group-hover:text-copper" aria-hidden /></span>
                   <span className="mt-2 text-sm text-mute-2">{c.why}</span>
                 </Link>
               </li>
@@ -95,10 +95,10 @@ export function ModulePage() {
         <div className="mx-auto grid max-w-[1440px] md:grid-cols-2">
           <Link to={p(`/architecture/${prev.slug}`)} className="group flex items-center gap-4 border-b border-line px-5 py-10 sm:px-8 md:border-b-0 md:border-r">
             <ArrowLeft className="h-5 w-5 text-mute transition group-hover:-translate-x-1 group-hover:text-copper" aria-hidden />
-            <span><span className="block text-[11px] uppercase tracking-[0.22em] text-mute">{t.mod.prev} · {prev.index}</span><span className="text-2xl">{prev.title}</span></span>
+            <span><span className="block text-[11px] uppercase tracking-[0.22em] text-mute">{t.mod.prev} · {prev.index}</span><span translate="no" className="text-2xl">{prev.title}</span></span>
           </Link>
           <Link to={p(`/architecture/${next.slug}`)} className="group flex items-center justify-end gap-4 px-5 py-10 text-right sm:px-8">
-            <span><span className="block text-[11px] uppercase tracking-[0.22em] text-mute">{t.mod.next} · {next.index}</span><span className="text-2xl">{next.title}</span></span>
+            <span><span className="block text-[11px] uppercase tracking-[0.22em] text-mute">{t.mod.next} · {next.index}</span><span translate="no" className="text-2xl">{next.title}</span></span>
             <ArrowRight className="h-5 w-5 text-mute transition group-hover:translate-x-1 group-hover:text-copper" aria-hidden />
           </Link>
         </div>

@@ -185,7 +185,7 @@ export function ProjectsPage() {
 
   useContextPanel(
     <div className="space-y-2 text-steel-300">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Progetti</h3>
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Projects</h3>
       <p>I progetti raccoglieranno documenti, fonti, appunti e rapporti man mano che i moduli verranno sviluppati.</p>
       <p className="text-xs text-steel-500">L'eliminazione è irreversibile e richiede sempre una conferma esplicita. Ogni operazione è registrata.</p>
     </div>,
@@ -210,7 +210,7 @@ export function ProjectsPage() {
     <>
       <PageHeader
         eyebrow="Workspace"
-        title="Progetti di ricerca"
+        title="Projects"
         actions={!creating && (
           <Button variant="primary" onClick={() => setCreating(true)}>
             <Plus className="size-4" aria-hidden /> Nuovo progetto

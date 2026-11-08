@@ -72,20 +72,20 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-6 pt-1">
-          <Section title="Panoramica">
+          <Section title="Overview">
             {MAIN_NAV.map((i) => <Item key={i.to} item={i} onNavigate={onClose} />)}
           </Section>
-          <Section title="Archivio">
+          <Section title="Archive">
             {ARCHIVE_NAV.map((i) => <Item key={i.to} item={i} onNavigate={onClose} />)}
           </Section>
-          <Section title="Moduli">
+          <Section title="Modules">
             {MODULE_NAV.map((i) => <Item key={i.to} item={i} onNavigate={onClose} />)}
           </Section>
           <Section title="Workspace">
             {WORKSPACE_NAV.map((i) => (
               <Item key={i.to} item={i} onNavigate={onClose} badge={i.to === '/notifications' ? unreadCount : undefined} />
             ))}
-            {isAdmin && <Item item={{ to: '/admin', label: 'Amministrazione', icon: ShieldCheck }} onNavigate={onClose} />}
+            {isAdmin && <Item item={{ to: '/admin', label: 'Administration', icon: ShieldCheck }} onNavigate={onClose} />}
           </Section>
         </nav>
         <p className="border-t border-ink-700 px-4 py-3 text-[11px] leading-relaxed text-steel-500">
