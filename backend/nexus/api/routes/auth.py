@@ -54,7 +54,8 @@ def _set_cookie(response: Response, token: str, settings) -> None:
 
 @router.get("/auth/config", summary="Modalità di autenticazione")
 def auth_config(settings: AppSettings) -> dict:
-    out = {"mode": settings.auth_mode, "allow_registration": settings.allow_registration and settings.auth_mode == "multi"}
+    out = {"mode": settings.auth_mode, "allow_registration": settings.allow_registration and settings.auth_mode == "multi",
+           "demo": settings.demo_enabled and settings.auth_mode != "local"}
     if settings.auth_mode == "supabase":
         # Valori pubblici: servono al browser per accedere con l'account del sito.
         out.update(supabase_url=settings.supabase_url, supabase_anon_key=settings.supabase_anon_key, site_url=settings.site_url)
@@ -64,6 +65,17 @@ def auth_config(settings: AppSettings) -> dict:
 def _not_in_supabase_mode(settings) -> None:
     if settings.auth_mode == "supabase":
         raise svc.ForbiddenError("Nella versione online registrazione, accesso e password si gestiscono con l'account del sito NEXUS.")
+
+
+@router.post("/auth/demo", summary="Apre la demo pubblica in sola lettura (nessun account richiesto)")
+def open_demo(request: Request, settings: AppSettings) -> dict:
+    from ...services import demo
+
+    if not settings.demo_enabled or settings.auth_mode == "local":
+        raise svc.ForbiddenError("La demo non è disponibile su questo server.")
+    demo.ensure_demo(request.app.state.database, settings)
+    token, expires = demo.make_token(settings)
+    return {"token": token, "expires_at": expires.isoformat()}
 
 
 @router.post("/auth/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)

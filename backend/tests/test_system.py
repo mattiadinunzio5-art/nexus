@@ -71,3 +71,9 @@ def test_unhandled_errors_return_generic_json_without_internals(settings):
     assert r.status_code == 500
     assert r.json()["error"]["code"] == "internal_error"
     assert "segreto" not in r.text
+
+
+def test_health_deep_checks_database(client):
+    r = client.get("/api/health/deep")
+    assert r.status_code == 200
+    assert r.json()["database_ok"] is True

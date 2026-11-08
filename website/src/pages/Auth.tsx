@@ -127,6 +127,7 @@ export function SignUp() {
           <Field label={a.pwHint} error={err.password}><input className={input} type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
           <Field label={a.confirm} error={err.confirm}><input className={input} type="password" autoComplete="new-password" value={f.confirm} onChange={(e) => setF({ ...f, confirm: e.target.value })} /></Field>
           {err.form && <p role="alert" className="text-sm text-[#e8846a]">{err.form}</p>}
+          <p className="text-xs leading-relaxed text-mute-2">{t.access.consent}<Link to={p('/privacy')} className="text-copper hover:underline">{t.access.privacyLink}</Link>.</p>
           <Submit busy={busy}>{a.createAccount}</Submit>
           <p className="text-center text-xs text-mute-2">{a.already} <Link to={p('/signin')} className="text-copper hover:underline">{a.signInTitle}</Link></p>
         </form>

@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     site_url: str | None = None
     session_hours: int = 24 * 7
     allow_registration: bool = True
+    # Demo pubblica in sola lettura (pulsante «Prova la demo», senza account). Non disponibile in modalità local.
+    demo_enabled: bool = True
     cookie_secure: bool = False  # True dietro HTTPS in produzione
     # Limiti alle operazioni automatiche.
     max_agent_steps: int = 12

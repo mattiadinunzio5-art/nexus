@@ -64,6 +64,8 @@ import type {
 export interface AuthConfig {
   mode: 'local' | 'multi' | 'supabase';
   allow_registration: boolean;
+  /** Demo pubblica in sola lettura disponibile (versione online). */
+  demo?: boolean;
   supabase_url?: string | null;
   supabase_anon_key?: string | null;
   site_url?: string | null;
@@ -286,6 +288,7 @@ export const api = {
   login: (email: string, password: string) => request<User>('/auth/login', json('POST', { email, password })),
   register: (email: string, password: string, display_name: string) => request<User>('/auth/register', json('POST', { email, password, display_name })),
   logout: () => request<void>('/auth/logout', { method: 'POST' }),
+  openDemo: () => request<{ token: string; expires_at: string }>('/auth/demo', { method: 'POST' }),
   sessions: () => request<{ id: number; created_at: string; last_seen_at: string | null; user_agent: string; ip: string; current: boolean }[]>('/auth/sessions'),
   revokeSession: (id: number) => request<void>(`/auth/sessions/${id}`, { method: 'DELETE' }),
   changePassword: (current: string, next: string) => request<void>('/auth/password', json('POST', { current, new: next })),

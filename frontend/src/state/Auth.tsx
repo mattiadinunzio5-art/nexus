@@ -6,9 +6,92 @@ import { Button } from '../components/ui/Button';
 import { Field, Input } from '../components/ui/Form';
 import { errorText } from '../lib/forms';
 
-interface AuthState { mode: AuthConfig['mode']; user: User | null; refresh: () => Promise<void>; logout: () => Promise<void>; siteUrl?: string | null }
+interface AuthState {
+  mode: AuthConfig['mode'];
+  user: User | null;
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
+  siteUrl?: string | null;
+  /** Sessione della demo pubblica in sola lettura. */
+  isDemo?: boolean;
+}
 const Ctx = createContext<AuthState>({ mode: 'local', user: null, refresh: async () => {}, logout: async () => {} });
 export const useAuth = () => useContext(Ctx);
+
+// --- Demo pubblica (senza account): token firmato dal server, valido alcune ore ---------------
+const DEMO_KEY = 'nexus.demo';
+
+export function readDemoToken(): string | null {
+  try {
+    const raw = localStorage.getItem(DEMO_KEY);
+    if (!raw) return null;
+    const { token, expires_at } = JSON.parse(raw) as { token: string; expires_at: string };
+    if (!token || Date.parse(expires_at) <= Date.now()) {
+      localStorage.removeItem(DEMO_KEY);
+      return null;
+    }
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+function saveDemoToken(v: { token: string; expires_at: string } | null) {
+  try {
+    if (v) localStorage.setItem(DEMO_KEY, JSON.stringify(v));
+    else localStorage.removeItem(DEMO_KEY);
+  } catch {
+    /* storage non disponibile: la demo dura finché la pagina resta aperta */
+  }
+}
+
+function wantsDemo(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('demo') === '1';
+}
+
+function DemoButton({ onStart }: { onStart: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string>();
+  return (
+    <div className="space-y-2 border-t border-ink-700 pt-4">
+      <Button type="button" className="w-full" disabled={busy} onClick={async () => {
+        setBusy(true);
+        setErr(undefined);
+        try {
+          await onStart();
+        } catch (x) {
+          setErr(errorText(x));
+        } finally {
+          setBusy(false);
+        }
+      }}>
+        {busy ? 'Apertura della demo…' : 'Prova la demo senza account'}
+      </Button>
+      <p className="text-center text-[11px] text-steel-500">Un progetto di esempio sulla Grande Depressione 1929–1933, in sola lettura.</p>
+      {err && <p role="alert" className="text-sm text-bad">{err}</p>}
+    </div>
+  );
+}
+
+/** Mostrato mentre il server si avvia: sul piano gratuito il primo accesso può richiedere fino a un minuto. */
+function StartingScreen() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="flex min-h-full items-center justify-center p-4" role="status" aria-live="polite">
+      <div className="max-w-sm text-center">
+        <p className="text-lg font-semibold tracking-[0.3em] text-gold-400">NEXUS</p>
+        <div className="mx-auto mt-4 size-6 animate-spin rounded-full border-2 border-ink-700 border-t-gold-400" aria-hidden />
+        <p className="mt-4 text-sm text-steel-300">{slow ? 'Avvio del server in corso…' : 'Caricamento…'}</p>
+        {slow && <p className="mt-1 text-xs text-steel-500">Se NEXUS non veniva usato da un po', il primo avvio può richiedere fino a un minuto. Non chiudere la pagina.</p>}
+      </div>
+    </div>
+  );
+}
 
 function LoginScreen({ allowRegistration, onDone }: { allowRegistration: boolean; onDone: () => Promise<void> }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -54,7 +137,7 @@ function LoginScreen({ allowRegistration, onDone }: { allowRegistration: boolean
 }
 
 /** Versione online: accesso con l'account del sito NEXUS (Supabase). Registrazione e recupero password sul sito. */
-function SupabaseLoginScreen({ client, siteUrl, onDone }: { client: SupabaseClient; siteUrl?: string | null; onDone: () => Promise<void> }) {
+function SupabaseLoginScreen({ client, siteUrl, onDone, onDemo }: { client: SupabaseClient; siteUrl?: string | null; onDone: () => Promise<void>; onDemo?: () => Promise<void> }) {
   const [f, setF] = useState({ email: '', password: '' });
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -69,6 +152,7 @@ function SupabaseLoginScreen({ client, siteUrl, onDone }: { client: SupabaseClie
       setBusy(false);
       return;
     }
+    saveDemoToken(null);
     await onDone();
     setBusy(false);
   }
@@ -91,6 +175,8 @@ function SupabaseLoginScreen({ client, siteUrl, onDone }: { client: SupabaseClie
             <a className="text-gold-300 hover:underline" href={`${site}/signup`}>Crea un account</a>
           </div>
         )}
+        {onDemo && <DemoButton onStart={onDemo} />}
+        {site && <p className="text-center text-[11px] text-steel-500"><a className="hover:text-paper hover:underline" href={`${site}/it/privacy`}>Informativa privacy</a></p>}
       </form>
     </div>
   );
@@ -101,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [supa, setSupa] = useState<SupabaseClient>();
   const [user, setUser] = useState<User | null>(null);
   const [checked, setChecked] = useState(false);
+  const [isDemo, setIsDemo] = useState(() => readDemoToken() !== null);
 
   const refresh = useCallback(async () => {
     try {
@@ -114,16 +201,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api.authConfig().then(async (cfg) => {
+      let signedIn = false;
       if (cfg.mode === 'supabase' && cfg.supabase_url && cfg.supabase_anon_key) {
         const { createClient } = await import('@supabase/supabase-js');
         const client = createClient(cfg.supabase_url, cfg.supabase_anon_key, { auth: { persistSession: true, autoRefreshToken: true } });
-        setTokenProvider(async () => (await client.auth.getSession()).data.session?.access_token ?? null);
+        setTokenProvider(async () => readDemoToken() ?? (await client.auth.getSession()).data.session?.access_token ?? null);
         client.auth.onAuthStateChange((event) => {
           if (event === 'SIGNED_OUT') setUser(null);
         });
         setSupa(client);
+        signedIn = !!(await client.auth.getSession()).data.session;
+      } else if (cfg.mode === 'multi') {
+        setTokenProvider(async () => readDemoToken());
       }
       setConfig(cfg);
+      if (cfg.demo && wantsDemo() && !signedIn && !readDemoToken()) {
+        try {
+          saveDemoToken(await api.openDemo());
+        } catch {
+          /* se la demo non si apre resta la schermata di accesso */
+        }
+      }
+      if (wantsDemo()) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('demo');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
+      setIsDemo(readDemoToken() !== null);
       await refresh();
     }).catch(() => {
       setConfig({ mode: 'local', allow_registration: false });
@@ -134,7 +238,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('nexus:unauthorized', onUnauthorized);
   }, [refresh]);
 
+  const startDemo = useCallback(async () => {
+    saveDemoToken(await api.openDemo());
+    setIsDemo(true);
+    await refresh();
+  }, [refresh]);
+
   const logout = useCallback(async () => {
+    if (readDemoToken()) {
+      saveDemoToken(null);
+      setIsDemo(false);
+      setUser(null);
+      return;
+    }
     if (supa) await supa.auth.signOut();
     else await api.logout().catch(() => undefined);
     setUser(null);
@@ -142,11 +258,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const mode = config?.mode ?? 'local';
   // Prima di conoscere la modalità non si chiede nulla al server (online servirebbe già il token).
-  if (!config) return null;
+  if (!config || (mode !== 'local' && !checked)) return <StartingScreen />;
   if (mode === 'supabase' && checked && !user) {
     if (!supa) return <div className="p-6 text-sm text-bad">Accesso online non configurato sul server.</div>;
-    return <SupabaseLoginScreen client={supa} siteUrl={config?.site_url} onDone={refresh} />;
+    return <SupabaseLoginScreen client={supa} siteUrl={config?.site_url} onDone={refresh} onDemo={config.demo ? startDemo : undefined} />;
   }
   if (mode === 'multi' && checked && !user) return <LoginScreen allowRegistration={config?.allow_registration ?? false} onDone={refresh} />;
-  return <Ctx.Provider value={{ mode, user, refresh, logout, siteUrl: config?.site_url }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ mode, user, refresh, logout, siteUrl: config?.site_url, isDemo: isDemo && !!user }}>{children}</Ctx.Provider>;
 }

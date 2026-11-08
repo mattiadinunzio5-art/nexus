@@ -3,7 +3,7 @@ import { ArrowUpRight, Terminal } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { Reveal, SectionLabel, WordsReveal } from '../Reveal';
 import { useI18n } from '../../lib/i18n';
-import { appUrl } from '../../lib/supabase';
+import { appUrl, demoUrl } from '../../lib/supabase';
 
 const INSTALL = `git clone https://github.com/mattiadinunzio5-art/nexus.git
 cd nexus
@@ -42,6 +42,12 @@ export function Access() {
                   <Link to={p('/signup')} className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void transition hover:bg-copper">{a.create} <ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
                   <Link to={p('/signin')} className="inline-flex rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">{a.signIn}</Link>
                 </div>
+                {demoUrl && (
+                  <p className="mt-6 border-t border-line pt-5 text-sm leading-relaxed text-mute-2">
+                    {a.demoText}{' '}
+                    <a href={demoUrl} className="inline-flex items-center gap-1 text-copper hover:underline">{a.demo} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden /></a>
+                  </p>
+                )}
               </>
             ) : (
               <>

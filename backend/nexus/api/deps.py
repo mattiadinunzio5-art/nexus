@@ -39,8 +39,11 @@ def get_current_user(request: Request, db: Annotated[Session, Depends(get_db)]) 
     settings: Settings = request.app.state.settings
     if settings.auth_mode == "local":
         return ensure_local_user(db)
-    from ..services import auth
+    from ..services import auth, demo
 
+    token = request_token(request)
+    if demo.is_demo_token(token):
+        return _demo_user(request, db, settings, token)
     if settings.auth_mode == "supabase":
         from ..security import supabase_auth
 
@@ -52,6 +55,22 @@ def get_current_user(request: Request, db: Annotated[Session, Depends(get_db)]) 
         return user
     user, session = auth.user_from_token(db, request_token(request))
     request.state.session_id = session.id
+    return user
+
+
+def _demo_user(request: Request, db: Session, settings: Settings, token: str) -> User:
+    from ..services import auth, demo
+
+    if not settings.demo_enabled:
+        raise auth.AuthError("La demo non è disponibile.")
+    demo.check_token(settings, token)
+    if request.method not in ("GET", "HEAD", "OPTIONS") and request.url.path not in demo.DEMO_ALLOWED_WRITES:
+        raise auth.ForbiddenError(demo.READ_ONLY_MESSAGE)
+    user = demo.demo_user(db)
+    if user is None:
+        demo.ensure_demo(request.app.state.database, settings)
+        user = demo.demo_user(db)
+    request.state.session_id = None
     return user
 
 
