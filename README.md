@@ -80,6 +80,14 @@ la War Room lavora in modalità locale e dichiara gli agenti non eseguiti.
 - **App installabile (PWA)**: dalla build di produzione servita in HTTPS o su localhost, il browser offre «Installa app».
   Su iPhone, Safari → Condividi → «Aggiungi a Home» funziona anche dalla rete locale.
 
+## Password dimenticata
+
+Con `scripts/dev.sh --lan` il login è obbligatorio. Per reimpostare la password di un account, sul computer dove gira NEXUS:
+
+```
+scripts/py.sh scripts/reset_password.py
+```
+
 ## Test
 ```bash
 scripts/test.sh                                                     # pytest + typecheck + vitest
