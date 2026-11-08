@@ -145,6 +145,22 @@ export function ModuleVisual({ kind, className = '' }: { kind: Kind; className?:
             <text x="214" y="182" fill={COPPER} fontSize="9" fontFamily="Inter, sans-serif">[1]</text>
           </g>
         );
+      case 'radar': {
+        const nodes = [[70, 60], [110, 150], [160, 40], [230, 70], [250, 150], [180, 120], [60, 120]];
+        return (
+          <g>
+            {[30, 60, 90].map((r, i) => <motion.circle key={r} cx="160" cy="100" r={r} fill="none" stroke={LINE} {...draw(i * 0.1)} />)}
+            <motion.path d="M160 100 L250 100 A90 90 0 0 0 224 37 Z" fill={COPPER} fillOpacity="0.12" style={{ originX: '160px', originY: '100px' }}
+              animate={reduce ? undefined : { rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
+            {[[0, 2], [2, 5], [5, 1], [3, 4]].map(([a, b], i) => (
+              <motion.line key={i} x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]} stroke={IVORY} strokeOpacity="0.5" {...draw(0.3 + i * 0.1)} />
+            ))}
+            <motion.line x1={nodes[5][0]} y1={nodes[5][1]} x2={nodes[3][0]} y2={nodes[3][1]} stroke={COPPER} strokeWidth="1.5" strokeDasharray="4 4" {...draw(0.9)} />
+            {nodes.map(([x, y], i) => <motion.circle key={i} cx={x} cy={y} r={i === 5 || i === 3 ? 6 : 4} fill={i === 5 || i === 3 ? COPPER : IVORY} {...pop(0.2 + i * 0.06)} />)}
+            <text x="206" y="88" fill={COPPER} fontSize="11" fontFamily="Inter, sans-serif">?</text>
+          </g>
+        );
+      }
       case 'plug':
         return (
           <g>

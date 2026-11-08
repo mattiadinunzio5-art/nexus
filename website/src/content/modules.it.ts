@@ -478,6 +478,49 @@ export const MODULES_IT: ModuleContent[] = [
     ],
     visual: 'plug',
   },
+  {
+    slug: 'discovery-intelligence',
+    index: '13',
+    title: 'Discovery Intelligence',
+    kicker: 'Scoperta',
+    tagline: 'Collegamenti che non avevi visto — proposti come ipotesi, mai come scoperte.',
+    description:
+      'Discovery Intelligence lavora su tutto ciò che è già nel tuo archivio NEXUS — eventi, serie, documenti, fonti e grafo della conoscenza — per proporre connessioni tra fenomeni, generare ipotesi strutturate, segnalare anomalie, ricostruire catene di causa ed effetto e costruire scenari. Ogni risultato porta con sé evidenze, fonti e un grado di affidabilità motivato.',
+    mainFunction: 'Trasformare un archivio che risponde alle domande in uno che suggerisce la domanda successiva — con le prove sul tavolo.',
+    whyUseful: [
+      'Cinque rilevatori deterministici: attori condivisi, riferimenti testuali, vicinanza nel grafo, coincidenze tra eventi e dati, associazioni statistiche sulle variazioni, mai sui livelli con trend.',
+      'Le ipotesi hanno evidenze a favore e contro, informazioni mancanti e un metodo di verifica; i controlli automatici raccolgono elementi, l’esito lo decidi tu.',
+      'Le fonti sono pesate per indipendenza: dieci articoli che riprendono la stessa fonte primaria valgono una sola conferma.',
+    ],
+    guide: [
+      { title: 'Chiedi o esplora', detail: 'Discovery Search: scrivi una domanda complessa, oppure avvia una sessione autonoma su tutto l’archivio. Le sessioni girano in background con limiti di tempo, chiamate AI e risultati, e si possono mettere in pausa, riprendere o fermare.' },
+      { title: 'Esamina le connessioni', detail: 'Ogni connessione indica elementi, tipo di relazione, periodo, evidenze, fonti e affidabilità, con le sue cautele. Accettala per salvarla nel grafo come ipotesi, oppure scartala.' },
+      { title: 'Verifica le ipotesi', detail: 'Esegui i controlli — stabilità nei sottoperiodi, passaggi nei tuoi documenti, fonti indipendenti, relazioni nel grafo — poi registra confermata, respinta o inconcludente, con la motivazione.' },
+      { title: 'Spiega le anomalie', detail: 'Variazioni insolite, deviazioni dal trend, fonti in disaccordo e incongruenze cronologiche, ognuna con il riferimento usato e le spiegazioni alternative.' },
+      { title: 'Ricostruisci cause e scenari', detail: 'Le catene causali classificano ogni anello come causa documentata, causa ipotizzata o associazione. Strategic Foresight costruisce scenari ottimistico, centrale e avverso dalle variazioni storiche, con gli indicatori da monitorare.' },
+    ],
+    inputs: ['Il tuo archivio: eventi con attori e fonti, serie importate, documenti, bibliografia, grafo', 'Una domanda — o nulla, per una sessione autonoma', 'Facoltativo: un provider AI per interpretare la domanda e scrivere la sintesi'],
+    outputs: ['Connessioni candidate con evidenze e affidabilità', 'Ipotesi strutturate con lo storico delle verifiche', 'Anomalie ordinate per rilevanza e verificabilità', 'Catene causali e analisi a tre scenari', 'Una sintesi della sessione e piste di approfondimento'],
+    example: {
+      title: 'Mettere alla prova una correlazione',
+      steps: [
+        'Importa l’inflazione dell’area euro dalla BCE e la crescita del PIL italiano dalla World Bank, poi chiedi come sono legate inflazione e crescita.',
+        'Il motore trova un’associazione tra le variazioni delle due serie e la trasforma in un’ipotesi da verificare.',
+        'La verifica mostra che la correlazione cambia segno tra la prima e la seconda metà del campione: registri l’ipotesi come respinta, con questa motivazione.',
+      ],
+    },
+    connections: [
+      { slug: 'knowledge-graph', why: 'Connessioni e ipotesi si salvano nel grafo, sempre come ipotesi.' },
+      { slug: 'financial-intelligence', why: 'Le serie alimentano associazioni, anomalie e scenari.' },
+      { slug: 'historical-intelligence', why: 'Eventi, attori e fonti alimentano connessioni e controlli cronologici.' },
+    ],
+    limits: [
+      'I risultati dipendono dal tuo archivio: con pochi eventi, fonti o serie le connessioni sono poche — e nessuna è inventata.',
+      'Connessioni e ipotesi sono candidate da verificare, mai scoperte dimostrate. L’AI è facoltativa e si limita a interpretare la domanda e scrivere la sintesi.',
+      'Gli scenari simulano ogni variabile separatamente e non possono produrre shock più grandi di quelli presenti nella storia della serie.',
+    ],
+    visual: 'radar',
+  },
 ];
 
 export const MODULES_BY_SLUG_IT = Object.fromEntries(MODULES_IT.map((m) => [m.slug, m])) as Record<ModuleSlug, ModuleContent>;

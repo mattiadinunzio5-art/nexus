@@ -89,5 +89,6 @@ export const CAPABILITIES_IT: { title: string; text: string; slug: ModuleSlug }[
   { title: 'Ricerca AI', text: 'Ricerca multi-agente supervisionata con affermazioni tipizzate, contro-analisi e approvazione obbligatoria.', slug: 'research-war-room' },
   { title: 'Simulazione economica', text: 'Monte Carlo, dinamica del debito, regole di politica monetaria, regressioni e backtest senza informazioni dal futuro, ipotesi comprese.', slug: 'economic-laboratory' },
   { title: 'Intelligenza documentale', text: 'Ricerca per parole chiave e semantica nel tuo archivio, con risposte fatte di citazioni letterali e localizzate.', slug: 'documents' },
+  { title: 'Discovery Intelligence', text: 'Connessioni candidate, ipotesi con verifica, anomalie, catene causali e scenari — costruiti sul tuo archivio, con evidenze e fonti.', slug: 'discovery-intelligence' },
   { title: 'Rapporti di ricerca', text: 'Rapporti in dieci parti con citazioni verificabili, grafici e tabelle, esportati in PDF, DOCX e LaTeX.', slug: 'research-studio' },
 ];
