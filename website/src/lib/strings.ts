@@ -79,6 +79,8 @@ const EN = {
     account: 'Account',
     signedIn: 'You are signed in.',
     goAccount: 'Go to your account',
+    openApp: 'Open the platform',
+    onlineText: 'NEXUS is online: open the platform in your browser and sign in with this same account.',
     createTitle: 'Create your NEXUS account.',
     createText: 'Your account identifies you on this site and reserves your access to the hosted platform. Today the platform itself runs on your own computer — see the right panel.',
     create: 'Create Account',
@@ -157,6 +159,7 @@ const EN = {
     accountTitle: 'Your account',
     accountText: 'Your NEXUS account is active. The hosted platform is not online yet: today NEXUS runs on your own computer, free and open-source.',
     howRun: 'How to run NEXUS',
+    accountTextOnline: 'Your NEXUS account is active. Open the online platform and sign in with the same email and password.',
     signOut: 'Sign out',
     errors: {
       invalid: 'Email or password is incorrect.',
@@ -249,6 +252,8 @@ const IT: Strings = {
     account: 'Account',
     signedIn: 'Hai effettuato l’accesso.',
     goAccount: 'Vai al tuo account',
+    openApp: 'Apri la piattaforma',
+    onlineText: 'NEXUS è online: apri la piattaforma nel browser e accedi con questo stesso account.',
     createTitle: 'Crea il tuo account NEXUS.',
     createText: 'L’account ti identifica su questo sito e ti riserva l’accesso alla piattaforma online. Oggi la piattaforma funziona sul tuo computer — vedi il pannello a destra.',
     create: 'Crea un account',
@@ -327,6 +332,7 @@ const IT: Strings = {
     accountTitle: 'Il tuo account',
     accountText: 'Il tuo account NEXUS è attivo. La piattaforma online non è ancora disponibile: oggi NEXUS funziona sul tuo computer, gratis e open-source.',
     howRun: 'Come avviare NEXUS',
+    accountTextOnline: 'Il tuo account NEXUS è attivo. Apri la piattaforma online e accedi con la stessa email e password.',
     signOut: 'Esci',
     errors: {
       invalid: 'Email o password non corretti.',

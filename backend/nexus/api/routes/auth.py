@@ -54,11 +54,21 @@ def _set_cookie(response: Response, token: str, settings) -> None:
 
 @router.get("/auth/config", summary="Modalità di autenticazione")
 def auth_config(settings: AppSettings) -> dict:
-    return {"mode": settings.auth_mode, "allow_registration": settings.allow_registration and settings.auth_mode == "multi"}
+    out = {"mode": settings.auth_mode, "allow_registration": settings.allow_registration and settings.auth_mode == "multi"}
+    if settings.auth_mode == "supabase":
+        # Valori pubblici: servono al browser per accedere con l'account del sito.
+        out.update(supabase_url=settings.supabase_url, supabase_anon_key=settings.supabase_anon_key, site_url=settings.site_url)
+    return out
+
+
+def _not_in_supabase_mode(settings) -> None:
+    if settings.auth_mode == "supabase":
+        raise svc.ForbiddenError("Nella versione online registrazione, accesso e password si gestiscono con l'account del sito NEXUS.")
 
 
 @router.post("/auth/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterIn, request: Request, response: Response, db: DB, settings: AppSettings):
+    _not_in_supabase_mode(settings)
     u = svc.register(db, settings, data.email, data.password, data.display_name)
     _, token = svc.login(db, settings, data.email, data.password, request.headers.get("user-agent", ""), request.client.host if request.client else "")
     _set_cookie(response, token, settings)
@@ -67,6 +77,7 @@ def register(data: RegisterIn, request: Request, response: Response, db: DB, set
 
 @router.post("/auth/login", response_model=UserOut)
 def login(data: LoginIn, request: Request, response: Response, db: DB, settings: AppSettings):
+    _not_in_supabase_mode(settings)
     u, token = svc.login(db, settings, data.email, data.password, request.headers.get("user-agent", ""), request.client.host if request.client else "")
     _set_cookie(response, token, settings)
     return u
@@ -91,7 +102,8 @@ def revoke(session_id: int, db: DB, user: CurrentUser) -> None:
 
 
 @router.post("/auth/password", status_code=status.HTTP_204_NO_CONTENT, summary="Cambia password (chiude le altre sessioni)")
-def change_password(data: PasswordIn, request: Request, db: DB, user: CurrentUser) -> None:
+def change_password(data: PasswordIn, request: Request, db: DB, user: CurrentUser, settings: AppSettings) -> None:
+    _not_in_supabase_mode(settings)
     svc.change_password(db, user, data.current, data.new, getattr(request.state, "session_id", None))
 
 

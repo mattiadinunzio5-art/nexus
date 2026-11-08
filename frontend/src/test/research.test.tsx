@@ -37,7 +37,7 @@ describe('archive Q&A', () => {
     });
     renderApp('/documents');
     const file = new File(['testo'], 'atlante.txt', { type: 'text/plain' });
-    await userEvent.upload(screen.getByLabelText(/File \(PDF/), file);
+    await userEvent.upload(await screen.findByLabelText(/File \(PDF/), file);
     await userEvent.selectOptions(screen.getAllByRole('combobox')[0], 'user_work');
     await userEvent.click(screen.getByRole('button', { name: /Importa$/ }));
     expect(await screen.findByText(/4 segmenti indicizzati/)).toBeInTheDocument();

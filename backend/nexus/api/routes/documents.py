@@ -1,7 +1,6 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
-from fastapi.responses import FileResponse
 
 from ...services import documents as svc
 from ..deps import DB, AppSettings, CurrentUser
@@ -60,7 +59,14 @@ def get_chunks(document_id: int, db: DB, user: CurrentUser, offset: int = Query(
 @router.get("/{document_id}/file", summary="Scarica il file originale")
 def download(document_id: int, db: DB, user: CurrentUser, settings: AppSettings):
     d = svc.get_document(db, user, document_id)
-    return FileResponse(svc.file_path(settings, d), filename=d.filename, content_disposition_type="attachment")
+    from urllib.parse import quote
+
+    from fastapi import Response
+
+    media = {"pdf": "application/pdf", "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+             "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "csv": "text/csv", "txt": "text/plain", "md": "text/markdown"}
+    return Response(svc.file_bytes(settings, d), media_type=media.get(d.kind, "application/octet-stream"),
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(d.filename)}"})
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

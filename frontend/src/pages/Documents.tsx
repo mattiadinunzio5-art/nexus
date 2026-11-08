@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Download, FileUp, Library, Trash2 } from 'lucide-react';
+import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
 import type { DocumentInfo } from '../api/types';
 import { InjectionWarning } from '../components/research';
@@ -161,7 +162,7 @@ export function DocumentsPage() {
                 </p>
                 {d.flagged_chunks > 0 && <InjectionWarning />}
               </div>
-              <a href={api.documentFileUrl(d.id)} className="rounded p-1.5 text-steel-400 hover:bg-ink-800 hover:text-paper" aria-label={`Scarica ${d.title}`}><Download className="size-4" /></a>
+              <DownloadButton path={api.documentFilePath(d.id)} fallbackName={d.filename} className="rounded p-1.5 text-steel-400 hover:bg-ink-800 hover:text-paper" label={`Scarica ${d.title}`}><Download className="size-4" /></DownloadButton>
               <Button variant="ghost" className="px-2 hover:text-bad" onClick={() => setToDelete(d)} aria-label={`Elimina ${d.title}`}><Trash2 className="size-4" /></Button>
             </li>
           ))}

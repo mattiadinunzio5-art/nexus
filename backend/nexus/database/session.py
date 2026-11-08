@@ -13,14 +13,27 @@ from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 
+def normalize_url(url: str) -> str:
+    """Accetta anche gli URL PostgreSQL «nudi» (es. quelli forniti da Supabase) usando il driver psycopg 3."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
 def build_engine(url: str) -> Engine:
+    url = normalize_url(url)
     connect_args: dict = {}
     if url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
         db_path = url.split("///", 1)[-1]
         if db_path and db_path != ":memory:":
             Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(url, connect_args=connect_args, future=True)
+    kwargs: dict = {}
+    if url.startswith("postgresql"):
+        # Connessioni gestite dal pooler di Supabase: verifica prima dell'uso, pool piccolo (server gratuito).
+        kwargs.update(pool_pre_ping=True, pool_size=3, max_overflow=2, pool_recycle=300)
+    engine = create_engine(url, connect_args=connect_args, future=True, **kwargs)
 
     if url.startswith("sqlite"):
 

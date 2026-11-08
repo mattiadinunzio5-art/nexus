@@ -76,10 +76,10 @@ def import_bytes(
     except ExtractionError as exc:
         raise ValidationFailedError(str(exc)) from exc
 
-    user_dir = settings.uploads_dir / str(user.id)
-    user_dir.mkdir(parents=True, exist_ok=True)
-    path = user_dir / f"{sha}.{kind}"
-    path.write_bytes(data)
+    from . import storage
+
+    key = f"uploads/{user.id}/{sha}.{kind}"
+    storage.for_settings(settings).put(key, data)
 
     chunks = chunk_sections(extracted.sections)
     doc = Document(
@@ -95,7 +95,7 @@ def import_bytes(
         author=(author or extracted.author or "")[:300],
         sha256=sha,
         size_bytes=len(data),
-        storage_path=str(path.relative_to(settings.data_dir)),
+        storage_path=key,
         page_count=extracted.page_count,
         char_count=sum(len(s.text) for s in extracted.sections),
         chunk_count=len(chunks),
@@ -205,7 +205,7 @@ def delete_document(db: Session, user: User, settings: Settings, document_id: in
     d = get_document(db, user, document_id)
     if not confirm:
         raise ConfirmationRequiredError("Eliminare un documento dall'archivio richiede conferma (confirm=true).")
-    path = settings.data_dir / d.storage_path
+    key = d.storage_path
     title = d.title
     index.fts_delete_document(db, d.id)
     db.delete(d)
@@ -213,12 +213,15 @@ def delete_document(db: Session, user: User, settings: Settings, document_id: in
                     summary=f"Eliminato il documento «{title}»")
     db.commit()
     index.semantic_index.invalidate(user.id)
-    if path.is_file() and path.resolve().is_relative_to(settings.data_dir.resolve()):
-        path.unlink()
+    from . import storage
+
+    try:
+        storage.for_settings(settings).delete(key)
+    except NexusError:
+        pass  # il record è già eliminato; un file orfano non blocca l'operazione
 
 
-def file_path(settings: Settings, d: Document) -> Path:
-    p = (settings.data_dir / d.storage_path).resolve()
-    if not p.is_relative_to(settings.data_dir.resolve()) or not p.is_file():
-        raise NotFoundError("File originale non disponibile.")
-    return p
+def file_bytes(settings: Settings, d: Document) -> bytes:
+    from . import storage
+
+    return storage.for_settings(settings).get(d.storage_path)

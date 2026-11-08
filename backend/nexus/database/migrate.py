@@ -13,7 +13,8 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 def alembic_config(database_url: str) -> Config:
     cfg = Config(str(BACKEND_DIR / "alembic.ini"))
     cfg.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
-    cfg.set_main_option("sqlalchemy.url", database_url)
+    # ConfigParser interpreta «%»: va raddoppiato (le password nell'URL possono contenerlo).
+    cfg.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
     return cfg
 
 

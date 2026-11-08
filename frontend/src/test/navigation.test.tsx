@@ -8,7 +8,7 @@ describe('navigation', () => {
   it('lists all eight modules in the sidebar with their phase', async () => {
     mockApi({ 'GET /api/dashboard': dashboard, 'GET /api/notifications': [], 'GET /api/system/status': new Response('{}', { status: 500 }) });
     renderApp('/');
-    const nav = screen.getByRole('complementary', { name: 'Navigazione principale' });
+    const nav = await screen.findByRole('complementary', { name: 'Navigazione principale' });
     for (const label of ['Historical Intelligence', 'Financial Intelligence', 'Time Machine', 'Knowledge Graph', 'Research War Room', 'Economic Laboratory', 'Research Studio', 'NEXUS Business']) {
       expect(within(nav).getByRole('link', { name: new RegExp(label) })).toBeInTheDocument();
     }
@@ -32,14 +32,14 @@ describe('navigation', () => {
       'GET /api/search': { query: 'gold', hits: [{ type: 'project', id: '1', title: 'Gold standard', snippet: '', url: '/projects?id=1' }], searched_scopes: ['progetti'], unavailable_scopes: ['documenti (Fase 2)'] },
     });
     renderApp('/');
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Ricerca globale' }), 'gold{enter}');
+    await userEvent.type(await screen.findByRole('searchbox', { name: 'Ricerca globale' }), 'gold{enter}');
     expect(await screen.findByText('Gold standard')).toBeInTheDocument();
     expect(screen.getByText(/Non ancora ricercabili: documenti \(Fase 2\)/)).toBeInTheDocument();
   });
 
-  it('shows a not-found page for unknown routes', () => {
+  it('shows a not-found page for unknown routes', async () => {
     mockApi({ 'GET /api/notifications': [] });
     renderApp('/nope');
-    expect(screen.getByRole('heading', { name: 'Pagina non trovata' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Pagina non trovata' })).toBeInTheDocument();
   });
 });

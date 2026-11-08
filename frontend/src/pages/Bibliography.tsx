@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
 import type { Source, SourceInput } from '../api/types';
 import { VERIFICATION } from '../components/research';
@@ -108,7 +109,7 @@ export function BibliographyPage() {
             });
           }} />
         </label>
-        {!!data?.length && <a href={api.bibtexUrl()} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><Download className="size-4" aria-hidden /> Esporta BibTeX</a>}
+        {!!data?.length && <DownloadButton path={api.bibtexPath()} fallbackName="nexus-bibliografia.bib" className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><Download className="size-4" aria-hidden /> Esporta BibTeX</DownloadButton>}
         <Button variant="primary" onClick={() => setEditing('new')}><Plus className="size-4" aria-hidden /> Nuova fonte</Button>
       </>} />
       {importMsg && <p role="status" className="mb-4 text-sm text-ok">{importMsg}</p>}
