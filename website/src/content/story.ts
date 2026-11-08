@@ -94,5 +94,6 @@ export const CAPABILITIES: { title: string; text: string; slug: ModuleSlug }[] =
   { title: 'AI Research', text: 'Supervised multi-agent research with typed claims, counter-analysis and mandatory approval.', slug: 'research-war-room' },
   { title: 'Economic Simulation', text: 'Monte Carlo, debt dynamics, policy rules, regressions and look-ahead-free backtests, assumptions included.', slug: 'economic-laboratory' },
   { title: 'Document Intelligence', text: 'Keyword and semantic search across your archive, answering with located, verbatim quotations.', slug: 'documents' },
+  { title: 'Discovery Intelligence', text: 'Candidate connections, hypotheses with verification, anomalies, causal chains and scenarios — built on your archive, with evidence and sources.', slug: 'discovery-intelligence' },
   { title: 'Research Reporting', text: 'Ten-part reports with verifiable citations, charts and tables, exported to PDF, DOCX and LaTeX.', slug: 'research-studio' },
 ];

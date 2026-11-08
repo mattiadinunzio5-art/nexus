@@ -13,7 +13,7 @@ import { counterpart, localize } from '../lib/i18n';
 
 describe('content', () => {
   it('has 12 complete modules', () => {
-    expect(MODULES).toHaveLength(12);
+    expect(MODULES).toHaveLength(13);
     for (const m of MODULES) {
       expect(m.description.length).toBeGreaterThan(40);
       expect(m.mainFunction).toBeTruthy();
@@ -29,7 +29,7 @@ describe('content', () => {
   it('workflow, case study and capabilities match the spec', () => {
     expect(WORKFLOW).toHaveLength(11);
     expect(CASE_STUDY).toHaveLength(9);
-    expect(CAPABILITIES).toHaveLength(7);
+    expect(CAPABILITIES).toHaveLength(8);
     for (const s of [...WORKFLOW, ...CASE_STUDY, ...CAPABILITIES]) expect(MODULES_BY_SLUG[s.slug]).toBeDefined();
   });
   it('contains no placeholder text', () => {
@@ -75,8 +75,8 @@ describe('auth helpers', () => {
 
 describe('seo', () => {
   it('has a page per module and renders head', () => {
-    expect(PAGES.filter((p) => p.path.startsWith('/architecture/'))).toHaveLength(12);
-    expect(PAGES.filter((p) => p.path.startsWith('/it/architecture/'))).toHaveLength(12);
+    expect(PAGES.filter((p) => p.path.startsWith('/architecture/'))).toHaveLength(13);
+    expect(PAGES.filter((p) => p.path.startsWith('/it/architecture/'))).toHaveLength(13);
     const itHome = renderHead('<html lang="en"><head><title>x</title></head>', PAGES.find((p) => p.path === '/it')!, 'https://example.com');
     expect(itHome).toContain('<html lang="it">');
     expect(itHome).toContain('hreflang="en" href="https://example.com/"');

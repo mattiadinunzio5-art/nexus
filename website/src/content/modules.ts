@@ -7,7 +7,8 @@
 
 export type ModuleSlug =
   | 'dashboard' | 'projects' | 'documents' | 'bibliography' | 'financial-intelligence' | 'historical-intelligence'
-  | 'time-machine' | 'knowledge-graph' | 'research-war-room' | 'economic-laboratory' | 'research-studio' | 'sources';
+  | 'time-machine' | 'knowledge-graph' | 'research-war-room' | 'economic-laboratory' | 'research-studio' | 'sources'
+  | 'discovery-intelligence';
 
 export interface ModuleContent {
   slug: ModuleSlug;
@@ -24,7 +25,7 @@ export interface ModuleContent {
   example: { title: string; steps: string[] };
   connections: { slug: ModuleSlug; why: string }[];
   limits: string[];
-  visual: 'dashboard' | 'folders' | 'pages' | 'citations' | 'chart' | 'timeline' | 'clock' | 'graph' | 'agents' | 'fan' | 'report' | 'plug';
+  visual: 'dashboard' | 'folders' | 'pages' | 'citations' | 'chart' | 'timeline' | 'clock' | 'graph' | 'agents' | 'fan' | 'report' | 'plug' | 'radar';
 }
 
 export const MODULES: ModuleContent[] = [
@@ -503,6 +504,49 @@ export const MODULES: ModuleContent[] = [
       'Declared but not yet connected: IMF, OECD, BIS.',
     ],
     visual: 'plug',
+  },
+  {
+    slug: 'discovery-intelligence',
+    index: '13',
+    title: 'Discovery Intelligence',
+    kicker: 'Discovery',
+    tagline: 'Connections you had not seen — offered as hypotheses, never as findings.',
+    description:
+      'Discovery Intelligence works on everything already in your NEXUS archive — events, series, documents, sources and the knowledge graph — to propose connections between phenomena, generate structured hypotheses, flag anomalies, reconstruct cause-and-effect chains and build scenarios. Every result carries its evidence, its sources and a motivated reliability grade.',
+    mainFunction: 'Turn an archive that answers questions into one that suggests the next question — with the evidence on the table.',
+    whyUseful: [
+      'Five deterministic detectors: shared actors, textual references, graph proximity, event–data coincidences and statistical associations on changes, never on trending levels.',
+      'Hypotheses come with evidence for and against, missing information and a verification method; automatic checks gather elements, you decide the outcome.',
+      'Sources are weighed for independence: ten articles repeating the same primary source count as one confirmation.',
+    ],
+    guide: [
+      { title: 'Ask or explore', detail: 'Discovery Search: write a complex question, or start an autonomous session over the whole archive. Sessions run in the background within limits of time, AI calls and results, and can be paused, resumed or stopped.' },
+      { title: 'Review the connections', detail: 'Each connection lists elements, relation type, period, evidence, sources and reliability, with its caveats. Accept it to save it in the graph as a hypothesis, or dismiss it.' },
+      { title: 'Verify the hypotheses', detail: 'Run the checks — stability across sub-periods, passages in your documents, independent sources, graph relations — then record confirmed, rejected or inconclusive, with your reasons.' },
+      { title: 'Explain the anomalies', detail: 'Unusual changes, deviations from trend, disagreeing sources and chronological inconsistencies, each with the reference used and alternative explanations.' },
+      { title: 'Trace causes and scenarios', detail: 'Causal chains classify every link as documented cause, hypothesised cause or association. Strategic Foresight builds optimistic, central and adverse scenarios from historical variations, with indicators to monitor.' },
+    ],
+    inputs: ['Your archive: events with actors and sources, imported series, documents, bibliography, graph', 'A question — or nothing, for an autonomous session', 'Optional: an AI provider to interpret the question and write the synthesis'],
+    outputs: ['Candidate connections with evidence and reliability', 'Structured hypotheses with their verification history', 'Anomalies ranked by relevance and verifiability', 'Causal chains and three-scenario analyses', 'A session synthesis and leads for further research'],
+    example: {
+      title: 'Testing a correlation',
+      steps: [
+        'Import euro-area inflation from the ECB and Italian GDP growth from the World Bank, then ask how inflation and growth are linked.',
+        'The engine finds an association between the changes of the two series and turns it into a hypothesis to verify.',
+        'The verification shows that the correlation changes sign between the first and the second half of the sample: you record the hypothesis as rejected, with that reason.',
+      ],
+    },
+    connections: [
+      { slug: 'knowledge-graph', why: 'Connections and hypotheses can be saved in the graph, always as hypotheses.' },
+      { slug: 'financial-intelligence', why: 'Series feed associations, anomalies and scenarios.' },
+      { slug: 'historical-intelligence', why: 'Events, actors and sources feed connections and chronology checks.' },
+    ],
+    limits: [
+      'Results depend on your archive: with few events, sources or series there are few connections — and none are invented.',
+      'Connections and hypotheses are candidates to verify, never proven discoveries. AI is optional and limited to interpreting the question and writing the synthesis.',
+      'Scenarios simulate each variable separately and cannot produce shocks larger than those in the history of the series.',
+    ],
+    visual: 'radar',
   },
 ];
 
