@@ -79,6 +79,8 @@ class KnowledgeOut(ORMModel):
 
 class EventOut(ORMModel):
     id: int
+    # Elemento della Biblioteca NEXUS (dati aperti condivisi, sola lettura).
+    library: bool = False
     title: str
     start_year: int
     start_month: int | None
@@ -143,6 +145,7 @@ class TimelineEvent(BaseModel):
     known_then: list[KnowledgeOut]
     known_later: list[KnowledgeOut]
     hidden_later_count: int
+    library: bool = False
     is_demo: bool
 
 
@@ -187,6 +190,8 @@ class EntityIn(BaseModel):
 
 class EntityOut(ORMModel):
     id: int
+    # Elemento della Biblioteca NEXUS (dati aperti condivisi, sola lettura).
+    library: bool = False
     entity_type: str
     name: str
     description: str

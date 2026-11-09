@@ -53,6 +53,8 @@ class SourceIn(BaseModel):
 
 class SourceOut(ORMModel):
     id: int
+    # Elemento della Biblioteca NEXUS (dati aperti condivisi, sola lettura).
+    library: bool = False
     source_type: str
     title: str
     authors: list[str]

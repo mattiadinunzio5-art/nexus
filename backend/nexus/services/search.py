@@ -75,19 +75,22 @@ def search(db: Session, user: User, query: str, limit: int = 25) -> SearchResult
             SearchHit(type="document", id=str(c.document_id), title=c.document.title + (f" — {c.locator}" if c.locator else ""),
                       snippet=_snippet(c.text, query), url=f"/documents/{c.document_id}")
         )
+    from ..core import library
+
+    owners = library.visible_owner_ids(db, user)
     for e in db.scalars(
         select(HistoricalEvent).where(
-            HistoricalEvent.owner_id == user.id,
+            HistoricalEvent.owner_id.in_(owners),
             or_(HistoricalEvent.title.ilike(pattern, escape="\\"), HistoricalEvent.description.ilike(pattern, escape="\\")),
         ).limit(limit)
     ):
         hits.append(SearchHit(type="event", id=str(e.id), title=e.title + (" [DEMO]" if e.is_demo else ""),
                               snippet=_snippet(e.description, query), url=f"/history/events/{e.id}"))
     for ent in db.scalars(
-        select(Entity).where(Entity.owner_id == user.id, Entity.event_id.is_(None), Entity.name.ilike(pattern, escape="\\")).limit(limit)
+        select(Entity).where(Entity.owner_id.in_(owners), Entity.event_id.is_(None), Entity.name.ilike(pattern, escape="\\")).limit(limit)
     ):
         hits.append(SearchHit(type="entity", id=str(ent.id), title=ent.name, snippet=ent.entity_type, url=f"/graph?focus={ent.id}"))
-    for se in db.scalars(select(Series).where(Series.owner_id == user.id, Series.name.ilike(pattern, escape="\\")).limit(limit)):
+    for se in db.scalars(select(Series).where(Series.owner_id.in_(owners), Series.name.ilike(pattern, escape="\\")).limit(limit)):
         hits.append(SearchHit(type="series", id=str(se.id), title=se.name, snippet=se.source_label, url=f"/financial/series/{se.id}"))
     for rp in db.scalars(select(Report).where(Report.owner_id == user.id, Report.title.ilike(pattern, escape="\\")).limit(limit)):
         hits.append(SearchHit(type="report", id=str(rp.id), title=rp.title, snippet="approvato" if rp.status == "approved" else "bozza", url=f"/studio/reports/{rp.id}"))

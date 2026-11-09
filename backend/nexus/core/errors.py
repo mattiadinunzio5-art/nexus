@@ -39,6 +39,13 @@ class ConfirmationRequiredError(NexusError):
     code = "confirmation_required"
 
 
+class ReadOnlyError(NexusError):
+    """Elemento condiviso in sola lettura (Biblioteca NEXUS)."""
+
+    status_code = status.HTTP_403_FORBIDDEN
+    code = "read_only"
+
+
 class ValidationFailedError(NexusError):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "validation_error"

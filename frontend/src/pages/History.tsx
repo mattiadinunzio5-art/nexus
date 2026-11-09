@@ -7,7 +7,7 @@ import {
   type Category, type EventInput, type HistoricalEvent, type Reliability,
 } from '../api/types';
 import { VERIFICATION } from '../components/research';
-import { Badge, DemoBadge, type BadgeTone } from '../components/ui/Badge';
+import { Badge, DemoBadge, LibraryBadge, type BadgeTone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -146,7 +146,7 @@ export function EventsPage() {
                 <span className="font-mono text-xs text-gold-300">{e.date_label}</span>
                 <span className="font-medium text-paper">{e.title}</span>
                 <Badge tone={RELIABILITY_TONE[e.reliability]}>{RELIABILITY[e.reliability]}</Badge>
-                {e.is_demo && <DemoBadge />}
+                {e.is_demo && <DemoBadge />}{e.library && <LibraryBadge />}
                 {e.source_warning && <AlertTriangle className="size-3.5 text-warn" aria-label={e.source_warning} />}
               </div>
               <p className="mt-1 text-xs text-steel-500">{[e.countries.join(', '), e.categories.map((c) => CATEGORIES[c]).join(', ')].filter(Boolean).join(' · ')}</p>
@@ -227,7 +227,7 @@ export function EventDetailPage() {
             <div className="mb-3 flex flex-wrap gap-1.5">
               <Badge tone={RELIABILITY_TONE[e.reliability]}>Attendibilità: {RELIABILITY[e.reliability]}</Badge>
               {e.categories.map((c) => <Badge key={c}>{CATEGORIES[c]}</Badge>)}
-              {e.is_demo && <DemoBadge />}
+              {e.is_demo && <DemoBadge />}{e.library && <LibraryBadge />}
             </div>
             {e.source_warning && <p className="mb-3 flex items-start gap-2 text-sm text-warn"><AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{e.source_warning}</p>}
             <div className="space-y-4">

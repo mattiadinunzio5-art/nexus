@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database.base import Base, TimestampMixin
@@ -20,6 +20,7 @@ class Source(TimestampMixin, Base):
     (o un import con metadati reali) e il suo stato di verifica è esplicito."""
 
     __tablename__ = "sources"
+    __table_args__ = (UniqueConstraint("owner_id", "origin", "external_id", name="uq_sources_origin_external_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -40,4 +41,7 @@ class Source(TimestampMixin, Base):
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Fonte primaria da cui questa fonte riprende le informazioni (per valutare l'indipendenza delle conferme).
     primary_source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id", ondelete="SET NULL"), nullable=True)
+    # Lotto di importazione (es. "wikidata") e identificativo nella fonte (es. "Q12345"): idempotenza e cancellazione per lotto.
+    origin: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)

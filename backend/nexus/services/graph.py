@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import networkx as nx
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select, union_all
 from sqlalchemy.orm import Session
 
 from ..api.schemas_history import EntityIn, GraphNode, GraphOut, PathOut, RelationIn, RelationOut
+from ..core import library
 from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
 from ..models import Document, DocumentChunk, Entity, Relation, Source, User
 from ..research.citations import format_citation
@@ -32,15 +33,12 @@ def relation_out(db: Session, r: Relation) -> RelationOut:
     return out
 
 
-def get_entity(db: Session, user: User, entity_id: int) -> Entity:
-    e = db.get(Entity, entity_id)
-    if e is None or e.owner_id != user.id:
-        raise NotFoundError("Entità non trovata.")
-    return e
+def get_entity(db: Session, user: User, entity_id: int, own: bool = False) -> Entity:
+    return library.access(db, user, db.get(Entity, entity_id), own, "Entità non trovata.")
 
 
 def list_entities(db: Session, user: User, q: str | None = None, entity_type: str | None = None, limit: int = 500) -> list[Entity]:
-    stmt = select(Entity).where(Entity.owner_id == user.id)
+    stmt = select(Entity).where(Entity.owner_id.in_(library.visible_owner_ids(db, user)))
     if q:
         stmt = stmt.where(Entity.name.ilike(f"%{q}%"))
     if entity_type:
@@ -73,7 +71,7 @@ def create_entity(db: Session, user: User, data: EntityIn, is_demo: bool = False
 
 
 def update_entity(db: Session, user: User, entity_id: int, data: EntityIn) -> Entity:
-    e = get_entity(db, user, entity_id)
+    e = get_entity(db, user, entity_id, own=True)
     if e.event_id is not None:
         raise ValidationFailedError("Questa entità rappresenta un evento: modificala dalla scheda evento.")
     from ..discovery.kg import find_entity
@@ -89,7 +87,7 @@ def update_entity(db: Session, user: User, entity_id: int, data: EntityIn) -> En
 
 
 def delete_entity(db: Session, user: User, entity_id: int, confirm: bool) -> None:
-    e = get_entity(db, user, entity_id)
+    e = get_entity(db, user, entity_id, own=True)
     if e.event_id is not None:
         raise ValidationFailedError("Questa entità rappresenta un evento: eliminala dall'archivio storico.")
     if not confirm:
@@ -103,7 +101,7 @@ def delete_entity(db: Session, user: User, entity_id: int, confirm: bool) -> Non
 def _check_evidence(db: Session, user: User, source_id: int | None, chunk_id: int | None) -> None:
     if source_id is not None:
         s = db.get(Source, source_id)
-        if s is None or s.owner_id != user.id:
+        if s is None or not library.can_read(db, user, s.owner_id):
             raise ValidationFailedError("Fonte inesistente.")
     if chunk_id is not None:
         c = db.get(DocumentChunk, chunk_id)
@@ -151,26 +149,68 @@ def relations_of(db: Session, user: User, entity_id: int) -> list[Relation]:
     return list(
         db.scalars(
             select(Relation).where(
-                Relation.owner_id == user.id,
+                Relation.owner_id.in_(library.visible_owner_ids(db, user)),
                 or_(Relation.source_entity_id == entity_id, Relation.target_entity_id == entity_id),
             )
         )
     )
 
 
-def _graph(db: Session, user: User, relation_types: list[str] | None, provenance: list[str] | None):
+MAX_EDGES = 4000  # limite di relazioni caricate per una vista (la Biblioteca può contenerne centinaia di migliaia)
+
+
+def _rel_filter(db: Session, user: User, relation_types: list[str] | None, provenance: list[str] | None):
+    conds = [Relation.owner_id.in_(library.visible_owner_ids(db, user))]
+    if relation_types:
+        conds.append(Relation.relation_type.in_(relation_types))
+    if provenance:
+        conds.append(Relation.provenance.in_(provenance))
+    return conds
+
+
+def _neighbourhood(db: Session, user: User, focus: int, depth: int, conds, max_nodes: int) -> set[int]:
+    """Visita in ampiezza fatta con query SQL, senza caricare l'intero grafo in memoria."""
+    seen, frontier = {focus}, {focus}
+    for _ in range(max(0, depth)):
+        if not frontier or len(seen) >= max_nodes:
+            break
+        rows = db.execute(
+            select(Relation.source_entity_id, Relation.target_entity_id)
+            .where(*conds, or_(Relation.source_entity_id.in_(frontier), Relation.target_entity_id.in_(frontier)))
+            .limit(MAX_EDGES)
+        ).all()
+        nxt = set()
+        for a, b in rows:
+            for n in (a, b):
+                if n not in seen and len(seen) + len(nxt) < max_nodes:
+                    nxt.add(n)
+        seen |= nxt
+        frontier = nxt
+    return seen
+
+
+def _top_by_degree(db: Session, user: User, conds, limit: int) -> list[int]:
+    ends = union_all(
+        select(Relation.source_entity_id.label("e")).where(*conds),
+        select(Relation.target_entity_id.label("e")).where(*conds),
+    ).subquery()
+    return [r[0] for r in db.execute(select(ends.c.e).group_by(ends.c.e).order_by(func.count().desc()).limit(limit))]
+
+
+def _graph(db: Session, user: User, relation_types: list[str] | None, provenance: list[str] | None, nodes: set[int] | None = None):
     g = nx.MultiDiGraph()
-    entities = {e.id: e for e in db.scalars(select(Entity).where(Entity.owner_id == user.id))}
+    conds = _rel_filter(db, user, relation_types, provenance)
+    stmt = select(Relation).where(*conds)
+    if nodes is not None:
+        stmt = stmt.where(Relation.source_entity_id.in_(nodes), Relation.target_entity_id.in_(nodes))
+    rels = list(db.scalars(stmt.limit(MAX_EDGES)))
+    ids = set(nodes or ()) | {r.source_entity_id for r in rels} | {r.target_entity_id for r in rels}
+    entities = {e.id: e for e in db.scalars(select(Entity).where(Entity.id.in_(ids)))} if ids else {}
     for e in entities.values():
         g.add_node(e.id)
-    stmt = select(Relation).where(Relation.owner_id == user.id)
-    if relation_types:
-        stmt = stmt.where(Relation.relation_type.in_(relation_types))
-    if provenance:
-        stmt = stmt.where(Relation.provenance.in_(provenance))
-    rels = list(db.scalars(stmt))
     for r in rels:
-        g.add_edge(r.source_entity_id, r.target_entity_id, key=r.id)
+        if r.source_entity_id in entities and r.target_entity_id in entities:
+            g.add_edge(r.source_entity_id, r.target_entity_id, key=r.id)
     return g, entities, {r.id: r for r in rels}
 
 
@@ -178,19 +218,20 @@ def explore(
     db: Session, user: User, *, focus: int | None, depth: int, relation_types: list[str] | None,
     provenance: list[str] | None, entity_types: list[str] | None, max_nodes: int = 300,
 ) -> GraphOut:
-    g, entities, rels = _graph(db, user, relation_types, provenance)
+    conds = _rel_filter(db, user, relation_types, provenance)
+    owners = library.visible_owner_ids(db, user)
     if focus is not None:
         get_entity(db, user, focus)
-        und = g.to_undirected(as_view=True)
-        keep = set(nx.single_source_shortest_path_length(und, focus, cutoff=depth))
+        keep = _neighbourhood(db, user, focus, depth, conds, max_nodes)
     else:
-        keep = set(g.nodes)
+        # Senza focus: le entità più collegate (fino al limite); se non ci sono relazioni, le prime entità.
+        keep = set(_top_by_degree(db, user, conds, max_nodes))
+        if not keep:
+            keep = set(db.scalars(select(Entity.id).where(Entity.owner_id.in_(owners)).order_by(Entity.id).limit(max_nodes)))
+    g, entities, rels = _graph(db, user, relation_types, provenance, keep)
+    keep = {n for n in keep if n in entities}
     if entity_types:
         keep = {n for n in keep if entities[n].entity_type in entity_types or n == focus}
-    if focus is None:
-        # Senza focus si mostrano solo entità con almeno un collegamento (più leggibile), fino al limite.
-        connected = {n for n in keep if g.degree(n) > 0}
-        keep = connected or keep
     keep = set(sorted(keep, key=lambda n: -g.degree(n))[:max_nodes])
     sub = g.subgraph(keep)
     simple = nx.Graph(sub.to_undirected())
@@ -203,25 +244,46 @@ def explore(
     ]
     edges = [relation_out(db, rels[k]) for _, _, k in sub.edges(keys=True)]
     stats = {
-        "entities": len(entities), "relations": len(rels), "shown_nodes": len(nodes), "shown_edges": len(edges),
+        "entities": db.scalar(select(func.count(Entity.id)).where(Entity.owner_id.in_(owners))) or 0,
+        "relations": db.scalar(select(func.count(Relation.id)).where(*conds)) or 0,
+        "shown_nodes": len(nodes), "shown_edges": len(edges),
         "components": nx.number_connected_components(simple) if len(simple) else 0,
         "by_provenance": {p: sum(1 for e in edges if e.provenance == p) for p in PROVENANCE_LABEL},
     }
     return GraphOut(nodes=nodes, edges=edges, stats=stats)
 
 
-def path(db: Session, user: User, a: int, b: int) -> PathOut:
+def path(db: Session, user: User, a: int, b: int, max_depth: int = 6, max_visited: int = 20000) -> PathOut:
+    """Percorso più breve con visita in ampiezza via SQL (limitata in profondità e nodi visitati)."""
     get_entity(db, user, a)
     get_entity(db, user, b)
-    g, _, rels = _graph(db, user, None, None)
-    und = nx.Graph()
-    edge_for: dict[tuple[int, int], int] = {}
-    for u, v, k in g.edges(keys=True):
-        und.add_edge(u, v)
-        edge_for.setdefault((min(u, v), max(u, v)), k)
-    try:
-        nodes = nx.shortest_path(und, a, b)
-    except (nx.NetworkXNoPath, nx.NodeNotFound):
+    conds = _rel_filter(db, user, None, None)
+    parent: dict[int, tuple[int, int] | None] = {a: None}
+    frontier = {a}
+    for _ in range(max_depth):
+        if b in parent or not frontier or len(parent) > max_visited:
+            break
+        rows = db.execute(
+            select(Relation.id, Relation.source_entity_id, Relation.target_entity_id)
+            .where(*conds, or_(Relation.source_entity_id.in_(frontier), Relation.target_entity_id.in_(frontier)))
+            .order_by(Relation.id)
+        ).all()
+        nxt = set()
+        for rid, u, v in rows:
+            for x, y in ((u, v), (v, u)):
+                if x in frontier and y not in parent:
+                    parent[y] = (x, rid)
+                    nxt.add(y)
+        frontier = nxt
+    if b not in parent:
         return PathOut(found=False, entity_ids=[], relations=[])
-    rel_ids = [edge_for[(min(u, v), max(u, v))] for u, v in zip(nodes, nodes[1:])]
+    nodes, rel_ids, cur = [b], [], b
+    while parent[cur] is not None:
+        prev, rid = parent[cur]
+        rel_ids.append(rid)
+        nodes.append(prev)
+        cur = prev
+    nodes.reverse()
+    rel_ids.reverse()
+    rels = {r.id: r for r in db.scalars(select(Relation).where(Relation.id.in_(rel_ids)))}
     return PathOut(found=True, entity_ids=nodes, relations=[relation_out(db, rels[r]) for r in rel_ids])

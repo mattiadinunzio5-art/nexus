@@ -28,7 +28,7 @@ PROVENANCE = ("sourced", "user_hypothesis", "ai_hypothesis")
 
 class Entity(TimestampMixin, Base):
     __tablename__ = "entities"
-    __table_args__ = (UniqueConstraint("owner_id", "event_id"),)
+    __table_args__ = (UniqueConstraint("owner_id", "origin", "external_id", name="uq_entities_origin_external_id"), UniqueConstraint("owner_id", "event_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -42,6 +42,9 @@ class Entity(TimestampMixin, Base):
     document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
     # Indicatore collegato a una serie importata (Discovery Intelligence).
     series_id: Mapped[int | None] = mapped_column(ForeignKey("series.id", ondelete="SET NULL"), nullable=True)
+    # Lotto di importazione (es. "wikidata") e identificativo nella fonte (es. "Q12345"): idempotenza e cancellazione per lotto.
+    origin: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)
 
 
@@ -50,6 +53,7 @@ class Relation(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    origin: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
     source_entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id", ondelete="CASCADE"), index=True, nullable=False)
     target_entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id", ondelete="CASCADE"), index=True, nullable=False)
     relation_type: Mapped[str] = mapped_column(String(30), nullable=False)

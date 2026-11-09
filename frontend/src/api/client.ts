@@ -249,7 +249,7 @@ export const api = {
 
   // Fase 4
   presets: () => request<Preset[]>('/finance/presets'),
-  seriesList: (category?: string) => request<SeriesInfo[]>(`/finance/series${qs({ category })}`),
+  seriesList: (category?: string, q?: string) => request<SeriesInfo[]>(`/finance/series${qs({ category, q })}`),
   series: (id: number) => request<SeriesDetail>(`/finance/series/${id}`),
   importSeries: (data: Record<string, unknown>) => request<SeriesDetail>('/finance/series/import', json('POST', data)),
   uploadSeries: (form: FormData) => request<SeriesDetail>('/finance/series/upload', { method: 'POST', body: form }),

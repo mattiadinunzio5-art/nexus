@@ -18,6 +18,7 @@ class Series(TimestampMixin, Base):
     """Serie storica con metadati di provenienza completi."""
 
     __tablename__ = "series"
+    __table_args__ = (UniqueConstraint("owner_id", "origin", "external_id", name="uq_series_origin_external_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -40,6 +41,9 @@ class Series(TimestampMixin, Base):
     missing_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     params: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    # Lotto di importazione (es. "wikidata") e identificativo nella fonte (es. "Q12345"): idempotenza e cancellazione per lotto.
+    origin: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     observations: Mapped[list["Observation"]] = relationship(
