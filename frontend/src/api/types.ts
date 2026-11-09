@@ -21,6 +21,8 @@ export interface Project {
   description: string;
   status: ProjectStatus;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
   owner_id?: number;
   my_role?: 'owner' | 'editor' | 'viewer';
   created_at: string;
@@ -174,6 +176,8 @@ export interface Source {
   verification_note: string;
   verified_at: string | null;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
   citation: string;
   created_at: string;
 }
@@ -202,6 +206,8 @@ export interface DocumentInfo {
   project_id: number | null;
   source_id: number | null;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
   created_at: string;
 }
 
@@ -322,6 +328,8 @@ export interface HistoricalEvent extends EventInput {
   id: number;
   date_label: string;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
   sources: { source_id: number; citation: string; verification_status: VerificationStatus; pages: string; note: string }[];
   knowledge: KnowledgeItem[];
   entity_id: number | null;
@@ -347,6 +355,8 @@ export interface TimelineEvent {
   known_later: KnowledgeItem[];
   hidden_later_count: number;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
 }
 
 export interface Timeline {
@@ -410,6 +420,8 @@ export interface Entity {
   event_id: number | null;
   document_id: number | null;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
 }
 
 export interface Relation {
@@ -452,6 +464,8 @@ export interface DataItem {
   date: string;
   url: string;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
 }
 
 export interface DataSection {
@@ -493,6 +507,8 @@ export interface SeriesInfo {
   missing_count: number;
   description: string;
   is_demo: boolean;
+  /** Biblioteca NEXUS (sola lettura). */
+  library?: boolean;
   last_value: number | null;
   last_date: string | null;
   created_at: string;

@@ -4,7 +4,7 @@ import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
 import type { Source, SourceInput } from '../api/types';
 import { VERIFICATION } from '../components/research';
-import { Badge, DemoBadge } from '../components/ui/Badge';
+import { Badge, DemoBadge, LibraryBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -137,7 +137,7 @@ export function BibliographyPage() {
             <div className="flex flex-wrap items-start gap-2">
               <p className="min-w-0 flex-1 text-sm text-paper">{s.citation}</p>
               <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge>
-              {s.is_demo && <DemoBadge />}
+              {s.is_demo && <DemoBadge />}{s.library && <LibraryBadge />}
             </div>
             {s.verification_note && <p className="mt-1 text-xs text-steel-500">{s.verification_note}</p>}
             <div className="mt-2 flex flex-wrap gap-1">

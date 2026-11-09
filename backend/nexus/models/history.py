@@ -27,6 +27,7 @@ class HistoricalEvent(TimestampMixin, Base):
     anche l'antichità; mese e giorno sono facoltativi (precisione variabile)."""
 
     __tablename__ = "historical_events"
+    __table_args__ = (UniqueConstraint("owner_id", "origin", "external_id", name="uq_historical_events_origin_external_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -49,6 +50,9 @@ class HistoricalEvent(TimestampMixin, Base):
     economic_implications: Mapped[str] = mapped_column(Text, default="", nullable=False)
     reliability: Mapped[str] = mapped_column(String(20), default="unverified", nullable=False)
     reliability_note: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    # Lotto di importazione (es. "wikidata") e identificativo nella fonte (es. "Q12345"): idempotenza e cancellazione per lotto.
+    origin: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     source_links: Mapped[list["EventSource"]] = relationship(cascade="all, delete-orphan", passive_deletes=True)

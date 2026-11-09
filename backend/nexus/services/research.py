@@ -28,16 +28,27 @@ def _semantic(db: Session, user: User, settings: Settings, q: str, limit: int) -
 def retrieve(
     db: Session, user: User, settings: Settings, q: str, mode: str = "hybrid", limit: int = 10, document_ids: list[int] | None = None
 ) -> tuple[list[Passage], str]:
+    from ..core import library
+
     pool = max(limit * 4, 30)
     engine = "nessuno"
     rankings = []
+    owners = library.visible_owner_ids(db, user)
     if mode in ("hybrid", "text"):
-        rankings.append(index.text_search(db, user.id, q, pool, document_ids))
+        # Documenti propri e della Biblioteca: si fondono le classifiche dei due archivi.
+        text_rank = []
+        for o in owners:
+            text_rank += index.text_search(db, o, q, pool, document_ids)
+        rankings.append(sorted(text_rank, key=lambda x: -x[1])[:pool])
     if mode in ("hybrid", "semantic"):
         sem, engine = _semantic(db, user, settings, q, pool)
+        lib = library.library_user_id(db)
+        if lib is not None and lib != user.id:
+            sem_lib, _ = _semantic(db, type("U", (), {"id": lib})(), settings, q, pool)
+            sem = sorted(sem + sem_lib, key=lambda x: -x[1])[:pool]
         if document_ids:
             allowed = set(
-                db.scalars(select(DocumentChunk.id).where(DocumentChunk.document_id.in_(document_ids), DocumentChunk.owner_id == user.id))
+                db.scalars(select(DocumentChunk.id).where(DocumentChunk.document_id.in_(document_ids), DocumentChunk.owner_id.in_(owners)))
             )
             sem = [x for x in sem if x[0] in allowed]
         rankings.append(sem)
@@ -49,7 +60,7 @@ def retrieve(
         select(DocumentChunk, Document, Source)
         .join(Document, Document.id == DocumentChunk.document_id)
         .outerjoin(Source, Source.id == Document.source_id)
-        .where(DocumentChunk.id.in_(ids), DocumentChunk.owner_id == user.id)
+        .where(DocumentChunk.id.in_(ids), DocumentChunk.owner_id.in_(owners))
     ).all()
     by_id = {c.id: (c, d, s) for c, d, s in rows}
     passages = []

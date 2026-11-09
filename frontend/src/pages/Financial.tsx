@@ -1,10 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../api/client';
 import { FREQUENCY_LABEL, SERIES_CATEGORIES, type AlertKind, type Comparison, type Preset, type SeriesDetail } from '../api/types';
 import { DrawdownChart, formatNumber, mergePoints, SERIES_COLORS, TimeChart } from '../components/charts';
-import { Badge, DemoBadge } from '../components/ui/Badge';
+import { Badge, DemoBadge, LibraryBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -113,7 +113,13 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
 
 export function FinancialPage() {
   const [category, setCategory] = useState('');
-  const list = useAsync(() => api.seriesList(category || undefined), [category]);
+  const [q, setQ] = useState('');
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setQuery(q.trim()), 350);
+    return () => clearTimeout(t);
+  }, [q]);
+  const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined), [category, query]);
   const [showImport, setShowImport] = useState(false);
   useContextPanel(
     <div className="space-y-2 text-steel-300">
@@ -129,10 +135,13 @@ export function FinancialPage() {
       <PageHeader eyebrow="Modulo B" title="Financial Intelligence" description="Serie storiche da fonti aperte documentate e analisi quantitative."
         actions={<><Link to="/financial/compare" className="inline-flex items-center rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800">Confronta serie</Link><Button variant="primary" onClick={() => setShowImport((v) => !v)}>Importa serie</Button></>} />
       {showImport && <Card title="Importa serie" className="mb-6"><ImportPanel onDone={() => list.reload()} /></Card>}
-      <Select aria-label="Categoria" className="mb-4 max-w-64" value={category} onChange={(e) => setCategory(e.target.value)}>
-        <option value="">Tutte le categorie</option>
-        {Object.entries(SERIES_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-      </Select>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Select aria-label="Categoria" className="max-w-64" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <option value="">Tutte le categorie</option>
+          {Object.entries(SERIES_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </Select>
+        <Input aria-label="Cerca serie" placeholder="Cerca per nome o paese…" className="max-w-72" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
       {list.loading && !list.data && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
       {list.data?.length === 0 && <EmptyState>Nessuna serie importata.</EmptyState>}
@@ -145,7 +154,7 @@ export function FinancialPage() {
             <tbody className="divide-y divide-ink-700">
               {list.data.map((s) => (
                 <tr key={s.id}>
-                  <td className="px-3 py-2"><Link to={`/financial/series/${s.id}`} className="text-paper hover:text-gold-300">{s.name}</Link> {s.is_demo && <DemoBadge />}<span className="block text-[11px] text-steel-500">{SERIES_CATEGORIES[s.category]}</span></td>
+                  <td className="px-3 py-2"><Link to={`/financial/series/${s.id}`} className="text-paper hover:text-gold-300">{s.name}</Link> {s.is_demo && <DemoBadge />}{s.library && <LibraryBadge />}<span className="block text-[11px] text-steel-500">{SERIES_CATEGORIES[s.category]}</span></td>
                   <td className="whitespace-nowrap px-3 py-2 text-paper">{formatNumber(s.last_value ?? undefined, 6)} <span className="text-xs text-steel-500">{s.unit}</span><span className="block text-[11px] text-steel-500">{s.last_date}</span></td>
                   <td className="whitespace-nowrap px-3 py-2 text-steel-400">{s.start_date?.slice(0, 7)} → {s.end_date?.slice(0, 7)}{s.missing_count > 0 && <span className="block text-[11px] text-warn">{s.missing_count} mancanti</span>}</td>
                   <td className="px-3 py-2 text-steel-400">{FREQUENCY_LABEL[s.frequency]}</td>

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { EyeOff, History } from 'lucide-react';
 import { api } from '../api/client';
 import { CATEGORIES, KNOWLEDGE_KINDS, RELIABILITY } from '../api/types';
-import { Badge, DemoBadge } from '../components/ui/Badge';
+import { Badge, DemoBadge, LibraryBadge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Field, Input, Select } from '../components/ui/Form';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -93,7 +93,7 @@ export function TimeMachinePage() {
                     <Link to={`/history/events/${e.id}`} className="font-medium text-paper hover:text-gold-300">{e.title}</Link>
                     {e.status_at_date === 'ongoing' && <Badge tone="gold">In corso alla data</Badge>}
                     <Badge tone={RELIABILITY_TONE[e.reliability]}>{RELIABILITY[e.reliability]}</Badge>
-                    {e.is_demo && <DemoBadge />}
+                    {e.is_demo && <DemoBadge />}{e.library && <LibraryBadge />}
                   </div>
                   {e.description && <p className="mt-1 text-sm text-steel-300">{e.description}</p>}
                   {e.known_then.length > 0 && (

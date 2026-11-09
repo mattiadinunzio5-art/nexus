@@ -20,6 +20,11 @@ export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; childr
   );
 }
 
+/** Elemento della Biblioteca NEXUS: dati aperti condivisi, in sola lettura. */
+export function LibraryBadge() {
+  return <span title="Biblioteca NEXUS: dati aperti con fonte, condivisi e in sola lettura"><Badge tone="gold">LIBRARY</Badge></span>;
+}
+
 export function DemoBadge() {
   return <Badge tone="warn">DEMO</Badge>;
 }

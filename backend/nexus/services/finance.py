@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..api.schemas_finance import CompareIn, Preset, SeriesDetailOut, SeriesImportIn, SeriesOut, SeriesUpdate
 from ..core.config import Settings
-from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
+from ..core.errors import ConfirmationRequiredError, ValidationFailedError
 from ..database.base import utcnow
 from ..finance import analytics, connectors
 from ..models import ConnectorState, Observation, Series, User
@@ -140,7 +140,7 @@ def import_csv(
 
 
 def refresh(db: Session, user: User, settings: Settings, series_id: int) -> Series:
-    s = get_series(db, user, series_id)
+    s = get_series(db, user, series_id, own=True)
     if s.connector == "upload":
         raise ValidationFailedError("Le serie caricate da CSV non hanno una fonte da cui aggiornarsi.")
     data = SeriesImportIn(category=s.category, **s.params)
@@ -161,25 +161,39 @@ def refresh(db: Session, user: User, settings: Settings, series_id: int) -> Seri
     return s
 
 
-def list_series(db: Session, user: User, category: str | None = None) -> list[Series]:
-    stmt = select(Series).where(Series.owner_id == user.id)
+def list_series(db: Session, user: User, category: str | None = None, q: str | None = None, limit: int = 300,
+                offset: int = 0, origin: str | None = None) -> list[Series]:
+    from ..core import library
+
+    stmt = select(Series).where(Series.owner_id.in_(library.visible_owner_ids(db, user)))
+    if origin == "mine":
+        stmt = stmt.where(Series.owner_id == user.id)
+    elif origin == "library":
+        stmt = stmt.where(Series.owner_id != user.id)
     if category:
         stmt = stmt.where(Series.category == category)
-    return list(db.scalars(stmt.order_by(Series.name)))
+    if q:
+        like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        stmt = stmt.where(or_(Series.name.ilike(like, escape="\\"), Series.country.ilike(like, escape="\\")))
+    # Prima le serie dell'utente, poi quelle della Biblioteca.
+    stmt = stmt.order_by((Series.owner_id != user.id), Series.name, Series.id)
+    return list(db.scalars(stmt.offset(offset).limit(limit)))
 
 
-def get_series(db: Session, user: User, series_id: int) -> Series:
-    s = db.get(Series, series_id)
-    if s is None or s.owner_id != user.id:
-        raise NotFoundError("Serie non trovata.")
-    return s
+def get_series(db: Session, user: User, series_id: int, own: bool = False) -> Series:
+    from ..core import library
+
+    return library.access(db, user, db.get(Series, series_id), own, "Serie non trovata.")
 
 
 def to_out(db: Session, s: Series, detail: bool = False) -> SeriesOut | SeriesDetailOut:
     last = db.scalar(
         select(Observation).where(Observation.series_id == s.id, Observation.value.is_not(None)).order_by(Observation.date.desc()).limit(1)
     )
+    from ..core import library
+
     base = SeriesOut.model_validate(s).model_dump()
+    base["library"] = library.is_library(db, s.owner_id)
     base.update(last_value=last.value if last else None, last_date=last.date if last else None)
     if detail:
         base["observations"] = [{"date": o.date, "value": o.value} for o in s.observations]
@@ -188,7 +202,7 @@ def to_out(db: Session, s: Series, detail: bool = False) -> SeriesOut | SeriesDe
 
 
 def update_series(db: Session, user: User, series_id: int, data: SeriesUpdate) -> Series:
-    s = get_series(db, user, series_id)
+    s = get_series(db, user, series_id, own=True)
     for k, v in data.model_dump(exclude_unset=True, exclude_none=True).items():
         setattr(s, k, v)
     db.commit()
@@ -197,7 +211,7 @@ def update_series(db: Session, user: User, series_id: int, data: SeriesUpdate) -
 
 
 def delete_series(db: Session, user: User, series_id: int, confirm: bool) -> None:
-    s = get_series(db, user, series_id)
+    s = get_series(db, user, series_id, own=True)
     if not confirm:
         raise ConfirmationRequiredError("Eliminare una serie richiede conferma (confirm=true).")
     db.delete(s)

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 
@@ -25,10 +25,12 @@ router = APIRouter(prefix="/history", tags=["history"])
 def list_events(
     db: DB, user: CurrentUser, q: str | None = Query(None, max_length=200), category: Category | None = None,
     country: str | None = Query(None, max_length=120), from_year: int | None = None, to_year: int | None = None,
-    reliability: Reliability | None = None,
+    reliability: Reliability | None = None, limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
+    origin: Literal["mine", "library"] | None = None,
 ):
     return [svc.to_out(db, e) for e in svc.list_events(db, user, q=q, category=category, country=country,
-                                                       from_year=from_year, to_year=to_year, reliability=reliability)]
+                                                       from_year=from_year, to_year=to_year, reliability=reliability,
+                                                       limit=limit, offset=offset, origin=origin)]
 
 
 @router.post("/events", response_model=EventOut, status_code=status.HTTP_201_CREATED)

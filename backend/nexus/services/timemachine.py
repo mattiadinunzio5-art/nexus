@@ -26,10 +26,18 @@ def timeline(
     db: Session, user: User, *, as_of_year: int | None, hindsight: bool, country: str | None, category: str | None,
     from_year: int | None, to_year: int | None, event_id: int | None = None,
 ) -> TimelineOut:
+    from ..core import library
+
     upper = to_year
     if as_of_year is not None and not hindsight:
         upper = min(as_of_year, to_year) if to_year is not None else as_of_year
-    all_events = history.list_events(db, user, category=category, country=country, from_year=from_year, to_year=to_year)
+    windowed = False
+    if as_of_year is not None and from_year is None and library.library_user_id(db) is not None:
+        # Con la Biblioteca l'archivio è molto grande: senza «dall'anno» si mostra una finestra
+        # di WINDOW_YEARS anni prima della data scelta (modificabile con i filtri).
+        from_year, windowed = as_of_year - WINDOW_YEARS, True
+    all_events = history.list_events(db, user, category=category, country=country, from_year=from_year, to_year=to_year,
+                                     limit=MAX_EVENTS)
     events = [e for e in all_events if upper is None or e.start_year <= upper]
     if event_id is not None:
         events = [e for e in events if e.id == event_id]
@@ -54,12 +62,14 @@ def timeline(
                 categories=e.categories, reliability=e.reliability, description=e.description,
                 consequences=None if strict else e.consequences, consequences_hidden=strict and bool(e.consequences),
                 known_then=k_then, known_later=[] if strict else k_later, hidden_later_count=len(k_later) if strict else 0,
-                is_demo=e.is_demo,
+                is_demo=e.is_demo, library=library.is_library(db, e.owner_id),
             )
         )
 
-    indicators = _indicators_as_of(db, user, as_of_year) if as_of_year is not None else []
+    indicators = _indicators_as_of(db, user, as_of_year, country) if as_of_year is not None else []
     notes = []
+    if windowed:
+        notes.append(f"Archivio esteso (Biblioteca NEXUS): sono mostrati gli eventi dal {dates.fmt(from_year)}; usa «Dall'anno» per allargare.")
     if as_of_year is not None and not hindsight:
         notes.append(f"Vista rigorosa al {dates.fmt(as_of_year)}: nascosti eventi successivi, conseguenze retrospettive e informazioni emerse dopo.")
     if as_of_year is not None and hindsight:
@@ -73,13 +83,26 @@ def timeline(
     )
 
 
-def _indicators_as_of(db: Session, user: User, year: int) -> list[TimelineIndicator]:
+WINDOW_YEARS = 25
+MAX_EVENTS = 400
+MAX_LIBRARY_INDICATORS = 12
+
+
+def _indicators_as_of(db: Session, user: User, year: int, country: str | None = None) -> list[TimelineIndicator]:
     try:
         from ..models import Observation, Series
     except ImportError:  # Fase 4 non ancora installata
         return []
+    from ..core import library
+
     result = []
-    for s in db.scalars(select(Series).where(Series.owner_id == user.id)):
+    candidates = list(db.scalars(select(Series).where(Series.owner_id == user.id)))
+    lib = library.library_user_id(db)
+    if lib is not None and lib != user.id and country:
+        # Dalla Biblioteca solo le serie del paese filtrato, con un limite (sono migliaia).
+        candidates += list(db.scalars(select(Series).where(Series.owner_id == lib, Series.country.ilike(f"%{country}%"))
+                                      .order_by(Series.name).limit(MAX_LIBRARY_INDICATORS)))
+    for s in candidates:
         obs = db.scalar(
             select(Observation)
             .where(Observation.series_id == s.id, Observation.date <= f"{year}-12-31", Observation.value.is_not(None))

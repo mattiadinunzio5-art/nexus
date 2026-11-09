@@ -1,4 +1,6 @@
-from fastapi import APIRouter, File, UploadFile, status
+from typing import Literal
+
+from fastapi import APIRouter, File, Query, UploadFile, status
 
 from ...services import sources as svc
 from ..deps import DB, CurrentUser
@@ -8,8 +10,15 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 
 @router.get("", response_model=list[SourceOut])
-def list_sources(db: DB, user: CurrentUser, q: str | None = None):
-    return [svc.to_out(s) for s in svc.list_sources(db, user, q)]
+def list_sources(db: DB, user: CurrentUser, q: str | None = None, limit: int = Query(500, ge=1, le=1000),
+                 offset: int = Query(0, ge=0), origin: Literal["mine", "library"] | None = None):
+    return [_out(s, user) for s in svc.list_sources(db, user, q, limit=limit, offset=offset, origin=origin)]
+
+
+def _out(s, user) -> SourceOut:
+    out = svc.to_out(s)
+    out.library = s.owner_id != user.id
+    return out
 
 
 @router.post("", response_model=SourceOut, status_code=status.HTTP_201_CREATED)
@@ -41,7 +50,7 @@ async def import_bibtex(db: DB, user: CurrentUser, file: UploadFile = File(...))
 
 @router.get("/{source_id}", response_model=SourceOut)
 def get_source(source_id: int, db: DB, user: CurrentUser):
-    return svc.to_out(svc.get_source(db, user, source_id))
+    return _out(svc.get_source(db, user, source_id), user)
 
 
 @router.put("/{source_id}", response_model=SourceOut)

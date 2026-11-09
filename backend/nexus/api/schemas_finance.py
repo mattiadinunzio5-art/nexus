@@ -37,6 +37,8 @@ class SeriesImportIn(BaseModel):
 
 class SeriesOut(ORMModel):
     id: int
+    # Elemento della Biblioteca NEXUS (dati aperti condivisi, sola lettura).
+    library: bool = False
     name: str
     category: str
     country: str
