@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..api.schemas_research import DocumentUpdate
 from ..core.config import Settings
-from ..core.errors import ConfirmationRequiredError, NexusError, NotFoundError, ValidationFailedError
+from ..core.errors import ConfirmationRequiredError, NexusError, ValidationFailedError
 from ..core.logging import logger
 from ..models import Document, DocumentChunk, Project, Source, User
 from ..research import index
@@ -164,7 +164,9 @@ def import_gutenberg(db: Session, user: User, settings: Settings, ebook_id: int,
 
 
 def list_documents(db: Session, user: User, project_id: int | None = None, category: str | None = None) -> list[Document]:
-    stmt = select(Document).where(Document.owner_id == user.id)
+    from ..core import library
+
+    stmt = select(Document).where(Document.owner_id.in_(library.visible_owner_ids(db, user)))
     if project_id is not None:
         stmt = stmt.where(Document.project_id == project_id)
     if category:
@@ -172,11 +174,10 @@ def list_documents(db: Session, user: User, project_id: int | None = None, categ
     return list(db.scalars(stmt.order_by(Document.created_at.desc())))
 
 
-def get_document(db: Session, user: User, document_id: int) -> Document:
-    d = db.get(Document, document_id)
-    if d is None or d.owner_id != user.id:
-        raise NotFoundError("Documento non trovato.")
-    return d
+def get_document(db: Session, user: User, document_id: int, own: bool = False) -> Document:
+    from ..core import library
+
+    return library.access(db, user, db.get(Document, document_id), own, "Documento non trovato.")
 
 
 def get_chunks(db: Session, user: User, document_id: int, offset: int = 0, limit: int = 50) -> list[DocumentChunk]:
@@ -189,7 +190,7 @@ def get_chunks(db: Session, user: User, document_id: int, offset: int = 0, limit
 
 
 def update_document(db: Session, user: User, document_id: int, data: DocumentUpdate) -> Document:
-    d = get_document(db, user, document_id)
+    d = get_document(db, user, document_id, own=True)
     changes = data.model_dump(exclude_unset=True)
     _check_refs(db, user, changes.get("project_id"), changes.get("source_id"))
     for k, v in changes.items():
@@ -202,7 +203,7 @@ def update_document(db: Session, user: User, document_id: int, data: DocumentUpd
 
 
 def delete_document(db: Session, user: User, settings: Settings, document_id: int, confirm: bool) -> None:
-    d = get_document(db, user, document_id)
+    d = get_document(db, user, document_id, own=True)
     if not confirm:
         raise ConfirmationRequiredError("Eliminare un documento dall'archivio richiede conferma (confirm=true).")
     key = d.storage_path

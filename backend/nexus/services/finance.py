@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..api.schemas_finance import CompareIn, Preset, SeriesDetailOut, SeriesImportIn, SeriesOut, SeriesUpdate
 from ..core.config import Settings
-from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
+from ..core.errors import ConfirmationRequiredError, ValidationFailedError
 from ..database.base import utcnow
 from ..finance import analytics, connectors
 from ..models import ConnectorState, Observation, Series, User

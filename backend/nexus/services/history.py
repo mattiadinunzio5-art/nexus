@@ -6,7 +6,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..api.schemas_history import EventIn, EventLinkIn, EventOut, EventSourceOut, KnowledgeIn, KnowledgeOut, RelationIn
-from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
+from ..core.errors import ConfirmationRequiredError, ValidationFailedError
 from ..history import dates
 from ..models import Entity, EventSource, HistoricalEvent, KnowledgeItem, Source, User
 from ..research.citations import format_citation

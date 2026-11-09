@@ -82,7 +82,7 @@ class Wikimedia:
 
     def __init__(self, run: Run, client: httpx.Client | None = None):
         self.run = run
-        self.client = client or httpx.Client(timeout=90, headers={"User-Agent": UA, "Accept": "application/sparql-results+json"})
+        self.client = client or httpx.Client(timeout=httpx.Timeout(90, connect=20), headers={"User-Agent": UA, "Accept": "application/sparql-results+json"})
         self.cache_dir = run.settings.cache_dir / "wikimedia"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -97,11 +97,13 @@ class Wikimedia:
             except httpx.HTTPError as exc:
                 if attempt == 5:
                     raise
+                print(f"    Wikimedia: {type(exc).__name__}, riprovo (tentativo {attempt + 1}/6)", flush=True)
                 time.sleep(5 * (attempt + 1))
                 continue
-            if r.status_code in (429, 503):
+            if r.status_code in (429, 503, 502, 504):
                 wait = float(r.headers.get("Retry-After", 30 * (attempt + 1)))
-                self.run.report.note("Wikimedia ha chiesto di rallentare (429/503): attese rispettate.")
+                print(f"    Wikimedia: HTTP {r.status_code}, attendo {min(wait, 300):.0f} s (tentativo {attempt + 1}/6)", flush=True)
+                self.run.report.note("Wikimedia ha chiesto di rallentare o non ha risposto (429/50x): attese rispettate.")
                 time.sleep(min(wait, 300))
                 continue
             r.raise_for_status()
@@ -381,13 +383,13 @@ def _entity_candidates(wm: Wikimedia, cls: str, prop: str, min_sl: int, cap: int
     offset = 0
     while len(out) < cap:
         rows = wm.sparql(f"""
-SELECT ?item ?label ?desc ?sl ?b ?d WHERE {{
+SELECT ?item ?label ?desc ?sl (MIN(?b0) AS ?b) (MAX(?d0) AS ?d) WHERE {{
   ?item wdt:{prop} wd:{cls} ; wikibase:sitelinks ?sl . FILTER(?sl >= {min_sl})
   ?item rdfs:label ?label FILTER(LANG(?label) = "en")
   OPTIONAL {{ ?item schema:description ?desc FILTER(LANG(?desc) = "en") }}
-  OPTIONAL {{ ?item wdt:P569|wdt:P571 ?b }}
-  OPTIONAL {{ ?item wdt:P570|wdt:P576 ?d }}
-}} ORDER BY DESC(?sl) ?item LIMIT {PAGE} OFFSET {offset}""")
+  OPTIONAL {{ ?item wdt:P569|wdt:P571 ?b0 }}
+  OPTIONAL {{ ?item wdt:P570|wdt:P576 ?d0 }}
+}} GROUP BY ?item ?label ?desc ?sl ORDER BY DESC(?sl) ?item LIMIT {PAGE} OFFSET {offset}""")
         for r in rows:
             out.setdefault(qid(r["item"]), r)
         if len(rows) < PAGE:
@@ -443,6 +445,7 @@ def run_graph(run: Run, wm: Wikimedia | None = None) -> None:
                 continue
             e = Entity(owner_id=run.lib.id, origin=ORIGIN, external_id=q, **data.model_dump())
             run.db.add(e)
+            existing[q] = -1  # stesso QID in più classi (es. impero e stato storico): una sola entità
             names.add(name.lower())
             created += 1
             run.report.add("entities", "created")

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..api.schemas_research import SourceIn, SourceOut
-from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
+from ..core.errors import ConfirmationRequiredError, ValidationFailedError
 from ..database.base import utcnow
 from ..models import Source, User
 from ..research.citations import crossref_lookup, format_citation
