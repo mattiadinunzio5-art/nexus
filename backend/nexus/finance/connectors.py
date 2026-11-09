@@ -288,7 +288,7 @@ def fetch_owid(f: HttpFetcher, slug: str, entity: str, force: bool = False) -> F
 
 # --- Eurostat ----------------------------------------------------------------
 
-EUROSTAT_LICENSE = "Eurostat: riutilizzo consentito con citazione della fonte, salvo eccezioni. Verificare: https://ec.europa.eu/eurostat/about-us/policies/copyright"
+EUROSTAT_LICENSE = "Eurostat: riutilizzo consentito con citazione della fonte, salvo eccezioni. Verificare: https://ec.europa.eu/eurostat/help/copyright-notice"
 
 
 def parse_jsonstat(d: dict) -> tuple[list[tuple[str, float | None]], dict]:

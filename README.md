@@ -67,6 +67,12 @@ la War Room lavora in modalità locale e dichiara gli agenti non eseguiti.
 
 ## Novità
 
+- **Biblioteca NEXUS** (dati aperti condivisi, sola lettura, etichetta LIBRARY): migliaia di serie (World Bank, Maddison
+  Project via OWID, Eurostat, BCE), eventi storici e Knowledge Graph da Wikidata con estratti di Wikipedia, bibliografia
+  da Crossref e Open Library, classici di pubblico dominio da Project Gutenberg — ognuno con fonte e licenza.
+  Import con `scripts/py.sh scripts/import_data.py all --profile online|full`; fonti, regole e comandi in
+  [`docs/DATA.md`](docs/DATA.md).
+
 - **Discovery Intelligence** (nuova sezione): connessioni tra eventi, serie ed entità, ipotesi con verifica, anomalie,
   catene causali e scenari, con evidenze e fonti. Architettura e limiti in [`docs/DISCOVERY.md`](docs/DISCOVERY.md).
 
@@ -111,12 +117,13 @@ nexus/
 │   ├── studio/         citazioni, grafici, export PDF/DOCX
 │   ├── security/       identità, password, cifratura, rate limit
 │   ├── billing/        interfaccia pagamenti (nessun pagamento attivo)
-│   └── integrations/   registro fonti e verifica raggiungibilità
-├── backend/migrations/ Alembic (0001–0008)
+│   ├── integrations/   registro fonti e verifica raggiungibilità
+│   └── importers/      importatori della Biblioteca NEXUS (dati aperti)
+├── backend/migrations/ Alembic (0001–0012)
 ├── backend/tests/      pytest
 ├── frontend/src/       React + TypeScript (api, components, pages, state, test)
 ├── docs/               architettura, roadmap, API
-└── scripts/            setup, avvio, test, seed, backup, briefing, test responsive
+└── scripts/            setup, avvio, test, seed, backup, briefing, import dati aperti, test responsive
 ```
 
 ## Website
