@@ -21,4 +21,4 @@ export function getSupabase(): Promise<SupabaseClient> | null {
 export const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/+$/, '') || null;
 
 /** Demo pubblica in sola lettura della piattaforma (nessun account richiesto). */
-export const demoUrl = appUrl ? `${appUrl}/?demo=1` : null;
+export const demoUrl = (lang: 'it' | 'en') => (appUrl ? `${appUrl}/?demo=${lang === 'en' ? 'en' : '1'}` : null);

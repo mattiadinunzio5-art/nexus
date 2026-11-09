@@ -63,13 +63,13 @@ def _demo_user(request: Request, db: Session, settings: Settings, token: str) ->
 
     if not settings.demo_enabled:
         raise auth.AuthError("La demo non è disponibile.")
-    demo.check_token(settings, token)
+    lang = demo.check_token(settings, token)
     if request.method not in ("GET", "HEAD", "OPTIONS") and request.url.path not in demo.DEMO_ALLOWED_WRITES:
-        raise auth.ForbiddenError(demo.READ_ONLY_MESSAGE)
-    user = demo.demo_user(db)
+        raise auth.ForbiddenError(demo.READ_ONLY_MESSAGE_EN if lang == "en" else demo.READ_ONLY_MESSAGE)
+    user = demo.demo_user(db, lang)
     if user is None:
-        demo.ensure_demo(request.app.state.database, settings)
-        user = demo.demo_user(db)
+        demo.ensure_demo(request.app.state.database, settings, lang)
+        user = demo.demo_user(db, lang)
     request.state.session_id = None
     return user
 

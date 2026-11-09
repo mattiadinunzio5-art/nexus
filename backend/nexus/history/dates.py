@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import calendar
 
+from ..core.locale import current_lang
+
 MONTHS_IT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 def validate(year: int | None, month: int | None, day: int | None, label: str) -> None:
@@ -36,12 +39,14 @@ def sort_key(year: int, month: int | None, day: int | None) -> tuple[int, int, i
 def fmt(year: int | None, month: int | None = None, day: int | None = None) -> str:
     if year is None:
         return ""
-    y = f"{-year} a.C." if year < 0 else str(year)
+    en = current_lang.get() == "en"
+    months = MONTHS_EN if en else MONTHS_IT
+    y = (f"{-year} BC" if en else f"{-year} a.C.") if year < 0 else str(year)
     if month is None:
         return y
     if day is None:
-        return f"{MONTHS_IT[month - 1]} {y}"
-    return f"{day} {MONTHS_IT[month - 1]} {y}"
+        return f"{months[month - 1]} {y}"
+    return f"{day} {months[month - 1]} {y}"
 
 
 def fmt_range(sy, sm, sd, ey, em, ed) -> str:

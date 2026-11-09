@@ -14,6 +14,7 @@ interface AuthState {
   siteUrl?: string | null;
   /** Sessione della demo pubblica in sola lettura. */
   isDemo?: boolean;
+  demoLang?: 'it' | 'en';
 }
 const Ctx = createContext<AuthState>({ mode: 'local', user: null, refresh: async () => {}, logout: async () => {} });
 export const useAuth = () => useContext(Ctx);
@@ -36,7 +37,16 @@ export function readDemoToken(): string | null {
   }
 }
 
-function saveDemoToken(v: { token: string; expires_at: string } | null) {
+export function readDemoLang(): 'it' | 'en' {
+  try {
+    const raw = localStorage.getItem(DEMO_KEY);
+    return raw && (JSON.parse(raw) as { lang?: string }).lang === 'en' ? 'en' : 'it';
+  } catch {
+    return 'it';
+  }
+}
+
+function saveDemoToken(v: { token: string; expires_at: string; lang?: 'it' | 'en' } | null) {
   try {
     if (v) localStorage.setItem(DEMO_KEY, JSON.stringify(v));
     else localStorage.removeItem(DEMO_KEY);
@@ -45,12 +55,14 @@ function saveDemoToken(v: { token: string; expires_at: string } | null) {
   }
 }
 
-function wantsDemo(): boolean {
-  if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('demo') === '1';
+/** ?demo=1 (o ?demo=it) apre la demo italiana, ?demo=en quella inglese. */
+function wantsDemo(): 'it' | 'en' | null {
+  if (typeof window === 'undefined') return null;
+  const v = new URLSearchParams(window.location.search).get('demo');
+  return v === 'en' ? 'en' : v === '1' || v === 'it' ? 'it' : null;
 }
 
-function DemoButton({ onStart }: { onStart: () => Promise<void> }) {
+function DemoButton({ onStart }: { onStart: (lang?: 'it' | 'en') => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>();
   return (
@@ -68,7 +80,10 @@ function DemoButton({ onStart }: { onStart: () => Promise<void> }) {
       }}>
         {busy ? 'Apertura della demo…' : 'Prova la demo senza account'}
       </Button>
-      <p className="text-center text-[11px] text-steel-500">Un progetto di esempio sulla Grande Depressione 1929–1933, in sola lettura.</p>
+      <p className="text-center text-[11px] text-steel-500">
+        Un progetto di esempio sulla Grande Depressione 1929–1933, in sola lettura. ·{' '}
+        <button type="button" className="text-gold-300 hover:underline" disabled={busy} onClick={() => { setBusy(true); onStart('en').catch((x) => setErr(errorText(x))).finally(() => setBusy(false)); }}>English demo</button>
+      </p>
       {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </div>
   );
@@ -76,6 +91,7 @@ function DemoButton({ onStart }: { onStart: () => Promise<void> }) {
 
 /** Mostrato mentre il server si avvia: sul piano gratuito il primo accesso può richiedere fino a un minuto. */
 function StartingScreen() {
+  const en = wantsDemo() === 'en' || readDemoLang() === 'en' && readDemoToken() !== null;
   const [slow, setSlow] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setSlow(true), 2500);
@@ -86,8 +102,10 @@ function StartingScreen() {
       <div className="max-w-sm text-center">
         <p className="text-lg font-semibold tracking-[0.3em] text-gold-400">NEXUS</p>
         <div className="mx-auto mt-4 size-6 animate-spin rounded-full border-2 border-ink-700 border-t-gold-400" aria-hidden />
-        <p className="mt-4 text-sm text-steel-300">{slow ? 'Avvio del server in corso…' : 'Caricamento…'}</p>
-        {slow && <p className="mt-1 text-xs text-steel-500">Se NEXUS non veniva usato da un po', il primo avvio può richiedere fino a un minuto. Non chiudere la pagina.</p>}
+        <p className="mt-4 text-sm text-steel-300">{slow ? (en ? 'Starting the server…' : 'Avvio del server in corso…') : en ? 'Loading…' : 'Caricamento…'}</p>
+        {slow && <p className="mt-1 text-xs text-steel-500">{en
+          ? "If NEXUS hasn't been used for a while, the first start can take up to a minute. Please keep this page open."
+          : "Se NEXUS non veniva usato da un po', il primo avvio può richiedere fino a un minuto. Non chiudere la pagina."}</p>}
       </div>
     </div>
   );
@@ -137,7 +155,7 @@ function LoginScreen({ allowRegistration, onDone }: { allowRegistration: boolean
 }
 
 /** Versione online: accesso con l'account del sito NEXUS (Supabase). Registrazione e recupero password sul sito. */
-function SupabaseLoginScreen({ client, siteUrl, onDone, onDemo }: { client: SupabaseClient; siteUrl?: string | null; onDone: () => Promise<void>; onDemo?: () => Promise<void> }) {
+function SupabaseLoginScreen({ client, siteUrl, onDone, onDemo }: { client: SupabaseClient; siteUrl?: string | null; onDone: () => Promise<void>; onDemo?: (lang?: 'it' | 'en') => Promise<void> }) {
   const [f, setF] = useState({ email: '', password: '' });
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -188,6 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [checked, setChecked] = useState(false);
   const [isDemo, setIsDemo] = useState(() => readDemoToken() !== null);
+  const [demoLang, setDemoLang] = useState<'it' | 'en'>(readDemoLang);
 
   const refresh = useCallback(async () => {
     try {
@@ -215,9 +234,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTokenProvider(async () => readDemoToken());
       }
       setConfig(cfg);
-      if (cfg.demo && wantsDemo() && !signedIn && !readDemoToken()) {
+      const want = wantsDemo();
+      if (cfg.demo && want && !signedIn && (!readDemoToken() || readDemoLang() !== want)) {
         try {
-          saveDemoToken(await api.openDemo());
+          saveDemoToken(await api.openDemo(want));
         } catch {
           /* se la demo non si apre resta la schermata di accesso */
         }
@@ -228,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.history.replaceState(null, '', url.pathname + url.search + url.hash);
       }
       setIsDemo(readDemoToken() !== null);
+      setDemoLang(readDemoLang());
       await refresh();
     }).catch(() => {
       setConfig({ mode: 'local', allow_registration: false });
@@ -238,9 +259,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('nexus:unauthorized', onUnauthorized);
   }, [refresh]);
 
-  const startDemo = useCallback(async () => {
-    saveDemoToken(await api.openDemo());
+  const startDemo = useCallback(async (lang: 'it' | 'en' = 'it') => {
+    saveDemoToken(await api.openDemo(lang));
     setIsDemo(true);
+    setDemoLang(lang);
     await refresh();
   }, [refresh]);
 
@@ -264,5 +286,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return <SupabaseLoginScreen client={supa} siteUrl={config?.site_url} onDone={refresh} onDemo={config.demo ? startDemo : undefined} />;
   }
   if (mode === 'multi' && checked && !user) return <LoginScreen allowRegistration={config?.allow_registration ?? false} onDone={refresh} />;
-  return <Ctx.Provider value={{ mode, user, refresh, logout, siteUrl: config?.site_url, isDemo: isDemo && !!user }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ mode, user, refresh, logout, siteUrl: config?.site_url, isDemo: isDemo && !!user, demoLang }}>{children}</Ctx.Provider>;
 }

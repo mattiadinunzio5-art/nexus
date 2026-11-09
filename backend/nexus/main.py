@@ -62,7 +62,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if (request.method in ("POST", "PUT", "PATCH", "DELETE") and request.cookies.get("nexus_session")
                 and not request.headers.get("authorization") and request.headers.get("x-nexus-client") != "web"):
             return JSONResponse(status_code=403, content={"error": {"code": "csrf", "message": "Richiesta non consentita (intestazione X-Nexus-Client mancante)."}})
-        response = await call_next(request)
+        from .core.locale import current_lang
+
+        token = current_lang.set("en" if request.headers.get("authorization", "").startswith("Bearer demo.en.") else "it")
+        try:
+            response = await call_next(request)
+        finally:
+            current_lang.reset(token)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "no-referrer")

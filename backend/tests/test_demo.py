@@ -52,3 +52,22 @@ def test_demo_tokens_are_signed_and_expire(online):  # noqa: F811
 def test_demo_not_available_in_local_mode(client):
     assert client.post("/api/auth/demo").status_code == 403
     assert client.get("/api/auth/config").json()["demo"] is False
+
+
+def test_english_demo_is_separate_and_in_english(online):  # noqa: F811
+    r = online.post("/api/auth/demo?lang=en")
+    assert r.status_code == 200 and r.json()["lang"] == "en"
+    tok = r.json()["token"]
+    assert tok.startswith("demo.en.")
+    assert [p["title"] for p in online.get("/api/projects", headers=as_(tok)).json()] == [demo.DEMO_PROJECT_TITLE_EN]
+    events = online.get("/api/history/events", headers=as_(tok)).json()
+    items = events["items"] if isinstance(events, dict) else events
+    crash = next(e for e in items if e["title"] == "Wall Street Crash")
+    assert crash["date_label"] == "24 Oct 1929 – 29 Oct 1929" and crash["countries"] == ["United States"]
+    w = online.post("/api/projects", json={"title": "x"}, headers=as_(tok))
+    assert w.status_code == 403 and "read-only" in w.json()["error"]["message"]
+    # La demo italiana resta in italiano e separata.
+    it = _open(online)
+    assert [p["title"] for p in online.get("/api/projects", headers=as_(it)).json()] == [demo.DEMO_PROJECT_TITLE]
+    ev_it = online.get("/api/history/events", headers=as_(it)).json()
+    assert any(e["date_label"].startswith("24 ott 1929") for e in (ev_it["items"] if isinstance(ev_it, dict) else ev_it))
