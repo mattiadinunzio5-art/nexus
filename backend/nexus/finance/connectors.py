@@ -198,7 +198,10 @@ def fetch_world_bank(f: HttpFetcher, indicator: str, country: str, force: bool =
     if not isinstance(data, list) or len(data) < 2:
         msg = data[0].get("message", [{}])[0].get("value", "") if isinstance(data, list) and data else ""
         raise ConnectorError(f"Nessun dato World Bank per {country}/{indicator}. {msg}".strip())
-    rows = data[1] or []
+    return _wb_result(info, data[0], data[1] or [], indicator, country, cached, when)
+
+
+def _wb_result(info: dict, page: dict, rows: list, indicator: str, country: str, cached: bool, when) -> FetchResult:
     obs, freqs = [], set()
     for r in rows:
         iso, fr = parse_period(r["date"])
@@ -213,9 +216,28 @@ def fetch_world_bank(f: HttpFetcher, indicator: str, country: str, force: bool =
         name=f"{name} — {country_name}", unit=unit, frequency=freqs.pop() if freqs else "A",
         source_label=f"World Bank, {info.get('source', {}).get('value', 'WDI')} ({info.get('sourceOrganization', '')[:200]})".strip(),
         source_url=f"https://data.worldbank.org/indicator/{indicator}?locations={country}", license_note=WB_LICENSE,
-        source_last_updated=data[0].get("lastupdated", ""), observations=sorted(obs), description=info.get("sourceNote", "")[:4000],
+        source_last_updated=page.get("lastupdated", ""), observations=sorted(obs), description=info.get("sourceNote", "")[:4000],
         country=country_name, from_cache=cached, retrieved_at=when,
     )
+
+
+def fetch_world_bank_bulk(f: HttpFetcher, indicator: str, force: bool = False) -> dict[str, FetchResult]:
+    """Un indicatore per TUTTI i paesi con una sola richiesta (stessa elaborazione di fetch_world_bank)."""
+    if not re.fullmatch(r"[A-Za-z0-9._]{2,60}", indicator):
+        raise ConnectorError("Codice indicatore non valido.")
+    base = "https://api.worldbank.org/v2"
+    meta = json.loads(f.get(f"{base}/indicator/{indicator}", {"format": "json"}, force=force)[0])
+    if not isinstance(meta, list) or len(meta) < 2 or not meta[1]:
+        raise ConnectorError("Indicatore World Bank inesistente.")
+    info = meta[1][0]
+    txt, cached, when = f.get(f"{base}/country/all/indicator/{indicator}", {"format": "json", "per_page": 30000}, force=force)
+    data = json.loads(txt)
+    if not isinstance(data, list) or len(data) < 2 or data[0].get("pages", 1) > 1:
+        raise ConnectorError(f"Risposta World Bank inattesa per {indicator}.")
+    by_country: dict[str, list] = {}
+    for r in data[1] or []:
+        by_country.setdefault(r.get("countryiso3code") or r["country"]["id"], []).append(r)
+    return {iso: _wb_result(info, data[0], rows, indicator, iso, cached, when) for iso, rows in by_country.items() if iso}
 
 
 # --- FRED --------------------------------------------------------------------

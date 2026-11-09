@@ -93,12 +93,13 @@ def _stats(s: Series) -> None:
     s.end_date = valid[-1].date if valid else None
 
 
-def import_series(db: Session, user: User, settings: Settings, data: SeriesImportIn) -> Series:
+def import_series(db: Session, user: User, settings: Settings, data: SeriesImportIn,
+                  prefetched: connectors.FetchResult | None = None) -> Series:
     quotas.check(db, user, "series")
     ext = _ext_id(data)
     if db.scalar(select(Series).where(Series.owner_id == user.id, Series.connector == data.connector, Series.source_series_id == ext)):
         raise ValidationFailedError("Serie già importata: usa «Aggiorna» per riscaricarla.")
-    res = _fetch(db, user, settings, data, force=False)
+    res = prefetched or _fetch(db, user, settings, data, force=False)
     if not any(v is not None for _, v in res.observations):
         raise ValidationFailedError("La fonte non contiene valori per questa selezione.")
     s = Series(owner_id=user.id, name=res.name[:300], category=data.category, connector=data.connector, source_series_id=ext,

@@ -24,8 +24,8 @@ from sqlalchemy import select
 
 from ..api.schemas_history import EntityIn, EventIn
 from ..api.schemas_research import SourceIn
-from ..models import Entity, HistoricalEvent, Relation, Series, Source
-from ..services import activity, history, sources
+from ..models import Entity, EventSource, HistoricalEvent, Relation, Series, Source
+from ..services import activity, sources
 from .common import Run
 
 UA = "NEXUS/0.1 (https://nexus-sigma-gules.vercel.app; open-data research platform)"
@@ -297,17 +297,39 @@ def run_events(run: Run, wm: Wikimedia | None = None) -> None:
     run.report.note(f"Eventi candidati: {len(uniq)}; selezionati con copertura per secolo: {len(chosen)}.")
 
     today = date.today().isoformat()
+    present = set(run.db.scalars(select(HistoricalEvent.external_id).where(HistoricalEvent.owner_id == run.lib.id,
+                                                                          HistoricalEvent.origin == ORIGIN)))
     for i in range(0, len(chosen), 50):
-        batch = [c for c in chosen[i:i + 50] if not run.is_done(_ekey(c))]
+        batch = []
+        for c in chosen[i:i + 50]:
+            if run.is_done(_ekey(c)):
+                continue
+            if _ext(c) in present:
+                run.report.add("historical_events", "skipped")
+                continue
+            batch.append(c)
         if not batch:
             continue
         print(f"  eventi {i + 1}–{i + len(batch)} di {len(chosen)}", flush=True)
         det = _details(wm, [qid(c["item"]) for c in batch])
         titles = [t for c in batch if (t := _wiki_title(c.get("article")))]
         extracts = wm.extracts(titles)
-        for c in batch:
-            _create_event(run, c, det.get(qid(c["item"]), {}), extracts, today)
+        try:
+            for c in batch:
+                _create_event(run, c, det.get(qid(c["item"]), {}), extracts, today)
+            activity.record(run.db, user=run.lib, actor="system", action="library.import", entity_type="event", entity_id=None,
+                            summary=f"Biblioteca: importati eventi da Wikidata (lotto {i // 50 + 1})")
+            run.db.commit()
+        except Exception as exc:  # noqa: BLE001 — il lotto si annulla e si riprova al prossimo avvio
+            for c in batch:
+                run.done.discard(_ekey(c))
+            run.error("historical_events", f"lotto {i // 50 + 1}", repr(exc))
+            continue
         run.save_state()
+
+
+def _ext(c: dict) -> str:
+    return qid(c["item"]) if c["_kind"] == "event" else f"{qid(c['item'])}:founding"
 
 
 def _ekey(c: dict) -> str:
@@ -316,13 +338,8 @@ def _ekey(c: dict) -> str:
 
 def _create_event(run: Run, c: dict, det: dict, extracts: dict[str, str], today: str) -> None:
     q = qid(c["item"])
-    ext = q if c["_kind"] == "event" else f"{q}:founding"
+    ext = _ext(c)
     key = _ekey(c)
-    if run.db.scalar(select(HistoricalEvent.id).where(HistoricalEvent.owner_id == run.lib.id, HistoricalEvent.origin == ORIGIN,
-                                                      HistoricalEvent.external_id == ext)):
-        run.report.add("historical_events", "skipped")
-        run.mark(key)
-        return
     if c["_kind"] == "event":
         sy, sm, sd, sp = parse_time(c.get("t") or c.get("s"), c.get("tp") or c.get("sp"))
         ey, em, ed, _ = parse_time(c.get("e"), c.get("ep")) if not c.get("t") else (None, None, None, 0)
@@ -353,25 +370,28 @@ def _create_event(run: Run, c: dict, det: dict, extracts: dict[str, str], today:
         run.error("historical_events", key, f"non valido: {exc}")
         run.mark(key)
         return
+    notes = f"Dati strutturati: {WD_LICENSE}."
+    if title_wp:
+        notes += f" Descrizione: estratto dall'articolo «{title_wp}» di Wikipedia in inglese (https://en.wikipedia.org/wiki/{title_wp.replace(' ', '_')}). {WP_LICENSE}."
     try:
-        notes = f"Dati strutturati: {WD_LICENSE}."
-        if title_wp:
-            notes += f" Descrizione: estratto dall'articolo «{title_wp}» di Wikipedia in inglese (https://en.wikipedia.org/wiki/{title_wp.replace(' ', '_')}). {WP_LICENSE}."
-        src = sources.create_source(run.db, run.lib, SourceIn(source_type="web", title=f"Wikidata {q}: {c['label'][:400]}",
-                                                               url=f"https://www.wikidata.org/wiki/{q}", accessed_at=today, notes=notes))
-        src.origin, src.external_id = ORIGIN, ext
-        e = history.create_event(run.db, run.lib, data)
-        e.origin, e.external_id = ORIGIN, ext
-        ent = run.db.scalar(select(Entity).where(Entity.event_id == e.id))
-        if ent is not None and c["_kind"] == "event":
-            ent.origin, ent.external_id = ORIGIN, q
-        run.db.commit()
-        history.link_source(run.db, run.lib, e.id, src.id, "", "Voce Wikidata e articolo Wikipedia")
-        run.report.add("historical_events", "created")
-        run.report.add("sources", "created")
+        sdata = SourceIn(source_type="web", title=f"Wikidata {q}: {c['label'][:400]}", url=f"https://www.wikidata.org/wiki/{q}",
+                         accessed_at=today, notes=notes)
     except Exception as exc:  # noqa: BLE001
-        run.error("historical_events", key, repr(exc))
+        run.error("sources", key, f"non valida: {exc}")
+        run.mark(key)
         return
+    # Scrittura a blocchi (stesse validazioni di create_event/create_source/link_source, commit unico per lotto):
+    # verso un database remoto evita ~10 viaggi di rete per evento.
+    src = Source(owner_id=run.lib.id, origin=ORIGIN, external_id=ext, **sdata.model_dump())
+    e = HistoricalEvent(owner_id=run.lib.id, origin=ORIGIN, external_id=ext, **data.model_dump())
+    run.db.add_all([src, e])
+    run.db.flush()
+    e.source_links.append(EventSource(source_id=src.id, pages="", note="Voce Wikidata e articolo Wikipedia"))
+    run.db.add(Entity(owner_id=run.lib.id, entity_type="event", name=e.title, description=e.description[:2000],
+                      start_year=e.start_year, end_year=e.end_year, event_id=e.id,
+                      origin=ORIGIN if c["_kind"] == "event" else None, external_id=q if c["_kind"] == "event" else None))
+    run.report.add("historical_events", "created")
+    run.report.add("sources", "created")
     run.mark(key)
 
 

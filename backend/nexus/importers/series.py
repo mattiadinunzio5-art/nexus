@@ -53,7 +53,8 @@ def _fetcher(run: Run) -> connectors.HttpFetcher:
     return connectors.HttpFetcher(connectors.Cache(run.settings.cache_dir, 24 * 30))
 
 
-def _import(run: Run, origin: str, ext: str, data: SeriesImportIn, license_note: str | None = None, fatal_network: bool = False) -> None:
+def _import(run: Run, origin: str, ext: str, data: SeriesImportIn, license_note: str | None = None, fatal_network: bool = False,
+            prefetched: connectors.FetchResult | None = None) -> None:
     key = f"{origin}:{ext}"
     if run.is_done(key) or not run.budget_left():
         return
@@ -64,7 +65,7 @@ def _import(run: Run, origin: str, ext: str, data: SeriesImportIn, license_note:
         return
     run.tick()
     try:
-        s = finance.import_series(run.db, run.lib, run.settings, data)
+        s = finance.import_series(run.db, run.lib, run.settings, data, prefetched=prefetched)
         s.origin, s.external_id = origin, ext
         if license_note:
             s.license_note = license_note
@@ -96,11 +97,25 @@ def world_bank(run: Run) -> None:
     rows = json.loads(txt)[1]
     countries = [r["id"] for r in rows if r.get("region", {}).get("id") not in (None, "NA", "")]
     ordered = [c for c in WB_FIRST if c in countries] + sorted(c for c in countries if c not in WB_FIRST)
+    # Una richiesta per indicatore (tutti i paesi), poi una serie per paese: molto più veloce e gentile con l'API.
+    bulk: dict[str, dict] = {}
+    for ind in WB_INDICATORS:
+        try:
+            bulk[ind] = connectors.fetch_world_bank_bulk(f, ind)
+        except connectors.ConnectorError as exc:
+            run.error("series", f"world-bank:{ind}", str(exc))
+            bulk[ind] = {}
+        run.sleep()
     for iso in ordered:
         for ind, cat in WB_INDICATORS.items():
             if not run.budget_left():
                 return
-            _import(run, "world-bank", f"{ind}:{iso}", SeriesImportIn(connector="world-bank", indicator=ind, country=iso, category=cat))
+            res = bulk[ind].get(iso)
+            if res is None or not any(v is not None for _, v in res.observations):
+                run.report.add("series", "skipped")
+                continue
+            _import(run, "world-bank", f"{ind}:{iso}", SeriesImportIn(connector="world-bank", indicator=ind, country=iso, category=cat),
+                    prefetched=res)
 
 
 def owid(run: Run) -> None:
