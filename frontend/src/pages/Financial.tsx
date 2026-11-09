@@ -212,7 +212,7 @@ export function SeriesDetailPage() {
           {d.connector !== 'upload' && <Button disabled={busy} onClick={async () => { setBusy(true); setErr(undefined); try { s.setData(await api.refreshSeries(id)); await a.reload(); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); } }}><RefreshCw className={`size-4 ${busy ? 'animate-spin' : ''}`} aria-hidden /> Aggiorna dalla fonte</Button>}
           <Button onClick={() => setDeleting(true)} aria-label="Elimina serie"><Trash2 className="size-4" /></Button>
         </>} />
-      {d.is_demo && <p className="mb-3"><DemoBadge /> <span className="text-xs text-steel-400">Serie dimostrativa: non sono dati reali.</span></p>}
+      {d.is_demo && <p className="mb-3"><DemoBadge /> <span className="text-xs text-steel-400">Serie del progetto dimostrativo: valori della fonte indicata sotto (sola lettura).</span></p>}
       {err && <div className="mb-4"><ErrorBox error={new Error(err)} /></div>}
       <Card title="Serie storica" className="mb-4">
         <div className="mb-3 flex flex-wrap gap-3">
