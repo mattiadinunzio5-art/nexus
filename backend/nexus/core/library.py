@@ -60,7 +60,7 @@ def ensure_library_user(db: Session):
     u = db.scalar(select(User).where(User.external_id == LIBRARY_EXTERNAL_ID))
     if u is None:
         u = User(email=LIBRARY_EMAIL, display_name="Biblioteca NEXUS", external_id=LIBRARY_EXTERNAL_ID, role="user",
-                 plan="free", is_local=False, is_active=False)
+                 plan="local", is_local=False, is_active=False)  # piano "local": nessun limite per la Biblioteca
         db.add(u)
         db.commit()
         db.refresh(u)
