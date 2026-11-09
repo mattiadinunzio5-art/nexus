@@ -26,6 +26,14 @@ Il database è quello di `NEXUS_DATABASE_URL` nel file `.env`. Per riempire la v
 proprio computer con l'indirizzo del database Supabase (Project Settings → Database → Connection string, modalità
 *Session pooler*), scritto **solo** nel file `.env` locale, mai in chat né nei commit.
 
+### Senza usare il computer: GitHub Actions
+
+Il workflow **«Import Biblioteca NEXUS»** (`.github/workflows/import-library.yml`) esegue lo stesso script su GitHub.
+Una volta sola, in GitHub → Settings → Secrets and variables → Actions, si aggiungono i segreti copiati dalle variabili
+di Render: `NEXUS_DATABASE_URL`, `NEXUS_SUPABASE_URL`, `NEXUS_SUPABASE_SERVICE_KEY`. Poi Actions → Import Biblioteca
+NEXUS → *Run workflow*. Ogni esecuzione dura al massimo ~6 ore: se l'import non è finito, si rilancia e riparte da dove
+era arrivato (gli elementi già presenti vengono saltati). I log degli errori sono scaricabili tra gli *artifact*.
+
 Ogni area è **idempotente** (colonne `origin` + `external_id`, migrazione `0012`), **riprendibile** (`--resume`, stato
 in `data/imports/*.state.json`), con **cache su disco** (`data/cache`), pause tra le richieste e **log degli errori**
 (`data/imports/*.errors.log`). Gli elementi non riusciti non vengono segnati come fatti: `--resume` li riprova.
