@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import time
 
 from sqlalchemy import select
 
@@ -50,7 +51,7 @@ ECB = [
 
 def _fetcher(run: Run) -> connectors.HttpFetcher:
     # Cache lunga: le esecuzioni ripetute non riscaricano i dati.
-    return connectors.HttpFetcher(connectors.Cache(run.settings.cache_dir, 24 * 30))
+    return connectors.HttpFetcher(connectors.Cache(run.settings.cache_dir, 24 * 30), timeout=120.0)
 
 
 def _import(run: Run, origin: str, ext: str, data: SeriesImportIn, license_note: str | None = None, fatal_network: bool = False,
@@ -100,11 +101,15 @@ def world_bank(run: Run) -> None:
     # Una richiesta per indicatore (tutti i paesi), poi una serie per paese: molto più veloce e gentile con l'API.
     bulk: dict[str, dict] = {}
     for ind in WB_INDICATORS:
-        try:
-            bulk[ind] = connectors.fetch_world_bank_bulk(f, ind)
-        except connectors.ConnectorError as exc:
-            run.error("series", f"world-bank:{ind}", str(exc))
-            bulk[ind] = {}
+        bulk[ind] = {}
+        for attempt in range(3):  # risposte grandi: fino a 3 tentativi prima di segnalare l'errore
+            try:
+                bulk[ind] = connectors.fetch_world_bank_bulk(f, ind)
+                break
+            except connectors.ConnectorError as exc:
+                if attempt == 2:
+                    run.error("series", f"world-bank:{ind}", str(exc))
+                time.sleep(10 * (attempt + 1))
         run.sleep()
     for iso in ordered:
         for ind, cat in WB_INDICATORS.items():
