@@ -28,14 +28,24 @@ from ..core.config import Settings
 from ..database.base import utcnow
 from ..models import Observation, Project, Series, User
 
+LANGS = ("it", "en")
 DEMO_EMAIL = "demo@nexus-demo.invalid"
 DEMO_EXTERNAL_ID = "nexus-public-demo"
 DEMO_PROJECT_TITLE = "[DEMO] La Grande Depressione 1929–1933"
+DEMO_PROJECT_TITLE_EN = "[DEMO] The Great Depression 1929–1933"
 TOKEN_PREFIX = "demo."
 TOKEN_HOURS = 8
 # Richieste di sola elaborazione consentite anche in demo (non salvano nulla).
 DEMO_ALLOWED_WRITES = {"/api/finance/compare", "/api/auth/logout"}
 READ_ONLY_MESSAGE = "Questa è la demo in sola lettura: crea un account gratuito per salvare e modificare i tuoi progetti."
+READ_ONLY_MESSAGE_EN = "This is the read-only demo: create a free account to save and edit your own projects."
+
+
+def _ids(lang: str) -> tuple[str, str]:
+    """(external_id, email) dell'utente demo per lingua; l'italiano mantiene gli identificativi originali."""
+    if lang == "en":
+        return DEMO_EXTERNAL_ID + "-en", "demo-en@nexus-demo.invalid"
+    return DEMO_EXTERNAL_ID, DEMO_EMAIL
 
 _lock = threading.Lock()
 
@@ -54,35 +64,39 @@ def _sign(settings: Settings, payload: str) -> str:
     return base64.urlsafe_b64encode(sig).decode().rstrip("=")
 
 
-def make_token(settings: Settings, now: float | None = None) -> tuple[str, datetime]:
+def make_token(settings: Settings, now: float | None = None, lang: str = "it") -> tuple[str, datetime]:
+    lang = lang if lang in LANGS else "it"
     exp = int((now or time.time()) + TOKEN_HOURS * 3600)
-    return f"{TOKEN_PREFIX}{exp}.{_sign(settings, str(exp))}", datetime.fromtimestamp(exp, UTC)
+    payload = f"{lang}.{exp}"
+    return f"{TOKEN_PREFIX}{payload}.{_sign(settings, payload)}", datetime.fromtimestamp(exp, UTC)
 
 
 def is_demo_token(token: str | None) -> bool:
     return bool(token) and token.startswith(TOKEN_PREFIX)
 
 
-def check_token(settings: Settings, token: str) -> None:
+def check_token(settings: Settings, token: str) -> str:
+    """Verifica firma e scadenza; restituisce la lingua della demo."""
     from .auth import AuthError
 
     try:
-        exp_s, sig = token[len(TOKEN_PREFIX):].split(".", 1)
+        lang, exp_s, sig = token[len(TOKEN_PREFIX):].split(".", 2)
         exp = int(exp_s)
     except ValueError as exc:
         raise AuthError("Sessione demo non valida: riapri la demo.") from exc
-    if not hmac.compare_digest(sig, _sign(settings, exp_s)):
+    if lang not in LANGS or not hmac.compare_digest(sig, _sign(settings, f"{lang}.{exp_s}")):
         raise AuthError("Sessione demo non valida: riapri la demo.")
     if exp < time.time():
         raise AuthError("La sessione demo è scaduta: riapri la demo.")
+    return lang
 
 
 def is_demo_user(user: User) -> bool:
-    return user.external_id == DEMO_EXTERNAL_ID
+    return bool(user.external_id) and user.external_id.startswith(DEMO_EXTERNAL_ID)
 
 
-def demo_user(db: Session) -> User | None:
-    return db.scalar(select(User).where(User.external_id == DEMO_EXTERNAL_ID))
+def demo_user(db: Session, lang: str = "it") -> User | None:
+    return db.scalar(select(User).where(User.external_id == _ids(lang)[0]))
 
 
 # --- Contenuti -----------------------------------------------------------------------------
@@ -205,56 +219,147 @@ SERIES = [
 ]
 
 
+# --- English version (public demo in English: ?demo=en) --------------------------------------------
+
+REGIONS_EN = {"Nord America": "North America", "Europa": "Europe", "Internazionale": "International"}
+COUNTRIES_EN = {"Stati Uniti": "United States", "Austria": "Austria", "Germania": "Germany", "Regno Unito": "United Kingdom", "Italia": "Italy"}
+
+EVENTS_EN = {
+    "crash": dict(title="Wall Street Crash",
+                  description="Between “Black Thursday” (24 October) and “Black Tuesday” (29 October) the New York Stock Exchange suffers the worst falls "
+                              "in its history up to then, after the Dow Jones peak of 3 September 1929.",
+                  causes="A strong speculative boom in 1928–29, heavy use of margin buying (broker loans), tighter monetary policy from 1928.",
+                  consequences="Destruction of wealth and confidence; the crash precedes, but does not by itself explain, the depth of the depression that followed."),
+    "tariff": dict(title="Smoot-Hawley Tariff", description="President Hoover signs the Tariff Act of 1930, raising duties on thousands of imported goods.",
+                   consequences="Trade retaliation by other countries and a contraction of international trade in the following years."),
+    "banks1930": dict(title="First wave of US banking panics", description="A wave of bank failures in autumn 1930; on 11 December the Bank of United States in New York closes.",
+                      consequences="According to Friedman and Schwartz, the start of the monetary contraction that turned the recession into the Great Depression."),
+    "creditanstalt": dict(title="Creditanstalt crisis", description="Austria's largest bank discloses massive losses: the start of the European financial crisis of 1931.",
+                          consequences="Panic spreads to Germany and puts sterling under pressure."),
+    "moratorium": dict(title="Hoover Moratorium", description="Proposal to suspend for one year all intergovernmental payments of war debts and reparations."),
+    "sterling": dict(title="Britain leaves the gold standard", description="After weeks of reserve outflows, Britain suspends the convertibility of sterling into gold.",
+                     consequences="Many countries follow sterling; those that leave gold earlier tend to recover earlier (Eichengreen)."),
+    "fedrate": dict(title="The Federal Reserve raises the discount rate",
+                    description="To defend the dollar's gold parity after sterling's exit, the Federal Reserve Bank of New York raises its discount rate "
+                                "from 1.5% to 3.5% in two steps (October 1931).",
+                    consequences="Monetary tightening in the middle of the depression, followed by new waves of bank failures."),
+    "rfc": dict(title="Reconstruction Finance Corporation founded", description="Federal agency created to lend to banks, railroads and other businesses in distress."),
+    "bottom": dict(title="Dow Jones hits bottom", description="The Dow Jones Industrial Average closes at 41.22, about 89% below its September 1929 peak."),
+    "iri": dict(title="Italy creates IRI", description="The government sets up the Istituto per la Ricostruzione Industriale, which takes over the industrial holdings of the troubled universal banks.",
+                consequences="The Italian state becomes the main shareholder of the country's industry and banking."),
+    "holiday": dict(title="Bank holiday and Emergency Banking Act",
+                    description="Two days after his inauguration, Roosevelt closes every bank in the country; on 9 March Congress passes the Emergency Banking Act "
+                                "and sound banks reopen in the following days."),
+    "glass": dict(title="Banking Act of 1933 (Glass-Steagall)", description="Separates commercial from investment banking and creates federal deposit insurance (FDIC)."),
+    "goldact": dict(title="Gold Reserve Act", description="Monetary gold is transferred to the Treasury; the next day the gold price is set at $35 an ounce "
+                                                          "(a devaluation of the dollar from the previous $20.67)."),
+    "bank1936": dict(title="Italian Banking Law", description="Reform of the credit system: separation of short-term and long-term lending, supervision entrusted to an "
+                                                               "Inspectorate chaired by the Governor; the Bank of Italy becomes a public-law institution."),
+}
+
+LINK_NOTES_EN = [
+    "The stock market crash precedes the first wave of banking panics.",
+    "The Austro-German banking crisis spreads to sterling.",
+    "The Fed raises rates to defend the dollar after sterling leaves gold.",
+    "From the bank closures to the reform of the banking system.",
+    "The rescue of the universal banks leads to the banking reform of 1936.",
+]
+
+KNOWLEDGE_EN = [
+    "In the days of the crash many commentators saw it as a correction of an overvalued market.",
+    "Galbraith reconstructs the speculation of 1928–29 and the financial fragility that came with it.",
+    "Friedman and Schwartz attribute the severity of the depression to the contraction of the money supply.",
+    "Bernanke adds the credit channel: bank failures destroy information and lending capacity.",
+    "Eichengreen: the gold standard transmits the crisis; countries that leave it earlier recover earlier.",
+    "Kindleberger: the crisis deepens because no country acts as international lender of last resort.",
+]
+
+SERIES_EN = {
+    "M1109BUSM293NNBR": dict(name="Dow Jones Industrial Average (monthly average)", unit="Dollars per share",
+                             description="Monthly index based on daily closing prices of the New York Stock Exchange; 30 stocks from October 1928. "
+                                         "Monthly values: daily lows (e.g. 41.22 on 8 July 1932) are lower."),
+    "INDPRO": dict(name="Industrial production, United States", unit="Index 2017=100 (s.a.)", description="Industrial production index, seasonally adjusted."),
+    "CPIAUCNS": dict(name="Consumer price index, United States", unit="Index 1982-84=100",
+                     description="CPI for all urban consumers, not seasonally adjusted: shows the 1930–33 deflation."),
+    "M13009USM156NNBR": dict(name="Discount rate, Federal Reserve Bank of New York", unit="Percent",
+                             description="Average of the discount rates in force during the month, weighted by days."),
+    "M0892AUSM156SNBR": dict(name="Unemployment rate, United States (NICB estimates)", unit="Percent (s.a.)",
+                             description="Contemporary estimates by the National Industrial Conference Board, seasonally adjusted (1929–1942). Not directly "
+                                         "comparable with modern BLS series: for 1929 they are lower than other reconstructions (e.g. Lebergott, about 3% annual)."),
+}
+
+TEXTS = {
+    "it": dict(project=DEMO_PROJECT_TITLE,
+               project_desc="Progetto dimostrativo: come la crisi di Wall Street del 1929 diventa una depressione mondiale. Eventi con fonti "
+                            "bibliografiche, serie storiche ufficiali (FRED/NBER) e la Time Machine per leggere i fatti con ciò che si sapeva allora.",
+               checked="Dati bibliografici confrontati con il catalogo Open Library (8 novembre 2026).",
+               reliability="Fatto documentato nella letteratura indicata tra le fonti.", country="Stati Uniti", name="Visitatore demo"),
+    "en": dict(project=DEMO_PROJECT_TITLE_EN,
+               project_desc="Sample project: how the 1929 Wall Street crash became a worldwide depression. Events with bibliographic sources, "
+                            "official historical series (FRED/NBER) and the Time Machine to read the facts with what was known at the time.",
+               checked="Bibliographic data checked against the Open Library catalogue (8 November 2026).",
+               reliability="Fact documented in the literature listed among the sources.", country="United States", name="Demo visitor"),
+}
+
+
+def _event(data: dict, lang: str) -> dict:
+    d = dict(data)
+    if lang == "en":
+        d.update(EVENTS_EN[d["key"]])
+        d["region"] = REGIONS_EN.get(d.get("region", ""), d.get("region", ""))
+        d["countries"] = [COUNTRIES_EN.get(c, c) for c in d.get("countries", [])]
+    return d
+
+
 def _load_series() -> dict:
     return json.loads((Path(__file__).with_name("demo_series.json")).read_text())
 
 
-def _seed(db: Session, settings: Settings, user: User) -> None:
+def _seed(db: Session, settings: Settings, user: User, lang: str = "it") -> None:
     from ..api.schemas import ProjectCreate
     from ..api.schemas_history import EventIn, EventLinkIn, KnowledgeIn
     from ..api.schemas_research import SourceIn
     from ..finance.connectors import FRED_LICENSE
     from . import finance, history, projects, sources
 
-    projects.create_project(db, user, ProjectCreate(
-        title=DEMO_PROJECT_TITLE,
-        description="Progetto dimostrativo: come la crisi di Wall Street del 1929 diventa una depressione mondiale. Eventi con fonti "
-                    "bibliografiche, serie storiche ufficiali (FRED/NBER) e la Time Machine per leggere i fatti con ciò che si sapeva allora."),
-        is_demo=True)
+    tx = TEXTS[lang]
+    projects.create_project(db, user, ProjectCreate(title=tx["project"], description=tx["project_desc"]), is_demo=True)
 
     src_ids = []
     for i, data in enumerate(SOURCES):
         s = sources.create_source(db, user, SourceIn(**data), is_demo=True)
         if i in CATALOGUE_CHECKED:
-            sources.verify_source(db, user, s.id, "user", "Dati bibliografici confrontati con il catalogo Open Library (8 novembre 2026).")
+            sources.verify_source(db, user, s.id, "user", tx["checked"])
         src_ids.append(s.id)
 
     events = {}
     for data in EVENTS:
-        d = dict(data)
+        d = _event(data, lang)
         key, srcs = d.pop("key"), d.pop("sources")
-        e = history.create_event(db, user, EventIn(**d, reliability="established",
-                                                   reliability_note="Fatto documentato nella letteratura indicata tra le fonti."), is_demo=True)
+        e = history.create_event(db, user, EventIn(**d, reliability="established", reliability_note=tx["reliability"]), is_demo=True)
         for si in srcs:
             history.link_source(db, user, e.id, src_ids[si], "", "")
         events[key] = e.id
 
-    for src, tgt, rel, si, note in LINKS:
+    for i, (src, tgt, rel, si, note) in enumerate(LINKS):
+        note = LINK_NOTES_EN[i] if lang == "en" else note
         history.link_events(db, user, events[src], EventLinkIn(target_event_id=events[tgt], relation_type=rel, provenance="sourced",
                                                               source_id=src_ids[si], evidence_note=note, confidence="high"))
-    for key, year, kind, si, content in KNOWLEDGE:
+    for i, (key, year, kind, si, content) in enumerate(KNOWLEDGE):
+        content = KNOWLEDGE_EN[i] if lang == "en" else content
         history.add_knowledge(db, user, events[key], KnowledgeIn(content=content, known_since_year=year, kind=kind,
                                                                 source_id=src_ids[si] if si is not None else None))
 
     bundle = _load_series()
     retrieved = datetime.fromisoformat(bundle["retrieved"]).replace(tzinfo=UTC)
     for meta in SERIES:
-        s = Series(owner_id=user.id, name=meta["name"], category=meta["category"], country="Stati Uniti", connector="fred",
-                   source_series_id=meta["id"], source_label=f"{meta['label']} — serie {meta['id']}",
-                   source_url=f"https://fred.stlouisfed.org/series/{meta['id']}", license_note=FRED_LICENSE, unit=meta["unit"],
-                   frequency="M", description=meta["description"], retrieved_at=retrieved, is_demo=True,
-                   params={"series_id": meta["id"]})
-        s.observations = [Observation(date=d, value=v) for d, v in bundle["series"][meta["id"]]]
+        m = {**meta, **SERIES_EN[meta["id"]]} if lang == "en" else meta
+        s = Series(owner_id=user.id, name=m["name"], category=m["category"], country=tx["country"], connector="fred",
+                   source_series_id=m["id"], source_label=f"{m['label']} — {'series' if lang == 'en' else 'serie'} {m['id']}",
+                   source_url=f"https://fred.stlouisfed.org/series/{m['id']}", license_note=FRED_LICENSE, unit=m["unit"],
+                   frequency="M", description=m["description"], retrieved_at=retrieved, is_demo=True,
+                   params={"series_id": m["id"]})
+        s.observations = [Observation(date=d, value=v) for d, v in bundle["series"][m["id"]]]
         finance._stats(s)
         db.add(s)
     db.commit()
@@ -273,21 +378,23 @@ def _run_discovery(database, settings: Settings, user_id: int) -> None:
     discovery.run_in_background(database, settings, sid)
 
 
-def ensure_demo(database, settings: Settings) -> int:
-    """Crea (una sola volta) l'utente demo con i suoi contenuti; restituisce l'id dell'utente."""
+def ensure_demo(database, settings: Settings, lang: str = "it") -> int:
+    """Crea (una sola volta per lingua) l'utente demo con i suoi contenuti; restituisce l'id dell'utente."""
+    lang = lang if lang in LANGS else "it"
+    external_id, email = _ids(lang)
     with _lock:
         with database.session_factory() as db:
-            user = demo_user(db)
+            user = demo_user(db, lang)
             if user is None:
-                user = User(email=DEMO_EMAIL, display_name="Visitatore demo", external_id=DEMO_EXTERNAL_ID, role="user",
+                user = User(email=email, display_name=TEXTS[lang]["name"], external_id=external_id, role="user",
                             plan="free", is_local=False, is_active=True)
                 db.add(user)
                 db.commit()
                 db.refresh(user)
             uid = user.id
-            seeded = db.scalar(select(Project.id).where(Project.owner_id == uid, Project.title == DEMO_PROJECT_TITLE))
+            seeded = db.scalar(select(Project.id).where(Project.owner_id == uid, Project.title == TEXTS[lang]["project"]))
             if seeded is None:
-                _seed(db, settings, user)
+                _seed(db, settings, user, lang)
             user.last_login_at = utcnow()
             db.commit()
         if seeded is None:

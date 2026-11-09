@@ -12,7 +12,7 @@ scripts/dev.sh          # http://127.0.0.1:5173`;
 
 export function Access() {
   const { configured, session } = useAuth();
-  const { t, p } = useI18n();
+  const { t, p, lang } = useI18n();
   const a = t.access;
   return (
     <section id="access" className="grain relative overflow-hidden border-t border-line bg-void py-28 md:py-40" aria-label={a.label}>
@@ -42,10 +42,10 @@ export function Access() {
                   <Link to={p('/signup')} className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void transition hover:bg-copper">{a.create} <ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
                   <Link to={p('/signin')} className="inline-flex rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">{a.signIn}</Link>
                 </div>
-                {demoUrl && (
+                {demoUrl(lang) && (
                   <p className="mt-6 border-t border-line pt-5 text-sm leading-relaxed text-mute-2">
                     {a.demoText}{' '}
-                    <a href={demoUrl} className="inline-flex items-center gap-1 text-copper hover:underline">{a.demo} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden /></a>
+                    <a href={demoUrl(lang)!} className="inline-flex items-center gap-1 text-copper hover:underline">{a.demo} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden /></a>
                   </p>
                 )}
               </>

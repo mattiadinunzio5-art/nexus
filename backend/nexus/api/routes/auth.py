@@ -68,14 +68,15 @@ def _not_in_supabase_mode(settings) -> None:
 
 
 @router.post("/auth/demo", summary="Apre la demo pubblica in sola lettura (nessun account richiesto)")
-def open_demo(request: Request, settings: AppSettings) -> dict:
+def open_demo(request: Request, settings: AppSettings, lang: str = "it") -> dict:
     from ...services import demo
 
     if not settings.demo_enabled or settings.auth_mode == "local":
         raise svc.ForbiddenError("La demo non è disponibile su questo server.")
-    demo.ensure_demo(request.app.state.database, settings)
-    token, expires = demo.make_token(settings)
-    return {"token": token, "expires_at": expires.isoformat()}
+    lang = lang if lang in demo.LANGS else "it"
+    demo.ensure_demo(request.app.state.database, settings, lang)
+    token, expires = demo.make_token(settings, lang=lang)
+    return {"token": token, "expires_at": expires.isoformat(), "lang": lang}
 
 
 @router.post("/auth/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)

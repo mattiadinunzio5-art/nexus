@@ -11,7 +11,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
-  const { t, p } = useI18n();
+  const { t, p, lang } = useI18n();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const graphScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.35]);
   const graphOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
@@ -71,8 +71,8 @@ export function Hero() {
               <Link to={p('/#access')} className="group inline-flex items-center gap-2 rounded-full border border-ivory/30 px-6 py-3 text-sm font-medium transition hover:border-ivory">
                 {t.hero.enter} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
               </Link>
-              {demoUrl && (
-                <a href={demoUrl} className="group inline-flex items-center gap-2 rounded-full bg-copper px-6 py-3 text-sm font-medium text-void transition hover:bg-ivory">
+              {demoUrl(lang) && (
+                <a href={demoUrl(lang)!} className="group inline-flex items-center gap-2 rounded-full bg-copper px-6 py-3 text-sm font-medium text-void transition hover:bg-ivory">
                   {t.hero.demo} <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
                 </a>
               )}
