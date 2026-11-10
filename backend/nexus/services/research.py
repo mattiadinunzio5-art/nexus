@@ -41,11 +41,9 @@ def retrieve(
             text_rank += index.text_search(db, o, q, pool, document_ids)
         rankings.append(sorted(text_rank, key=lambda x: -x[1])[:pool])
     if mode in ("hybrid", "semantic"):
+        # Solo l'archivio dell'utente: l'indice semantico in memoria sulla Biblioteca (decine di migliaia di passaggi)
+        # supererebbe la memoria del server gratuito. Per la Biblioteca vale la ricerca testuale.
         sem, engine = _semantic(db, user, settings, q, pool)
-        lib = library.library_user_id(db)
-        if lib is not None and lib != user.id:
-            sem_lib, _ = _semantic(db, type("U", (), {"id": lib})(), settings, q, pool)
-            sem = sorted(sem + sem_lib, key=lambda x: -x[1])[:pool]
         if document_ids:
             allowed = set(
                 db.scalars(select(DocumentChunk.id).where(DocumentChunk.document_id.in_(document_ids), DocumentChunk.owner_id.in_(owners)))
