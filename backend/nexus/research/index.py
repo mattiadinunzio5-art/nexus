@@ -11,6 +11,8 @@ Il metodo effettivamente usato è sempre riportato nella risposta.
 
 from __future__ import annotations
 
+import re
+
 import threading
 from dataclasses import dataclass, field
 
@@ -67,8 +69,20 @@ def text_search(db: Session, owner_id: int, q: str, limit: int, document_ids: li
         sql += " ORDER BY s LIMIT :l"
         params["l"] = limit
         return [(int(r[0]), float(-r[1])) for r in db.execute(text(sql), params)]
-    # Fallback portabile (es. PostgreSQL prima dell'indice tsvector).
     toks = terms(q)[:8]
+    if db.get_bind().dialect.name == "postgresql" and toks:
+        # PostgreSQL: ricerca full-text nel database (indice GIN, migrazione 0013), senza caricare i testi in memoria.
+        tsq = " | ".join(re.sub(r"[^\w]", "", t) for t in toks if re.sub(r"[^\w]", "", t))
+        if not tsq:
+            return []
+        sql = ("SELECT id, ts_rank(to_tsvector('simple', text), to_tsquery('simple', :q)) AS s FROM document_chunks "
+               "WHERE owner_id = :o AND to_tsvector('simple', text) @@ to_tsquery('simple', :q)")
+        params2: dict = {"q": tsq, "o": owner_id, "l": limit}
+        if document_ids:
+            sql += f" AND document_id IN ({','.join(str(int(d)) for d in document_ids)})"
+        sql += " ORDER BY s DESC LIMIT :l"
+        return [(int(r[0]), float(r[1])) for r in db.execute(text(sql), params2)]
+    # Fallback portabile (altri database).
     if not toks:
         return []
     stmt = select(DocumentChunk.id, DocumentChunk.text).where(DocumentChunk.owner_id == owner_id)
