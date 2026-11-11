@@ -1,4 +1,6 @@
-const dateTime = new Intl.DateTimeFormat('it-IT', { dateStyle: 'medium', timeStyle: 'short' });
+import { locale } from '../i18n';
+
+const dateTime = new Intl.DateTimeFormat(locale(), { dateStyle: 'medium', timeStyle: 'short' });
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';

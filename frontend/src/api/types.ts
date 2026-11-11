@@ -370,7 +370,7 @@ export interface Timeline {
 
 export const ENTITY_TYPES = {
   person: 'Persona',
-  state: 'Stato',
+  state: 'Stato sovrano',
   company: 'Azienda',
   bank: 'Banca',
   institution: 'Istituzione',

@@ -1,3 +1,4 @@
+import { lang } from '../i18n';
 import type {
   CausalChainResult,
   LibrarySummary,
@@ -101,7 +102,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 
 /** Scarica un file dal server (con le credenziali) e lo salva sul dispositivo. */
 export async function downloadFile(path: string, fallbackName = 'download'): Promise<void> {
-  const res = await fetch(BASE + path, { credentials: 'same-origin', headers: { 'X-Nexus-Client': 'web', ...(await authHeaders()) } });
+  const res = await fetch(BASE + path, { credentials: 'same-origin', headers: { 'X-Nexus-Client': 'web', 'X-Nexus-Lang': lang(), ...(await authHeaders()) } });
   if (!res.ok) {
     let msg = `Errore HTTP ${res.status}`;
     try {
@@ -141,6 +142,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: {
         // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
         'X-Nexus-Client': 'web',
+        'X-Nexus-Lang': lang(),
         ...(await authHeaders()),
         ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         ...(init.headers as Record<string, string> | undefined),

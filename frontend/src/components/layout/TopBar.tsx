@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Menu, PanelRight, Search } from 'lucide-react';
 import { useAppState } from '../../state/AppState';
 import { FeedbackButton } from './FeedbackButton';
+import { LangSwitch } from './LangSwitch';
 
 export function TopBar({ onMenu, onTogglePanel, panelOpen }: { onMenu: () => void; onTogglePanel: () => void; panelOpen: boolean }) {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export function TopBar({ onMenu, onTogglePanel, panelOpen }: { onMenu: () => voi
         <span className={`size-2 rounded-full ${backendOnline === undefined ? 'bg-steel-500' : backendOnline ? 'bg-ok' : 'bg-bad'}`} aria-hidden />
         {backendOnline === undefined ? 'Connessione…' : backendOnline ? 'Backend online' : 'Backend offline'}
       </span>
+      <LangSwitch />
       <FeedbackButton />
       <Link to="/notifications" className="relative rounded p-1.5 text-steel-300 hover:bg-ink-800" aria-label={`Notifiche (${unreadCount} non lette)`}>
         <Bell className="size-5" />

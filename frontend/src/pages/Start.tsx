@@ -1,3 +1,4 @@
+import { locale } from '../i18n';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpenText, ChartLine, FolderKanban, GraduationCap, History, Landmark, Network, Radar, Search } from 'lucide-react';
@@ -44,7 +45,7 @@ export function StartPage() {
             <dl className="mb-3 grid grid-cols-3 gap-2 text-center" aria-label="Contenuto della Biblioteca">
               {([['eventi storici', l.events], ['serie di dati', l.series], ['collegamenti', l.relations]] as const).map(([label, v]) => (
                 <div key={label} className="rounded-md border border-ink-700 bg-ink-850 p-2">
-                  <dd className="text-lg text-paper">{v.toLocaleString('it-IT')}</dd>
+                  <dd className="text-lg text-paper">{v.toLocaleString(locale())}</dd>
                   <dt className="text-[11px] text-steel-500">{label}</dt>
                 </div>
               ))}

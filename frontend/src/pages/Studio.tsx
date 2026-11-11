@@ -1,3 +1,4 @@
+import { locale } from '../i18n';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
@@ -268,7 +269,7 @@ export function BriefingPage() {
                   {s.items.map((it, j) => (
                     <li key={j}>
                       <p className="text-paper">{it.url ? <Link to={it.url} className="hover:text-gold-300">{it.title}</Link> : it.title}
-                        {it.value !== undefined && it.value !== null && <span className="ml-2 text-gold-300">{it.value.toLocaleString('it-IT', { maximumSignificantDigits: 6 })} {it.unit}</span>}</p>
+                        {it.value !== undefined && it.value !== null && <span className="ml-2 text-gold-300">{it.value.toLocaleString(locale(), { maximumSignificantDigits: 6 })} {it.unit}</span>}</p>
                       {it.detail && <p className="text-steel-300">{it.detail}</p>}
                       <p className="text-[11px] text-steel-500">{[it.date && `Data: ${it.date}`, it.source && `Fonte: ${it.source}`, it.kind, it.reason].filter(Boolean).join(' · ')}</p>
                       {it.flags?.map((f) => <p key={f} className="text-[11px] text-warn">{f}</p>)}
