@@ -1,7 +1,7 @@
 import { MessageSquarePlus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
-export const FEEDBACK_EMAIL = 'mattiadinunzio5@gmail.com';
+export const FEEDBACK_EMAIL = 'nexus.analytic.research@gmail.com';
 
 /** «Suggerisci / Segnala»: apre una email precompilata con la pagina corrente. */
 export function feedbackHref(path: string): string {

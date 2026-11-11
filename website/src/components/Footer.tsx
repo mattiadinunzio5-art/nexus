@@ -27,7 +27,7 @@ export function Footer() {
         <span>© {new Date().getFullYear()} NEXUS</span>
         <span className="flex flex-wrap gap-4">
           <Link to={p('/privacy')} className="hover:text-ivory">{t.footer.privacy}</Link>
-          <a href="mailto:mattiadinunzio5@gmail.com" className="hover:text-ivory">{t.footer.contact}</a>
+          <a href="mailto:nexus.analytic.research@gmail.com" className="hover:text-ivory">{t.footer.contact}</a>
         </span>
         <span>{t.footer.tagline}</span>
       </div>

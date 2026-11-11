@@ -120,7 +120,7 @@ describe('routes', () => {
   it('privacy policy in both languages, linked from the footer', async () => {
     at('/it/privacy');
     expect(await screen.findByRole('heading', { level: 1, name: 'Informativa sulla privacy' })).toBeInTheDocument();
-    expect(screen.getAllByText(/mattiadinunzio5@gmail.com/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/nexus.analytic.research@gmail.com/).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/it/privacy');
   });
 });
