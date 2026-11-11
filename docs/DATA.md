@@ -91,8 +91,10 @@ invece dai servizi (`create_event`, `create_source`, `link_source`).
 ## Discovery
 
 `import_data.py discovery` esegue sulla Biblioteca solo i rilevatori **deterministici** (connessioni evento-dato,
-anomalie). I risultati appartengono alla Biblioteca e oggi non compaiono nelle pagine Discovery degli utenti, che
-analizzano l'archivio personale.
+anomalie). I risultati appartengono alla Biblioteca e si consultano nelle pagine Discovery con il selettore
+**«Il mio archivio | Biblioteca NEXUS»** (API: `?origin=library` su connessioni, ipotesi, anomalie e sessioni; la
+panoramica li conta in `library`). Sono in **sola lettura**: accettare, scartare, verificare o decidere restituisce
+`403 read_only`. Le liste predefinite restano quelle dell'archivio personale.
 
 Su archivi grandi (oltre 1.500 eventi o 2.000 nodi del grafo) i rilevatori non confrontano più «tutti con tutti», che
 sulla Biblioteca significava centinaia di milioni di coppie e un workflow fermato dopo 6 ore. Si confrontano solo le
@@ -104,7 +106,7 @@ siano identici al confronto completo. Due limiti, solo per gli archivi grandi:
   eventi) e non genera connessioni;
 - un nodo del grafo con più di 300 collegamenti non genera coppie candidate, ma conta nel punteggio delle coppie trovate.
 
-La sessione Discovery della Biblioteca ha un limite di 3 ore invece dei 120 secondi pensati per l'app.
+La sessione Discovery della Biblioteca ha un limite di 3 ore (invece di 120 secondi) e conserva fino a 300 risultati per tipo (invece di 60).
 
 ## Prestazioni
 

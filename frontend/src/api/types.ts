@@ -704,7 +704,7 @@ export interface DiscoveryEvidence { kind: string; label: string; detail: string
 export interface DiscoveryConnection {
   id: number; session_id: number | null; kind: string; kind_label: string; title: string; elements: DiscoveryElement[]; period: string;
   evidence: DiscoveryEvidence[]; sources: number[]; reliability: DiscoveryLevel; reliability_reasons: string[]; explanation: string;
-  caveats: string[]; score: number; status: 'new' | 'accepted' | 'dismissed'; graph_relation_id: number | null; created_at: string;
+  caveats: string[]; score: number; status: 'new' | 'accepted' | 'dismissed'; graph_relation_id: number | null; created_at: string; library?: boolean;
 }
 
 export type HypothesisStatus = 'to_verify' | 'verifying' | 'confirmed' | 'rejected' | 'inconclusive';
@@ -712,6 +712,7 @@ export interface VerificationCheck { check: string; outcome: string; detail: str
 export interface DiscoveryHypothesis {
   id: number; session_id: number | null; connection_id: number | null; title: string; description: string; phenomena: string[];
   motivation: string; supporting: string[]; contrary: string[]; missing: string[]; method: string[]; confidence: DiscoveryLevel;
+  library?: boolean;
   status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string }[];
   decision_note: string; decided_at: string | null; origin: string; graph_entity_id: number | null; created_at: string;
 }
@@ -719,7 +720,7 @@ export interface DiscoveryHypothesis {
 export interface DiscoveryAnomaly {
   id: number; kind: string; title: string; what_changed: string; reference: string; period: string; data: Record<string, unknown>;
   alternatives: string[]; refs: { series_id?: number; series_ids?: number[]; event_ids?: number[] }; relevance: number;
-  verifiability: DiscoveryLevel; status: 'open' | 'explained' | 'dismissed'; note: string; created_at: string;
+  verifiability: DiscoveryLevel; status: 'open' | 'explained' | 'dismissed'; note: string; created_at: string; library?: boolean;
 }
 
 export interface DiscoveryStep {
@@ -729,7 +730,7 @@ export interface DiscoveryStep {
 export interface DiscoveryLead { kind: string; text: string; ref: Record<string, number> }
 export interface DiscoverySession {
   id: number; mode: 'guided' | 'autonomous'; query: string; status: 'queued' | 'running' | 'paused' | 'stopped' | 'completed' | 'failed';
-  cursor: number; steps_total: number; plan: string[]; scope: Record<string, unknown>; steps: DiscoveryStep[];
+  cursor: number; steps_total: number; plan: string[]; scope: Record<string, unknown>; steps: DiscoveryStep[]; library?: boolean;
   result: { synthesis?: { text: string; executor: string; note?: string; references: string[] }; leads?: DiscoveryLead[]; counts?: Record<string, number> };
   limits: Record<string, number | string>; llm_calls: number; elapsed_ms: number; error: string | null; created_at: string;
 }
@@ -757,5 +758,7 @@ export interface DiscoveryOverview {
   connections: number; connections_new: number; hypotheses: number; hypotheses_by_status: Record<HypothesisStatus, number>; anomalies_open: number;
   running: { id: number; mode: string; query: string; status: string; cursor: number; steps_total: number }[];
   latest_connections: DiscoveryConnection[]; latest_hypotheses: DiscoveryHypothesis[]; latest_anomalies: DiscoveryAnomaly[];
+  /** Risultati della Discovery sulla Biblioteca NEXUS (sola lettura); null se la Biblioteca non esiste. */
+  library?: { connections: number; hypotheses: number; anomalies: number; last_run: string | null; session_id: number | null } | null;
   archive: { events: number; series: number; entities: number };
 }

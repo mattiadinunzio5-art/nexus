@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..agents import llm
 from ..api.schemas_history import RelationIn
+from ..core import library
 from ..core.config import Settings
 from ..core.errors import NexusError, NotFoundError, ValidationFailedError
 from ..database.base import utcnow
@@ -22,11 +23,18 @@ class InvalidStateError(NexusError):
     code = "invalid_state"
 
 
-def _own(db: Session, user: User, model, oid: int, label: str):
-    x = db.get(model, oid)
-    if x is None or x.owner_id != user.id:
-        raise NotFoundError(f"{label} non trovata.")
-    return x
+def _own(db: Session, user: User, model, oid: int, label: str, own: bool = True):
+    """Lettura (own=False): risultati propri e della Biblioteca NEXUS. Scrittura: solo i propri (la Biblioteca è in sola lettura)."""
+    return library.access(db, user, db.get(model, oid), own, f"{label} non trovata.")
+
+
+def _owner(db: Session, user: User, origin: str) -> int | None:
+    """Proprietario dei risultati da elencare: l'utente («mine») o la Biblioteca NEXUS («library»)."""
+    return library.library_user_id(db) if origin == "library" else user.id
+
+
+def with_flag(db: Session, out: dict, x) -> dict:
+    return {**out, "library": library.is_library(db, x.owner_id)}
 
 
 # --- Sessioni ------------------------------------------------------------------------------------
@@ -93,16 +101,19 @@ def run_in_background(database: Database, settings: Settings, session_id: int) -
             db.commit()
 
 
-def list_sessions(db: Session, user: User, limit: int = 30) -> list[DiscoverySession]:
-    return list(db.scalars(select(DiscoverySession).where(DiscoverySession.owner_id == user.id).order_by(DiscoverySession.id.desc()).limit(limit)))
+def list_sessions(db: Session, user: User, limit: int = 30, origin: str = "mine") -> list[DiscoverySession]:
+    owner = _owner(db, user, origin)
+    if owner is None:
+        return []
+    return list(db.scalars(select(DiscoverySession).where(DiscoverySession.owner_id == owner).order_by(DiscoverySession.id.desc()).limit(limit)))
 
 
 def get_session(db: Session, user: User, sid: int) -> DiscoverySession:
-    return _own(db, user, DiscoverySession, sid, "Sessione")
+    return _own(db, user, DiscoverySession, sid, "Sessione", own=False)
 
 
 def control(db: Session, user: User, sid: int, action: str) -> DiscoverySession:
-    s = get_session(db, user, sid)
+    s = _own(db, user, DiscoverySession, sid, "Sessione")
     allowed = {"pause": ("queued", "running"), "resume": ("paused",), "stop": ("queued", "running", "paused")}
     if s.status not in allowed[action]:
         raise InvalidStateError(f"Impossibile eseguire «{action}» su una sessione nello stato «{s.status}».")
@@ -141,7 +152,24 @@ def overview(db: Session, user: User) -> dict:
         "latest_anomalies": [anomaly_out(a) for a in db.scalars(select(DiscoveryAnomaly).where(DiscoveryAnomaly.owner_id == user.id, DiscoveryAnomaly.status == "open")
                                                                   .order_by(DiscoveryAnomaly.relevance.desc()).limit(5))],
         "archive": {"events": count(HistoricalEvent), "series": count(Series), "entities": count(Entity)},
+        "library": _library_overview(db),
     }
+
+
+def _library_overview(db: Session) -> dict | None:
+    """Risultati della Discovery eseguita sulla Biblioteca NEXUS (dati aperti condivisi, in sola lettura)."""
+    lib = library.library_user_id(db)
+    if lib is None:
+        return None
+
+    def count(model, *cond):
+        return db.scalar(select(func.count()).select_from(model).where(model.owner_id == lib, *cond)) or 0
+
+    last = db.scalar(select(DiscoverySession).where(DiscoverySession.owner_id == lib, DiscoverySession.status == "completed")
+                     .order_by(DiscoverySession.id.desc()))
+    return {"connections": count(DiscoveryConnection), "hypotheses": count(DiscoveryHypothesis, DiscoveryHypothesis.archived.is_(False)),
+            "anomalies": count(DiscoveryAnomaly, DiscoveryAnomaly.status == "open"),
+            "last_run": last.finished_at if last else None, "session_id": last.id if last else None}
 
 
 # --- Serializzazione -------------------------------------------------------------------------------
@@ -181,8 +209,12 @@ def session_out(s: DiscoverySession) -> dict:
 # --- Connessioni -----------------------------------------------------------------------------------
 
 
-def list_connections(db: Session, user: User, status: str | None = None, kind: str | None = None, session_id: int | None = None) -> list[DiscoveryConnection]:
-    stmt = select(DiscoveryConnection).where(DiscoveryConnection.owner_id == user.id)
+def list_connections(db: Session, user: User, status: str | None = None, kind: str | None = None, session_id: int | None = None,
+                     origin: str = "mine") -> list[DiscoveryConnection]:
+    owner = _owner(db, user, origin)
+    if owner is None:
+        return []
+    stmt = select(DiscoveryConnection).where(DiscoveryConnection.owner_id == owner)
     if status:
         stmt = stmt.where(DiscoveryConnection.status == status)
     if kind:
@@ -232,8 +264,11 @@ def set_connection_status(db: Session, user: User, cid: int, status: str) -> Dis
 # --- Ipotesi ---------------------------------------------------------------------------------------
 
 
-def list_hypotheses(db: Session, user: User, status: str | None = None, archived: bool = False) -> list[DiscoveryHypothesis]:
-    stmt = select(DiscoveryHypothesis).where(DiscoveryHypothesis.owner_id == user.id, DiscoveryHypothesis.archived.is_(archived))
+def list_hypotheses(db: Session, user: User, status: str | None = None, archived: bool = False, origin: str = "mine") -> list[DiscoveryHypothesis]:
+    owner = _owner(db, user, origin)
+    if owner is None:
+        return []
+    stmt = select(DiscoveryHypothesis).where(DiscoveryHypothesis.owner_id == owner, DiscoveryHypothesis.archived.is_(archived))
     if status:
         stmt = stmt.where(DiscoveryHypothesis.status == status)
     return list(db.scalars(stmt.order_by(DiscoveryHypothesis.id.desc()).limit(300)))
@@ -319,8 +354,11 @@ def hypothesis_to_graph(db: Session, user: User, hid: int) -> DiscoveryHypothesi
 # --- Anomalie --------------------------------------------------------------------------------------
 
 
-def list_anomalies(db: Session, user: User, status: str | None = None) -> list[DiscoveryAnomaly]:
-    stmt = select(DiscoveryAnomaly).where(DiscoveryAnomaly.owner_id == user.id)
+def list_anomalies(db: Session, user: User, status: str | None = None, origin: str = "mine") -> list[DiscoveryAnomaly]:
+    owner = _owner(db, user, origin)
+    if owner is None:
+        return []
+    stmt = select(DiscoveryAnomaly).where(DiscoveryAnomaly.owner_id == owner)
     if status:
         stmt = stmt.where(DiscoveryAnomaly.status == status)
     order = {"high": 0, "medium": 1, "low": 2}

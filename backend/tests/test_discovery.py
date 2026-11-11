@@ -420,4 +420,4 @@ def test_library_discovery_gets_a_longer_time_budget(db, monkeypatch):
 
     discovery_run.run_discovery(R())
     s = db.get(DiscoverySession, seen["sid"])
-    assert s.limits["max_seconds"] == discovery_run.LIBRARY_MAX_SECONDS
+    assert s.limits["max_seconds"] == discovery_run.LIBRARY_MAX_SECONDS and s.limits["max_items"] == discovery_run.LIBRARY_MAX_ITEMS
