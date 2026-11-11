@@ -1,3 +1,4 @@
+import { tr } from '../i18n';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Badge } from '../components/ui/Badge';
@@ -25,7 +26,7 @@ export function SearchPage() {
       {data && (
         <>
           <p className="mb-4 text-xs text-steel-500">
-            Ambiti cercati: {data.searched_scopes.join(', ')}. Non ancora ricercabili: {data.unavailable_scopes.join(', ')}.
+            Ambiti cercati: {data.searched_scopes.map(tr).join(', ')}. Non ancora ricercabili: {data.unavailable_scopes.map(tr).join(', ') || '—'}.
           </p>
           {data.hits.length === 0 ? (
             <EmptyState>Nessun risultato.</EmptyState>

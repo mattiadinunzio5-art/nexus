@@ -109,3 +109,16 @@ def test_library_summary_counts_shared_open_data(client):
     s = client.get("/api/library/summary").json()
     assert s["available"] is True and s["events"] == 1 and s["series"] == 0
     library.reset_cache()
+
+
+def test_english_interface_header_is_allowed_and_localises_dates(client):
+    from nexus.core.config import get_settings
+
+    origin = get_settings().cors_origins[0]
+    pre = client.options("/api/history/events", headers={"Origin": origin, "Access-Control-Request-Method": "GET",
+                                                          "Access-Control-Request-Headers": "x-nexus-lang,x-nexus-client"})
+    assert pre.status_code == 200 and "x-nexus-lang" in pre.headers["access-control-allow-headers"].lower()
+    ev = client.post("/api/history/events", json={"title": "Test", "start_year": -44, "start_month": 3, "start_day": 15}).json()
+    it = client.get(f"/api/history/events/{ev['id']}").json()
+    en = client.get(f"/api/history/events/{ev['id']}", headers={"X-Nexus-Lang": "en"}).json()
+    assert it != en and "BC" in str(en) and "a.C." in str(it)

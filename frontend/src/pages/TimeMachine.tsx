@@ -1,3 +1,4 @@
+import { locale } from '../i18n';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EyeOff, History } from 'lucide-react';
@@ -76,7 +77,7 @@ export function TimeMachinePage() {
                 {data.indicators.map((i) => (
                   <li key={i.series_id} className="flex flex-wrap justify-between gap-2">
                     <Link to={`/financial/series/${i.series_id}`} className="text-steel-300 hover:text-paper">{i.name}</Link>
-                    <span className="text-paper">{i.last_value.toLocaleString('it-IT')} {i.unit} <span className="text-[11px] text-steel-500">({i.last_date}, {i.source})</span></span>
+                    <span className="text-paper">{i.last_value.toLocaleString(locale())} {i.unit} <span className="text-[11px] text-steel-500">({i.last_date}, {i.source})</span></span>
                   </li>
                 ))}
               </ul>

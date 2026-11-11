@@ -84,3 +84,17 @@ Storia e grafo: `historical_events`, `event_sources`, `knowledge_items`, `entiti
 Finanza e laboratorio: `series`, `observations`, `simulation_runs`.
 AI e studio: `research_runs`, `agent_steps`, `reports`, `report_sections`, `briefings`.
 Operatività: `activity_log`, `notifications`, `search_queries`, `connector_states`.
+
+## Lingua dell'interfaccia (IT / EN)
+
+I testi sono scritti in italiano nel codice. In inglese li traduce il **runtime JSX di NEXUS** (`frontend/src/i18n`,
+configurato con `jsxImportSource: 'nexus-i18n'` in `vite.config.ts` e `tsconfig.json`): per ogni elemento traduce il
+testo e gli attributi visibili (placeholder, title, aria-label, alt) con il dizionario `en.ts` (interfaccia) e
+`en-server-*.ts` (messaggi e etichette prodotti dal server), prima per corrispondenza esatta e poi con modelli che
+hanno parti variabili (`{0}`). I dati degli utenti non sono nel dizionario e restano come sono.
+
+- Lingua: `?lang=en|it`, poi la scelta salvata (`nexus.lang`), poi la lingua del browser; la demo `?demo=en` apre in
+  inglese. Il selettore **IT / EN** è in alto a destra e ricarica la pagina.
+- Numeri e date seguono la lingua (`locale()`); il server riceve `X-Nexus-Lang` e formatta le date storiche in inglese.
+- Per un testo nuovo: aggiungi la frase italiana esatta e la traduzione al dizionario. `src/test/i18n.test.tsx` controlla
+  il meccanismo.

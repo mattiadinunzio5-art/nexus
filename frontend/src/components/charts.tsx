@@ -1,3 +1,4 @@
+import { locale } from '../i18n';
 /**
  * Grafici NEXUS (Recharts). Regole: un solo asse y per grafico, palette
  * categoriale validata (CVD) in ordine fisso, legenda con ≥ 2 serie, tooltip,
@@ -11,7 +12,7 @@ export const SERIES_COLORS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d551
 
 const AXIS = { stroke: '#3a3d44', tick: { fill: '#9a9ea6', fontSize: 11 } };
 const fmt = (v: number | null | undefined, digits = 4) =>
-  v === null || v === undefined || Number.isNaN(v) ? '—' : v.toLocaleString('it-IT', { maximumSignificantDigits: digits });
+  v === null || v === undefined || Number.isNaN(v) ? '—' : v.toLocaleString(locale(), { maximumSignificantDigits: digits });
 
 export interface ChartSeries { key: string; label: string; color?: string; dashed?: boolean }
 
