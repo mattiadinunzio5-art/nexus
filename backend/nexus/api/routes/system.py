@@ -29,3 +29,21 @@ def system_status(db: DB, settings: AppSettings, user: CurrentUser) -> SystemSta
 @router.get("/me", response_model=UserOut, summary="Utente corrente (Fase 1: utente locale)")
 def me(user: CurrentUser) -> UserOut:
     return UserOut.model_validate(user)
+
+
+@router.get("/library/summary", summary="Contenuto della Biblioteca NEXUS (dati aperti condivisi, sola lettura)")
+def library_summary(db: DB, user: CurrentUser) -> dict:
+    from sqlalchemy import func, select
+
+    from ...core import library
+    from ...models import Document, Entity, HistoricalEvent, Relation, Series, Source
+
+    lib = library.library_user_id(db)
+    if lib is None:
+        return {"available": False}
+
+    def count(model) -> int:
+        return db.scalar(select(func.count()).select_from(model).where(model.owner_id == lib)) or 0
+
+    return {"available": True, "events": count(HistoricalEvent), "series": count(Series), "entities": count(Entity),
+            "relations": count(Relation), "sources": count(Source), "documents": count(Document)}

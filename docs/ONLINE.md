@@ -34,3 +34,26 @@
 - Ogni utente ha i propri dati; i limiti del piano «free» si applicano (vedi `backend/nexus/core/plans.py`).
 - L'AI resta facoltativa: ogni utente usa le proprie chiavi (cifrate con `NEXUS_SECRET_KEY`). Ollama non è disponibile online.
 - In locale non cambia nulla: `scripts/dev.sh` usa SQLite, la cartella `data/` e gli account locali.
+
+## Backup del database
+
+Il workflow **«Backup database»** (`.github/workflows/backup-db.yml`) gira ogni domenica alle 02:43 UTC e si può
+lanciare a mano (Actions → Backup database → *Run workflow*).
+
+- Copia lo schema `public` (tutti i dati dell'app: progetti, eventi, fonti, serie, documenti indicizzati, Biblioteca,
+  Discovery) con `pg_dump` in formato compresso.
+- La salva nel bucket **privato** `nexus-backups` di Supabase Storage (Supabase → Storage) e tiene le ultime **6** copie.
+- Non usa gli artifact di GitHub: il backup contiene dati degli utenti.
+- Gli **account** (email e password) sono gestiti da Supabase Auth e non sono in questo backup; i **file** caricati
+  restano nel bucket `nexus-documents`.
+
+**Ripristino** (da un computer con PostgreSQL 17 installato):
+
+1. Supabase → Storage → `nexus-backups` → scarica il file `nexus-AAAAMMGGTHHMMZ.dump` scelto.
+2. Prendi l'indirizzo del database (Project Settings → Database → Connection string, *Session pooler*), senza scriverlo
+   in chat né nei commit.
+3. Ripristina sopra lo schema esistente:
+   ```bash
+   pg_restore --clean --if-exists --no-owner --no-privileges -d "postgresql://…" nexus-AAAAMMGGTHHMMZ.dump
+   ```
+   Per una prova senza toccare i dati online, ripristina in un database PostgreSQL locale vuoto.

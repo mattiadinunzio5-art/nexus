@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Cpu, Eye, EyeOff, Plus, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, Compass, Cpu, Eye, EyeOff, Plus, SlidersHorizontal } from 'lucide-react';
 import { api } from '../api/client';
 import type { DataSection, Dashboard as DashboardData, DashboardLayout, UnavailableSection, WidgetId } from '../api/types';
 import { SystemSummary } from '../components/SystemSummary';
@@ -280,6 +280,13 @@ export function DashboardPage() {
       />
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
+      {data && data.projects.active_count === 0 && (
+        <Link to="/start" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gold-500/50 bg-gold-500/10 p-4 hover:border-gold-400">
+          <Compass className="size-5 shrink-0 text-gold-300" aria-hidden />
+          <span className="min-w-0 flex-1 text-sm text-paper"><strong>Nuovo su NEXUS?</strong> Inizia da qui: la Biblioteca già pronta e i tre passi per il tuo primo progetto.</span>
+          <span className="text-sm text-gold-300">Inizia da qui →</span>
+        </Link>
+      )}
       {data && editing && (
         <LayoutEditor
           layout={data.layout}

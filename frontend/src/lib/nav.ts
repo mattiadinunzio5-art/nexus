@@ -8,6 +8,7 @@ import {
   BookOpenText,
   Briefcase,
   ChartLine,
+  Compass,
   Database,
   FlaskConical,
   FolderKanban,
@@ -48,6 +49,7 @@ export const MODULE_NAV: NavItem[] = [
 ];
 
 export const MAIN_NAV: NavItem[] = [
+  { to: '/start', label: 'Inizia da qui', icon: Compass },
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/briefing', label: 'Daily Briefing', icon: Newspaper },
   { to: '/lessons', label: 'Guided Lessons', icon: GraduationCap },

@@ -1,0 +1,69 @@
+# Backup settimanale del database online (schema «public»: progetti, eventi, fonti, serie, Biblioteca, Discovery…).
+# - Copia con pg_dump in formato compresso e la salva nel bucket PRIVATO «nexus-backups» di Supabase Storage.
+# - Tiene le ultime 6 copie (circa un mese e mezzo) e cancella le più vecchie.
+# - Nessun file pubblico: non usa gli artifact di GitHub, perché il backup contiene dati degli utenti.
+# Segreti usati (già presenti per l'import): NEXUS_DATABASE_URL, NEXUS_SUPABASE_URL, NEXUS_SUPABASE_SERVICE_KEY.
+# Ripristino: docs/ONLINE.md, sezione «Backup del database».
+name: Backup database
+
+on:
+  schedule:
+    - cron: "43 2 * * 0"   # ogni domenica alle 02:43 UTC
+  workflow_dispatch: {}
+
+concurrency:
+  group: backup-db
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DB_URL: ${{ secrets.NEXUS_DATABASE_URL }}
+      SB_URL: ${{ secrets.NEXUS_SUPABASE_URL }}
+      SB_KEY: ${{ secrets.NEXUS_SUPABASE_SERVICE_KEY }}
+      BUCKET: nexus-backups
+      KEEP: "6"
+    steps:
+      - name: Controllo dei segreti
+        run: |
+          for v in DB_URL SB_URL SB_KEY; do
+            if [ -z "${!v}" ]; then echo "Manca un segreto ($v): vedi docs/ONLINE.md"; exit 1; fi
+          done
+      - name: Client PostgreSQL 17 (stessa versione del server Supabase)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsS -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+      - name: Copia del database
+        run: |
+          # L'indirizzo usato dall'app ha il prefisso del driver Python («postgresql+psycopg://»): pg_dump vuole quello standard.
+          PG_URL=$(printf '%s' "$DB_URL" | sed -E 's#^postgres(ql)?\+[a-z0-9]+://#postgresql://#')
+          FILE="nexus-$(date -u +%Y%m%dT%H%MZ).dump"
+          /usr/lib/postgresql/17/bin/pg_dump "$PG_URL" --schema=public --format=custom --compress=9 --no-owner --no-privileges -f "$FILE"
+          /usr/lib/postgresql/17/bin/pg_restore --list "$FILE" > /dev/null   # il file è leggibile
+          echo "FILE=$FILE" >> "$GITHUB_ENV"
+          ls -lh "$FILE"
+      - name: Salvataggio nel bucket privato
+        run: |
+          AUTH=(-H "Authorization: Bearer $SB_KEY" -H "apikey: $SB_KEY")
+          # Crea il bucket privato la prima volta (se esiste già, Supabase risponde con un errore che si ignora).
+          curl -sS "${AUTH[@]}" -H "Content-Type: application/json" \
+            -d "{\"id\":\"$BUCKET\",\"name\":\"$BUCKET\",\"public\":false}" "$SB_URL/storage/v1/bucket" > /dev/null || true
+          curl -fsS "${AUTH[@]}" -H "Content-Type: application/octet-stream" -H "x-upsert: false" \
+            --data-binary @"$FILE" "$SB_URL/storage/v1/object/$BUCKET/$FILE" > /dev/null
+          echo "Salvato: $BUCKET/$FILE"
+      - name: Pulizia delle copie vecchie
+        run: |
+          AUTH=(-H "Authorization: Bearer $SB_KEY" -H "apikey: $SB_KEY")
+          LIST=$(curl -fsS "${AUTH[@]}" -H "Content-Type: application/json" \
+            -d '{"prefix":"","limit":1000,"sortBy":{"column":"name","order":"desc"}}' "$SB_URL/storage/v1/object/list/$BUCKET")
+          OLD=$(printf '%s' "$LIST" | python3 -c "import json,sys; n=[o['name'] for o in json.load(sys.stdin) if o['name'].startswith('nexus-') and o['name'].endswith('.dump')]; print('\n'.join(sorted(n, reverse=True)[int('$KEEP'):]))")
+          if [ -n "$OLD" ]; then
+            BODY=$(printf '%s' "$OLD" | python3 -c "import json,sys; print(json.dumps({'prefixes': sys.stdin.read().split()}))")
+            curl -fsS -X DELETE "${AUTH[@]}" -H "Content-Type: application/json" -d "$BODY" "$SB_URL/storage/v1/object/$BUCKET" > /dev/null
+            echo "Cancellate: $OLD"
+          fi
+          echo "Copie presenti prima della pulizia:"; printf '%s' "$LIST" | python3 -c "import json,sys; [print(' ', o['name']) for o in json.load(sys.stdin)][:0]"

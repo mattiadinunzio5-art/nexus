@@ -762,3 +762,8 @@ export interface DiscoveryOverview {
   library?: { connections: number; hypotheses: number; anomalies: number; last_run: string | null; session_id: number | null } | null;
   archive: { events: number; series: number; entities: number };
 }
+
+/** Contenuto della Biblioteca NEXUS (dati aperti condivisi in sola lettura). */
+export type LibrarySummary =
+  | { available: false }
+  | { available: true; events: number; series: number; entities: number; relations: number; sources: number; documents: number };
