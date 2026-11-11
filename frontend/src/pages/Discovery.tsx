@@ -7,7 +7,7 @@ import type {
   DiscoverySession, ForesightResult, HypothesisStatus, TransmissionStep,
 } from '../api/types';
 import { formatNumber, TimeChart } from '../components/charts';
-import { Badge, type BadgeTone } from '../components/ui/Badge';
+import { Badge, LibraryBadge, type BadgeTone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
@@ -58,6 +58,35 @@ function Shell({ title, description, actions, children }: { title: string; descr
       {children}
     </>
   );
+}
+
+// --- Biblioteca NEXUS ------------------------------------------------------------------------------
+// I risultati della Discovery eseguita sulla Biblioteca (dati aperti condivisi) si consultano a parte, in sola lettura.
+
+type Origin = 'mine' | 'library';
+
+function useOrigin(): [Origin, (o: Origin) => void] {
+  const [params, setParams] = useSearchParams();
+  const origin: Origin = params.get('origin') === 'library' ? 'library' : 'mine';
+  const set = (o: Origin) => { const p = new URLSearchParams(params); if (o === 'library') p.set('origin', 'library'); else p.delete('origin'); setParams(p); };
+  return [origin, set];
+}
+
+function OriginSwitch({ origin, onChange }: { origin: Origin; onChange: (o: Origin) => void }) {
+  return (
+    <div role="group" aria-label="Archivio" className="inline-flex self-end rounded-md border border-ink-700 bg-ink-900 p-0.5 text-sm">
+      {([['mine', 'Il mio archivio'], ['library', 'Biblioteca NEXUS']] as const).map(([o, label]) => (
+        <button key={o} type="button" aria-pressed={origin === o} onClick={() => onChange(o)}
+          className={`rounded px-3 py-1.5 ${origin === o ? 'bg-ink-700 text-paper' : 'text-steel-400 hover:text-paper'}`}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
+const LIBRARY_NOTE = 'Risultato della Discovery sulla Biblioteca NEXUS (dati aperti con fonte): è in sola lettura. Rilevatori deterministici, nessuna AI: ogni elemento è una pista da verificare.';
+
+function LibraryNote() {
+  return <p className="mb-4 rounded-md border border-gold-500/40 bg-gold-500/10 p-3 text-sm text-gold-300">{LIBRARY_NOTE}</p>;
 }
 
 const LEVEL: Record<DiscoveryLevel, { label: string; tone: BadgeTone }> = {
@@ -144,6 +173,20 @@ export function DiscoveryDashboardPage() {
               </Link>
             ))}
           </dl>
+          {o.data.library && o.data.library.connections + o.data.library.anomalies + o.data.library.hypotheses > 0 && (
+            <section aria-labelledby="disc-library" className="mb-5 rounded-lg border border-gold-500/40 bg-ink-900 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <LibraryBadge /><h2 id="disc-library" className="text-sm font-medium text-paper">Discovery sulla Biblioteca NEXUS</h2>
+                {o.data.library.last_run && <span className="text-xs text-steel-500">aggiornata il {formatDateTime(o.data.library.last_run)}</span>}
+              </div>
+              <p className="mt-1 text-sm text-steel-400">Piste trovate sui dati aperti condivisi (eventi, serie ufficiali, grafo): da consultare e verificare, in sola lettura.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link to="/discovery/connections?origin=library" className="rounded-md border border-ink-700 px-3 py-1.5 text-sm text-paper hover:border-gold-500">{o.data.library.connections} connessioni</Link>
+                <Link to="/discovery/hypotheses?origin=library" className="rounded-md border border-ink-700 px-3 py-1.5 text-sm text-paper hover:border-gold-500">{o.data.library.hypotheses} ipotesi</Link>
+                <Link to="/discovery/anomalies?origin=library" className="rounded-md border border-ink-700 px-3 py-1.5 text-sm text-paper hover:border-gold-500">{o.data.library.anomalies} anomalie</Link>
+              </div>
+            </section>
+          )}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card title="Ultime connessioni">
               {o.data.latest_connections.length ? <ul className="space-y-2">{o.data.latest_connections.map((c) => (
@@ -298,7 +341,8 @@ export function ConnectionsPage() {
   const kind = params.get('kind') ?? '';
   const status = params.get('status') ?? '';
   const session = Number(params.get('session')) || undefined;
-  const list = useAsync(() => api.discoveryConnections({ kind: kind || undefined, status: status || undefined, session_id: session }), [kind, status, session]);
+  const [origin, setOrigin] = useOrigin();
+  const list = useAsync(() => api.discoveryConnections({ kind: kind || undefined, status: status || undefined, session_id: session, origin }), [kind, status, session, origin]);
   const set = (k: string, v: string) => { const p = new URLSearchParams(params); if (v) p.set(k, v); else p.delete(k); setParams(p); };
   return (
     <Shell title="Connections" description="Collegamenti candidati tra eventi, serie ed entità. Ognuno ha elementi, tipo di relazione, periodo, evidenze, fonti e affidabilità motivata.">
@@ -306,7 +350,9 @@ export function ConnectionsPage() {
         <Field label="Tipo"><Select value={kind} onChange={(e) => set('kind', e.target.value)}><option value="">Tutti</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
         <Field label="Stato"><Select value={status} onChange={(e) => set('status', e.target.value)}><option value="">Tutti</option><option value="new">Da esaminare</option><option value="accepted">Accettate</option><option value="dismissed">Scartate</option></Select></Field>
         {session && <button className="self-end pb-2 text-xs text-gold-300 hover:underline" onClick={() => set('session', '')}>Solo sessione #{session} ✕</button>}
+        <OriginSwitch origin={origin} onChange={setOrigin} />
       </div>
+      {origin === 'library' && <LibraryNote />}
       {list.loading && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
       {list.data?.length === 0 && <EmptyState>Nessuna connessione con questi filtri.</EmptyState>}
@@ -314,7 +360,7 @@ export function ConnectionsPage() {
         <li key={c.id}>
           <Link to={`/discovery/connections/${c.id}`} className="block rounded-lg border border-ink-700 bg-ink-900 p-4 hover:border-gold-500">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="neutral">{c.kind_label}</Badge><LevelBadge level={c.reliability} />
+              {c.library && <LibraryBadge />}<Badge tone="neutral">{c.kind_label}</Badge><LevelBadge level={c.reliability} />
               {c.status !== 'new' && <Badge tone={c.status === 'accepted' ? 'ok' : 'neutral'}>{c.status === 'accepted' ? 'accettata' : 'scartata'}</Badge>}
               <span className="text-xs text-steel-500">{c.period}</span>
             </div>
@@ -335,13 +381,14 @@ export function ConnectionDetailPage() {
   if (c.error) return <Shell title="Connection"><ErrorBox error={c.error} onRetry={c.reload} /></Shell>;
   const d = c.data as DiscoveryConnection;
   return (
-    <Shell title={d.title} description={`${d.kind_label} · ${d.period}`}
-      actions={<>
+    <Shell title={d.title} description={<span className="flex flex-wrap items-center gap-2">{d.library && <LibraryBadge />}{d.kind_label} · {d.period}</span>}
+      actions={d.library ? undefined : <>
         {d.status !== 'accepted' && <Button variant="primary" disabled={busy} onClick={() => run(async () => c.setData(await api.setConnectionStatus(d.id, 'accepted')), 'Salvata nel Knowledge Graph come ipotesi (non come relazione documentata).')}><Check className="size-4" aria-hidden /> Accetta</Button>}
         {d.status !== 'dismissed' && <Button disabled={busy} onClick={() => run(async () => c.setData(await api.setConnectionStatus(d.id, 'dismissed')))}><X className="size-4" aria-hidden /> Scarta</Button>}
         <Button disabled={busy} onClick={() => run(async () => { const h = await api.hypothesisFromConnection(d.id); nav(`/discovery/hypotheses/${h.id}`); })}>Genera l'ipotesi</Button>
       </>}>
       {view}
+      {d.library && <LibraryNote />}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Elementi e spiegazione" className="lg:col-span-2">
           <div className="mb-3 flex flex-wrap gap-2">{d.elements.map((e) => <ElementLink key={`${e.type}${e.id}`} el={e} />)}</div>
@@ -367,7 +414,8 @@ export function ConnectionDetailPage() {
 export function HypothesesPage() {
   const [status, setStatus] = useState('');
   const [archived, setArchived] = useState(false);
-  const list = useAsync(() => api.discoveryHypotheses({ status: status || undefined, archived }), [status, archived]);
+  const [origin, setOrigin] = useOrigin();
+  const list = useAsync(() => api.discoveryHypotheses({ status: status || undefined, archived, origin }), [status, archived, origin]);
   const [compare, setCompare] = useState<number[]>([]);
   const chosen = useMemo(() => list.data?.filter((h) => compare.includes(h.id)) ?? [], [list.data, compare]);
   return (
@@ -376,7 +424,9 @@ export function HypothesesPage() {
         <Field label="Stato"><Select value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Tutti</option>{Object.entries(H_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select></Field>
         <label className="flex items-center gap-2 pb-2 text-sm text-steel-300"><input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} /> Archiviate</label>
         {compare.length > 0 && <span className="pb-2 text-xs text-steel-400">{compare.length} selezionate per il confronto (max 3) · <button className="text-gold-300 hover:underline" onClick={() => setCompare([])}>azzera</button></span>}
+        <OriginSwitch origin={origin} onChange={(o) => { setCompare([]); setOrigin(o); }} />
       </div>
+      {origin === 'library' && <LibraryNote />}
       {list.loading && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
       {list.data?.length === 0 && <EmptyState>Nessuna ipotesi.</EmptyState>}
@@ -404,7 +454,7 @@ export function HypothesesPage() {
           <input type="checkbox" aria-label={`Confronta: ${h.title}`} className="mt-1" checked={compare.includes(h.id)} disabled={!compare.includes(h.id) && compare.length >= 3}
             onChange={(e) => setCompare((c) => e.target.checked ? [...c, h.id] : c.filter((x) => x !== h.id))} />
           <Link to={`/discovery/hypotheses/${h.id}`} className="min-w-0 flex-1">
-            <div className="flex flex-wrap gap-2"><Badge tone={H_STATUS[h.status].tone}>{H_STATUS[h.status].label}</Badge><LevelBadge level={h.confidence} prefix="confidenza" /></div>
+            <div className="flex flex-wrap gap-2">{h.library && <LibraryBadge />}<Badge tone={H_STATUS[h.status].tone}>{H_STATUS[h.status].label}</Badge><LevelBadge level={h.confidence} prefix="confidenza" /></div>
             <p className="mt-2 font-medium text-paper hover:text-gold-300">{h.title}</p>
             <p className="mt-1 text-xs text-steel-500">{h.phenomena.join(' · ')}</p>
           </Link>
@@ -426,13 +476,14 @@ export function HypothesisDetailPage() {
   const decided = ['confirmed', 'rejected', 'inconclusive'].includes(d.status);
   return (
     <Shell title={d.title}
-      description={<span className="flex flex-wrap items-center gap-2"><Badge tone={H_STATUS[d.status].tone}>{H_STATUS[d.status].label}</Badge><LevelBadge level={d.confidence} prefix="confidenza" />{d.archived && <Badge>archiviata</Badge>}</span>}
-      actions={<>
+      description={<span className="flex flex-wrap items-center gap-2">{d.library && <LibraryBadge />}<Badge tone={H_STATUS[d.status].tone}>{H_STATUS[d.status].label}</Badge><LevelBadge level={d.confidence} prefix="confidenza" />{d.archived && <Badge>archiviata</Badge>}</span>}
+      actions={d.library ? undefined : <>
         {!decided && <Button variant="primary" disabled={busy} onClick={() => run(async () => h.setData(await api.verifyHypothesis(d.id)), 'Verifica eseguita: leggi i controlli e decidi l’esito.')}>Verifica</Button>}
         {!d.graph_entity_id && <Button disabled={busy} onClick={() => run(async () => h.setData(await api.hypothesisToGraph(d.id)), 'Aggiunta al Knowledge Graph come nodo «ipotesi».')}><GitBranch className="size-4" aria-hidden /> Nel grafo</Button>}
         <Button disabled={busy} onClick={() => run(async () => h.setData(await api.archiveHypothesis(d.id, !d.archived)))}><Archive className="size-4" aria-hidden /> {d.archived ? 'Ripristina' : 'Archivia'}</Button>
       </>}>
       {view}
+      {d.library && <LibraryNote />}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Descrizione" className="lg:col-span-2">
           <p className="whitespace-pre-line text-sm text-steel-200">{d.description}</p>
@@ -455,7 +506,7 @@ export function HypothesisDetailPage() {
             </>
           )}
         </Card>
-        <Card title="Esito (deciso da te)" className="lg:col-span-2">
+        {!d.library && <Card title="Esito (deciso da te)" className="lg:col-span-2">
           {d.decision_note && <p className="mb-3 text-sm text-steel-300"><strong className="text-paper">{H_STATUS[d.status].label}</strong>{d.decided_at && ` il ${formatDateTime(d.decided_at)}`}: {d.decision_note}</p>}
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void run(async () => { h.setData(await api.decideHypothesis(d.id, decision, note)); setNote(''); }, 'Esito registrato.'); }}>
             <Field label="Esito"><Select value={decision} onChange={(e) => setDecision(e.target.value as HypothesisStatus)}>
@@ -464,7 +515,7 @@ export function HypothesisDetailPage() {
             <Field label="Motivazione (obbligatoria)"><Input value={note} onChange={(e) => setNote(e.target.value)} className="min-w-64" placeholder="Su quali evidenze ti basi?" /></Field>
             <Button type="submit" disabled={busy}>Registra</Button>
           </form>
-        </Card>
+        </Card>}
       </div>
     </Shell>
   );
@@ -474,20 +525,25 @@ export function HypothesisDetailPage() {
 
 export function AnomaliesPage() {
   const [status, setStatus] = useState('open');
-  const list = useAsync(() => api.discoveryAnomalies(status || undefined), [status]);
+  const [origin, setOrigin] = useOrigin();
+  const list = useAsync(() => api.discoveryAnomalies(status || undefined, origin), [status, origin]);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const { busy, run, view } = useAction();
   const KIND: Record<string, string> = { series_change: 'Variazione anomala', trend_deviation: 'Deviazione dal trend', source_discrepancy: 'Discrepanza tra fonti', chronology: 'Incongruenza cronologica' };
   return (
     <Shell title="Anomalies" description="Variazioni insolite, deviazioni dal trend, fonti in disaccordo e incongruenze cronologiche, ordinate per rilevanza e verificabilità. Con dati insufficienti non viene segnalato nulla.">
-      <Field label="Stato"><Select value={status} onChange={(e) => setStatus(e.target.value)} className="mb-4 w-auto"><option value="open">Aperte</option><option value="explained">Spiegate</option><option value="dismissed">Scartate</option><option value="">Tutte</option></Select></Field>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <Field label="Stato"><Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-auto"><option value="open">Aperte</option><option value="explained">Spiegate</option><option value="dismissed">Scartate</option><option value="">Tutte</option></Select></Field>
+        <OriginSwitch origin={origin} onChange={setOrigin} />
+      </div>
+      {origin === 'library' && <LibraryNote />}
       {view}
       {list.loading && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
       {list.data?.length === 0 && <EmptyState>Nessuna anomalia.</EmptyState>}
       <ul className="space-y-3">{list.data?.map((a) => (
         <li key={a.id} id={`a${a.id}`} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
-          <div className="flex flex-wrap gap-2"><Badge>{KIND[a.kind] ?? a.kind}</Badge><Badge tone={a.verifiability === 'high' ? 'ok' : 'neutral'}>verificabilità {a.verifiability === 'high' ? 'alta' : a.verifiability === 'medium' ? 'media' : 'bassa'}</Badge><span className="text-xs text-steel-500">rilevanza {formatNumber(a.relevance, 3)} · {a.period}</span></div>
+          <div className="flex flex-wrap gap-2">{a.library && <LibraryBadge />}<Badge>{KIND[a.kind] ?? a.kind}</Badge><Badge tone={a.verifiability === 'high' ? 'ok' : 'neutral'}>verificabilità {a.verifiability === 'high' ? 'alta' : a.verifiability === 'medium' ? 'media' : 'bassa'}</Badge><span className="text-xs text-steel-500">rilevanza {formatNumber(a.relevance, 3)} · {a.period}</span></div>
           <p className="mt-2 font-medium text-paper">{a.title}</p>
           <dl className="mt-2 grid gap-2 text-sm md:grid-cols-2">
             <div><dt className="text-xs text-steel-500">Cosa è cambiato</dt><dd className="text-steel-300">{a.what_changed}</dd></div>
@@ -500,7 +556,7 @@ export function AnomaliesPage() {
             {a.refs.series_ids?.map((s) => <Link key={s} className="text-gold-300 hover:underline" to={`/financial/series/${s}`}>Serie #{s}</Link>)}
             {a.refs.event_ids?.map((e) => <Link key={e} className="text-gold-300 hover:underline" to={`/history/events/${e}`}>Evento #{e}</Link>)}
           </div>
-          {a.status === 'open' ? (
+          {a.library ? null : a.status === 'open' ? (
             <div className="mt-3 flex flex-wrap gap-2">
               <Input aria-label="Spiegazione o motivo" placeholder="Spiegazione o motivo" value={notes[a.id] ?? ''} onChange={(e) => setNotes({ ...notes, [a.id]: e.target.value })} className="min-w-56 flex-1" />
               <Button disabled={busy} onClick={() => run(async () => { await api.updateAnomaly(a.id, 'explained', notes[a.id] ?? ''); await list.reload(); })}>Spiegata</Button>

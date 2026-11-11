@@ -55,3 +55,48 @@ def test_library_graph_is_explored_without_loading_everything(client):
     p = client.get(f"/api/graph/path?source={ea}&target={eb}").json()
     assert p["found"] and p["entity_ids"] == [ea, eb]
     library.reset_cache()
+
+
+def test_library_discovery_results_are_listed_separately_and_read_only(client):
+    from nexus.models import DiscoveryAnomaly, DiscoveryConnection, DiscoveryHypothesis, DiscoverySession
+
+    library.reset_cache()
+    eid = _library_event(client)
+    with client.app.state.database.session_factory() as db:
+        lib = library.ensure_library_user(db)
+        s = DiscoverySession(owner_id=lib.id, mode="autonomous", query="", status="completed", limits={}, steps=[], result={})
+        db.add(s)
+        db.flush()
+        c = DiscoveryConnection(owner_id=lib.id, session_id=s.id, fingerprint="f1", kind="event_data_change", title="Panic of 1907 — serie",
+                                elements=[{"type": "event", "id": eid, "label": "Panic of 1907"}], period="1907", evidence=[], sources=[],
+                                reliability="low", reliability_reasons=[], explanation="x", caveats=[], score=3.0)
+        a = DiscoveryAnomaly(owner_id=lib.id, session_id=s.id, fingerprint="a1", kind="series_change", title="Salto", what_changed="x",
+                             reference="x", period="1907", data={}, alternatives=[], refs={}, relevance=5.0, verifiability="high")
+        db.add_all([c, a])
+        db.flush()
+        h = DiscoveryHypothesis(owner_id=lib.id, session_id=s.id, connection_id=c.id, fingerprint="f1", origin="rules", title="Ipotesi",
+                                description="x", phenomena=[], motivation="x", supporting=[], contrary=[], missing=[], method="x", confidence="low")
+        db.add(h)
+        db.commit()
+        cid, aid, hid, sid = c.id, a.id, h.id, s.id
+    # Le liste dell'utente restano sue; la Biblioteca si chiede esplicitamente.
+    assert client.get("/api/discovery/connections").json() == []
+    lib_c = client.get("/api/discovery/connections?origin=library").json()
+    assert [x["id"] for x in lib_c] == [cid] and lib_c[0]["library"] is True
+    assert [x["id"] for x in client.get("/api/discovery/anomalies?origin=library").json()] == [aid]
+    assert [x["id"] for x in client.get("/api/discovery/hypotheses?origin=library").json()] == [hid]
+    assert [x["id"] for x in client.get("/api/discovery/sessions?origin=library").json()] == [sid]
+    ov = client.get("/api/discovery/overview").json()
+    assert ov["connections"] == 0 and ov["library"]["connections"] == 1 and ov["library"]["session_id"] == sid
+    # Dettagli leggibili, azioni rifiutate.
+    assert client.get(f"/api/discovery/connections/{cid}").json()["library"] is True
+    assert client.get(f"/api/discovery/hypotheses/{hid}").status_code == 200
+    for method, url, body in [("post", f"/api/discovery/connections/{cid}/status", {"status": "dismissed"}),
+                              ("post", f"/api/discovery/connections/{cid}/hypothesis", None),
+                              ("post", f"/api/discovery/hypotheses/{hid}/archive", None),
+                              ("post", f"/api/discovery/hypotheses/{hid}/decision", {"status": "rejected", "note": ""}),
+                              ("post", f"/api/discovery/anomalies/{aid}", {"status": "dismissed", "note": ""}),
+                              ("post", f"/api/discovery/sessions/{sid}/stop", None)]:
+        r = getattr(client, method)(url, json=body) if body is not None else getattr(client, method)(url)
+        assert r.status_code == 403 and r.json()["error"]["code"] == "read_only", url
+    library.reset_cache()

@@ -7,6 +7,7 @@ from ..services import discovery
 from .common import Run
 
 LIBRARY_MAX_SECONDS = 3 * 3600
+LIBRARY_MAX_ITEMS = 300
 
 
 def run_discovery(run: Run) -> None:
@@ -14,9 +15,9 @@ def run_discovery(run: Run) -> None:
     if s.limits.get("max_llm_calls"):
         run.report.note("Attenzione: la sessione avrebbe usato un provider AI; annullata.")
         return
-    # Sulla Biblioteca (decine di migliaia di elementi) il limite di 120 s pensato per l'app non basta: il passo delle
-    # connessioni da solo dura qualche minuto. Il workflow ha comunque il suo limite di 6 ore.
-    s.limits = {**s.limits, "max_seconds": LIBRARY_MAX_SECONDS}
+    # Sulla Biblioteca (decine di migliaia di elementi) i limiti pensati per l'app non bastano: il passo delle connessioni
+    # da solo dura qualche minuto, e 60 risultati per tipo sono pochi. Il workflow ha comunque il suo limite di 6 ore.
+    s.limits = {**s.limits, "max_seconds": LIBRARY_MAX_SECONDS, "max_items": LIBRARY_MAX_ITEMS}
     run.db.commit()
     sid = s.id
     discovery.run_in_background(run.database, run.settings, sid)

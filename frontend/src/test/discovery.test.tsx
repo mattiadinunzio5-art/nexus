@@ -20,6 +20,25 @@ const hyp = {
 };
 
 describe('discovery intelligence', () => {
+  it('shows the NEXUS Library results separately, read-only', async () => {
+    const libConn = { ...conn, id: 40, title: 'Panic of 1907 — Inflazione USA', library: true };
+    const { calls } = mockApi({
+      'GET /api/notifications': [],
+      'GET /api/discovery/connections': (url: string) => (url.includes('origin=library') ? [libConn] : []),
+      'GET /api/discovery/connections/40': libConn,
+    });
+    renderApp('/discovery/connections');
+    expect(await screen.findByText(/Nessuna connessione con questi filtri/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Biblioteca NEXUS' }));
+    expect(await screen.findByText('Panic of 1907 — Inflazione USA')).toBeInTheDocument();
+    expect(screen.getByText(/in sola lettura/)).toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes('/api/discovery/connections?origin=library'))).toBe(true);
+    await userEvent.click(screen.getByText('Panic of 1907 — Inflazione USA'));
+    expect(await screen.findByText('Federal Reserve')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Accetta/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Genera l'ipotesi/ })).not.toBeInTheDocument();
+  });
+
   it('dashboard warns honestly when the archive is empty and starts an autonomous session', async () => {
     const { calls } = mockApi({
       'GET /api/notifications': [],

@@ -8,6 +8,8 @@ from ...services import discovery as svc
 from ..deps import DB, AppSettings, CurrentUser
 
 router = APIRouter(prefix="/discovery", tags=["discovery"])
+# «mine»: risultati dell'utente; «library»: risultati della Discovery sulla Biblioteca NEXUS (sola lettura).
+Origin = Literal["mine", "library"]
 
 
 class SessionIn(BaseModel):
@@ -64,13 +66,14 @@ def create_session(data: SessionIn, request: Request, background: BackgroundTask
 
 
 @router.get("/sessions")
-def list_sessions(db: DB, user: CurrentUser) -> list[dict]:
-    return [svc.session_out(s) for s in svc.list_sessions(db, user)]
+def list_sessions(db: DB, user: CurrentUser, origin: Origin = "mine") -> list[dict]:
+    return [svc.with_flag(db, svc.session_out(s), s) for s in svc.list_sessions(db, user, origin=origin)]
 
 
 @router.get("/sessions/{sid}")
 def get_session(sid: int, db: DB, user: CurrentUser) -> dict:
-    return svc.session_out(svc.get_session(db, user, sid))
+    s = svc.get_session(db, user, sid)
+    return svc.with_flag(db, svc.session_out(s), s)
 
 
 @router.post("/sessions/{sid}/{action}", summary="Pausa, ripresa o arresto di una sessione")
@@ -82,15 +85,17 @@ def control(sid: int, action: Literal["pause", "resume", "stop"], request: Reque
 
 
 @router.get("/connections")
-def list_connections(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status"), kind: str | None = None, session_id: int | None = None) -> list[dict]:
-    return [svc.connection_out(c) for c in svc.list_connections(db, user, status_filter, kind, session_id)]
+def list_connections(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status"), kind: str | None = None, session_id: int | None = None,
+                     origin: Origin = "mine") -> list[dict]:
+    return [svc.with_flag(db, svc.connection_out(c), c) for c in svc.list_connections(db, user, status_filter, kind, session_id, origin)]
 
 
 @router.get("/connections/{cid}")
 def get_connection(cid: int, db: DB, user: CurrentUser) -> dict:
     from ...models import DiscoveryConnection
 
-    return svc.connection_out(svc._own(db, user, DiscoveryConnection, cid, "Connessione"))
+    c = svc._own(db, user, DiscoveryConnection, cid, "Connessione", own=False)
+    return svc.with_flag(db, svc.connection_out(c), c)
 
 
 @router.post("/connections/{cid}/status", summary="Accetta (salva nel grafo come ipotesi) o scarta una connessione")
@@ -104,15 +109,17 @@ def connection_hypothesis(cid: int, db: DB, user: CurrentUser) -> dict:
 
 
 @router.get("/hypotheses")
-def list_hypotheses(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status"), archived: bool = False) -> list[dict]:
-    return [svc.hypothesis_out(h) for h in svc.list_hypotheses(db, user, status_filter, archived)]
+def list_hypotheses(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status"), archived: bool = False,
+                    origin: Origin = "mine") -> list[dict]:
+    return [svc.with_flag(db, svc.hypothesis_out(h), h) for h in svc.list_hypotheses(db, user, status_filter, archived, origin)]
 
 
 @router.get("/hypotheses/{hid}")
 def get_hypothesis(hid: int, db: DB, user: CurrentUser) -> dict:
     from ...models import DiscoveryHypothesis
 
-    return svc.hypothesis_out(svc._own(db, user, DiscoveryHypothesis, hid, "Ipotesi"))
+    h = svc._own(db, user, DiscoveryHypothesis, hid, "Ipotesi", own=False)
+    return svc.with_flag(db, svc.hypothesis_out(h), h)
 
 
 @router.post("/hypotheses/{hid}/verify", summary="Verifica automatica: raccoglie elementi, non decide")
@@ -136,8 +143,8 @@ def to_graph(hid: int, db: DB, user: CurrentUser) -> dict:
 
 
 @router.get("/anomalies")
-def list_anomalies(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status")) -> list[dict]:
-    return [svc.anomaly_out(a) for a in svc.list_anomalies(db, user, status_filter)]
+def list_anomalies(db: DB, user: CurrentUser, status_filter: str | None = Query(None, alias="status"), origin: Origin = "mine") -> list[dict]:
+    return [svc.with_flag(db, svc.anomaly_out(a), a) for a in svc.list_anomalies(db, user, status_filter, origin)]
 
 
 @router.post("/anomalies/{aid}")
