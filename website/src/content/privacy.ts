@@ -9,7 +9,7 @@ const C = PRIVACY_CONTACT;
 
 export const PRIVACY_IT: PrivacyDoc = {
   title: 'Informativa sulla privacy',
-  updated: 'Ultimo aggiornamento: 9 novembre 2026',
+  updated: 'Ultimo aggiornamento: 11 novembre 2026',
   intro: `Questa informativa spiega quali dati personali tratta NEXUS (il sito e la piattaforma online), perché e con quali diritti per te. NEXUS è un progetto personale e non commerciale: non vende dati, non mostra pubblicità e non usa strumenti di profilazione.`,
   sections: [
     { title: '1. Titolare del trattamento', body: [`${C.name} — email: ${C.email}. Per qualsiasi domanda o richiesta sui tuoi dati puoi scrivere a questo indirizzo.`] },
@@ -19,7 +19,8 @@ export const PRIVACY_IT: PrivacyDoc = {
         'Dati dell’account: indirizzo email e password. La password è gestita dal servizio di autenticazione (Supabase) in forma cifrata: nessuno, nemmeno il titolare, può leggerla.',
         'Contenuti che inserisci: progetti, note, eventi, fonti, serie di dati e documenti che carichi nella piattaforma. Restano visibili solo a te e alle persone con cui scegli di condividerli.',
         'Dati tecnici: i server registrano automaticamente dati come indirizzo IP, tipo di browser, data e ora delle richieste, necessari per il funzionamento e la sicurezza.',
-        'Memoria del browser: il sito e la piattaforma salvano nel tuo browser solo ciò che serve a mantenerti collegato (sessione) e alcune preferenze. Non usiamo cookie di profilazione né strumenti di analisi o statistiche di terzi.',
+        'Memoria del browser: il sito e la piattaforma salvano nel tuo browser solo ciò che serve a mantenerti collegato (sessione) e alcune preferenze. Non usiamo cookie di profilazione.',
+        'Statistiche di visita: usiamo Vercel Web Analytics per contare in forma aggregata le pagine visitate (pagina, paese, tipo di dispositivo e browser). Non usa cookie, non identifica le singole persone e non segue la navigazione su altri siti.',
         'Messaggi: se ci scrivi (per esempio con il pulsante «Suggerisci»), trattiamo il tuo indirizzo email e il contenuto del messaggio per risponderti.',
       ],
     },
@@ -28,6 +29,7 @@ export const PRIVACY_IT: PrivacyDoc = {
       body: [
         'Per creare e gestire il tuo account e fornirti la piattaforma (esecuzione del servizio che richiedi, art. 6.1.b GDPR).',
         'Per proteggere il servizio da abusi e garantirne la sicurezza (legittimo interesse, art. 6.1.f GDPR).',
+        'Per capire quali pagine sono utili e migliorare il servizio, con statistiche di visita aggregate e anonime (legittimo interesse, art. 6.1.f GDPR).',
         'Per rispondere ai tuoi messaggi (art. 6.1.b o 6.1.f GDPR). Non usiamo i tuoi dati per marketing.',
       ],
     },
@@ -65,7 +67,7 @@ export const PRIVACY_IT: PrivacyDoc = {
 
 export const PRIVACY_EN: PrivacyDoc = {
   title: 'Privacy policy',
-  updated: 'Last updated: 9 November 2026',
+  updated: 'Last updated: 11 November 2026',
   intro: 'This policy explains which personal data NEXUS (the website and the online platform) processes, why, and what rights you have. NEXUS is a personal, non-commercial project: it does not sell data, show ads or use profiling tools.',
   sections: [
     { title: '1. Data controller', body: [`${C.name} — email: ${C.email}. Write to this address for any question or request about your data.`] },
@@ -75,7 +77,8 @@ export const PRIVACY_EN: PrivacyDoc = {
         'Account data: email address and password. The password is handled by the authentication service (Supabase) in encrypted form: nobody, not even the controller, can read it.',
         'Content you add: projects, notes, events, sources, data series and documents you upload. They are visible only to you and to the people you choose to share them with.',
         'Technical data: servers automatically log data such as IP address, browser type, date and time of requests, needed for operation and security.',
-        'Browser storage: the site and the platform store in your browser only what is needed to keep you signed in (session) and a few preferences. We use no profiling cookies and no third-party analytics.',
+        'Browser storage: the site and the platform store in your browser only what is needed to keep you signed in (session) and a few preferences. We use no profiling cookies.',
+        'Visit statistics: we use Vercel Web Analytics to count visited pages in aggregate form (page, country, device type and browser). It uses no cookies, does not identify individual people and does not track browsing on other sites.',
         'Messages: if you write to us (for example with the “Suggest” button), we process your email address and message in order to reply.',
       ],
     },
@@ -84,6 +87,7 @@ export const PRIVACY_EN: PrivacyDoc = {
       body: [
         'To create and manage your account and provide the platform (performance of the service you request, Art. 6(1)(b) GDPR).',
         'To protect the service against abuse and keep it secure (legitimate interest, Art. 6(1)(f) GDPR).',
+        'To understand which pages are useful and improve the service, with aggregate and anonymous visit statistics (legitimate interest, Art. 6(1)(f) GDPR).',
         'To answer your messages (Art. 6(1)(b) or (f) GDPR). We do not use your data for marketing.',
       ],
     },

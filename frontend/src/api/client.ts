@@ -1,5 +1,6 @@
 import type {
   CausalChainResult,
+  LibrarySummary,
   DiscoveryAnalysis,
   DiscoveryAnomaly,
   DiscoveryConnection,
@@ -338,6 +339,7 @@ export const api = {
   lessons: () => request<LessonSummary[]>('/lessons'),
   lesson: (id: string) => request<Lesson>(`/lessons/${encodeURIComponent(id)}`),
   // Discovery Intelligence
+  librarySummary: () => request<LibrarySummary>('/library/summary'),
   discoveryOverview: () => request<DiscoveryOverview>('/discovery/overview'),
   discoverySessions: (origin?: 'mine' | 'library') => request<DiscoverySession[]>(`/discovery/sessions${qs({ origin })}`),
   discoverySession: (id: number) => request<DiscoverySession>(`/discovery/sessions/${id}`),

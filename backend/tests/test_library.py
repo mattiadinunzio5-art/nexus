@@ -100,3 +100,12 @@ def test_library_discovery_results_are_listed_separately_and_read_only(client):
         r = getattr(client, method)(url, json=body) if body is not None else getattr(client, method)(url)
         assert r.status_code == 403 and r.json()["error"]["code"] == "read_only", url
     library.reset_cache()
+
+
+def test_library_summary_counts_shared_open_data(client):
+    library.reset_cache()
+    assert client.get("/api/library/summary").json() == {"available": False}
+    _library_event(client)
+    s = client.get("/api/library/summary").json()
+    assert s["available"] is True and s["events"] == 1 and s["series"] == 0
+    library.reset_cache()
