@@ -21,6 +21,7 @@ import { ProjectsPage } from './pages/Projects';
 import { SearchPage } from './pages/Search';
 import { SettingsPage } from './pages/Settings';
 import { StartPage } from './pages/Start';
+import { DataPolicyPage } from './pages/DataPolicy';
 import { SourcesPage } from './pages/Sources';
 import { AppStateProvider } from './state/AppState';
 import { AuthProvider } from './state/Auth';
@@ -34,6 +35,7 @@ export function App() {
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
           <Route path="start" element={<StartPage />} />
+          <Route path="data-policy" element={<DataPolicyPage />} />
           <Route path="modules/:moduleId" element={<ModulePage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="sources" element={<SourcesPage />} />

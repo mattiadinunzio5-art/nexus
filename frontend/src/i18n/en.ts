@@ -459,4 +459,28 @@ export const EN: Record<string, string> = {
   'Email o password non corretti.': 'Wrong email or password.', 'Conferma prima il tuo indirizzo email.': 'Please confirm your email address first.',
   'Accedi con il tuo account NEXUS': 'Sign in with your NEXUS account', 'Lo stesso account del sito.': 'The same account as on the website.', 'Password dimenticata?': 'Forgot your password?',
   'Informativa privacy': 'Privacy policy', 'Accesso online non configurato sul server.': 'Online sign-in is not configured on the server.',
+
+  // --- Copyright & Data Policy ------------------------------------------------------------------------
+  'Sì': 'Yes', 'Con condizioni': 'With conditions', 'Licenza': 'Licence', 'Attribuzione obbligatoria': 'Required attribution',
+  'Uso commerciale': 'Commercial use', 'Redistribuzione': 'Redistribution', 'Limitazioni territoriali': 'Territorial restrictions',
+  'Modifiche effettuate da NEXUS': 'Changes made by NEXUS', 'Condizioni verificate il': 'Terms checked on', 'pagina ufficiale': 'official page',
+  'da verificare serie per serie': 'to be checked series by series', 'Licenza della fonte': 'Source licence',
+  "Licenza e condizioni d'uso": 'Licence and terms of use', 'Principi': 'Principles', 'sito': 'website',
+  'fuori dalla Biblioteca': 'outside the Library', 'Nella Biblioteca:': 'In the Library:', '· aggiornata il': '· updated on', 'relazioni': 'relations',
+  'Da dove viene ogni dato di NEXUS, con quale licenza e a quali condizioni si può riutilizzare.':
+    'Where every piece of NEXUS data comes from, under which licence, and on what terms it can be reused.',
+  "Nella Biblioteca NEXUS entrano solo dati aperti con una licenza registrata: senza scheda di licenza, l'importazione viene bloccata.":
+    'Only open data with a registered licence enter the NEXUS Library: without a licence entry, the import is blocked.',
+  "Per ogni elemento NEXUS conserva fonte originale, URL e data di acquisizione; la licenza, l'attribuzione e le condizioni d'uso sono nella scheda della fonte.":
+    "For every item NEXUS keeps the original source, URL and acquisition date; licence, attribution and terms of use are in the source's entry.",
+  'Dei libri e degli articoli protetti da copyright NEXUS conserva solo i riferimenti bibliografici (autore, titolo, anno, DOI), mai il testo.':
+    'For copyrighted books and articles NEXUS keeps only the bibliographic references (author, title, year, DOI), never the text.',
+  "Gli unici testi integrali sono opere di pubblico dominio, libere anche in Italia e nell'Unione europea.":
+    'The only full texts are public-domain works, free in Italy and the European Union as well.',
+  'I documenti e i dati caricati da un utente restano privati nel suo account e non entrano nella Biblioteca.':
+    "Documents and data uploaded by a user stay private in their account and never enter the Library.",
+  'NEXUS non modifica i valori delle fonti: i dati mancanti restano mancanti, e ogni trasformazione calcolata è dichiarata come tale.':
+    'NEXUS does not alter source values: missing data stay missing, and every computed transformation is labelled as such.',
+  'Le condizioni sono riassunte dalle pagine ufficiali di ciascuna fonte, indicate in ogni scheda con la data di verifica. Questa pagina non costituisce parere legale: in caso di dubbio fa fede il testo della licenza originale.':
+    "Terms are summarised from each source's official pages, linked in every entry with the date they were checked. This page is not legal advice: if in doubt, the original licence text prevails.",
 };

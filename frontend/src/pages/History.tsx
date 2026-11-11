@@ -1,3 +1,4 @@
+import { LicenseBox } from '../components/License';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, Network, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -255,6 +256,7 @@ export function EventDetailPage() {
                   </li>
                 ))}
               </ul>
+              <LicenseBox ids={[...new Set(e.sources.flatMap((s) => s.license_ids ?? []))]} />
               <div className="mt-3 space-y-2">
                 <Select aria-label="Fonte da collegare" value={srcSel} onChange={(x) => setSrcSel(x.target.value)}>
                   <option value="">Seleziona una fonte…</option>

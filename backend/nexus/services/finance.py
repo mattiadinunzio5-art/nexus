@@ -93,6 +93,14 @@ def _stats(s: Series) -> None:
     s.end_date = valid[-1].date if valid else None
 
 
+def _require_registered_license(db: Session, user: User, source_url: str, source_series_id: str) -> None:
+    """Copyright & Data Policy: nella Biblioteca entra solo ciò che ha una scheda nel registro delle licenze."""
+    from ..core import library, licenses
+
+    if library.is_library(db, user.id) and licenses.for_series(source_url, source_series_id) is None:
+        raise ValidationFailedError("Biblioteca NEXUS: la fonte di questa serie non ha una licenza registrata (core/licenses.py).")
+
+
 def import_series(db: Session, user: User, settings: Settings, data: SeriesImportIn,
                   prefetched: connectors.FetchResult | None = None) -> Series:
     quotas.check(db, user, "series")
@@ -105,6 +113,7 @@ def import_series(db: Session, user: User, settings: Settings, data: SeriesImpor
     s = Series(owner_id=user.id, name=res.name[:300], category=data.category, connector=data.connector, source_series_id=ext,
                params=data.model_dump(exclude={"category"}))
     _apply(s, res)
+    _require_registered_license(db, user, s.source_url, s.source_series_id)
     db.add(s)
     db.flush()
     activity.record(db, user=user, actor="user", action="series.import", entity_type="series", entity_id=s.id,
@@ -131,6 +140,7 @@ def import_csv(
                source_url=source_url, license_note=license_note, unit=unit, frequency=freq, retrieved_at=utcnow(), is_demo=is_demo, params={})
     s.observations = [Observation(date=d, value=v) for d, v in obs]
     _stats(s)
+    _require_registered_license(db, user, s.source_url, s.source_series_id)
     db.add(s)
     db.flush()
     activity.record(db, user=user, actor="user", action="series.upload", entity_type="series", entity_id=s.id,

@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Network,
   Radar,
+  Scale,
   Settings,
   Swords,
   type LucideIcon,
@@ -67,6 +68,7 @@ export const WORKSPACE_NAV: NavItem[] = [
   { to: '/activity', label: 'Activity Log', icon: Activity },
   { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/settings', label: 'System', icon: Settings },
+  { to: '/data-policy', label: 'Copyright & Data Policy', icon: Scale },
 ];
 
 /** Percorso della pagina di un modulo (pagina reale se implementato, altrimenti scheda «in preparazione»). */

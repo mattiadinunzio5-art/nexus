@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic import BaseModel, Field, StringConstraints, computed_field, field_validator
 
+from ..core import licenses
 from ..research.citations import normalize_doi, valid_doi, valid_isbn, valid_url
 from .schemas import CleanStr, ORMModel, UTCDateTime
 
@@ -75,6 +76,12 @@ class SourceOut(ORMModel):
     citation: str = ""
     created_at: UTCDateTime
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license_id(self) -> str | None:
+        """Scheda del registro licenze per le fonti di dati aperti (Wikidata, Wikipedia)."""
+        return licenses.for_source(self.url)
+
 
 class SourceVerifyIn(BaseModel):
     method: Literal["user", "registry"]
@@ -104,6 +111,12 @@ class DocumentOut(ORMModel):
     source_id: int | None
     is_demo: bool
     created_at: UTCDateTime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license_id(self) -> str | None:
+        """Scheda del registro licenze per i testi di dati aperti (es. Project Gutenberg)."""
+        return licenses.for_document(self.origin, self.origin_url)
 
 
 class DocumentUpdate(BaseModel):

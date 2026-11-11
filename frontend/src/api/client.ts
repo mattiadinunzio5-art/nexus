@@ -2,6 +2,7 @@ import { lang } from '../i18n';
 import type {
   CausalChainResult,
   LibrarySummary,
+  LicenseRegistry,
   DiscoveryAnalysis,
   DiscoveryAnomaly,
   DiscoveryConnection,
@@ -342,6 +343,7 @@ export const api = {
   lesson: (id: string) => request<Lesson>(`/lessons/${encodeURIComponent(id)}`),
   // Discovery Intelligence
   librarySummary: () => request<LibrarySummary>('/library/summary'),
+  licenses: () => request<LicenseRegistry>('/licenses'),
   discoveryOverview: () => request<DiscoveryOverview>('/discovery/overview'),
   discoverySessions: (origin?: 'mine' | 'library') => request<DiscoverySession[]>(`/discovery/sessions${qs({ origin })}`),
   discoverySession: (id: number) => request<DiscoverySession>(`/discovery/sessions/${id}`),
