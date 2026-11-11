@@ -1,6 +1,6 @@
 /** Informativa privacy (art. 13 GDPR) — italiano e inglese. Aggiornare `updated` a ogni modifica. */
 
-export const PRIVACY_CONTACT = { name: 'Mattia Di Nunzio', email: 'mattiadinunzio5@gmail.com' };
+export const PRIVACY_CONTACT = { name: 'Mattia Di Nunzio', email: 'nexus.analytic.research@gmail.com' };
 
 export interface PrivacySection { title: string; body: string[] }
 export interface PrivacyDoc { title: string; updated: string; intro: string; sections: PrivacySection[] }
