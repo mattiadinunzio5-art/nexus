@@ -1,3 +1,4 @@
+import { LicenseBox } from '../components/License';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
@@ -201,6 +202,7 @@ export function SeriesDetailPage() {
         </dl>
         {s.data.from_cache && <p className="text-xs text-warn">Ultimo aggiornamento servito dalla cache: la fonte non era raggiungibile.</p>}
         <p className="text-xs text-steel-500">{s.data.license_note}</p>
+        <LicenseBox ids={[s.data.license_id]} />
         {s.data.source_url && <a href={s.data.source_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-xs text-gold-300 hover:underline">Pagina della fonte <ExternalLink className="size-3" aria-hidden /></a>}
       </div>
     ) : null,

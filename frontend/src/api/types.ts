@@ -193,6 +193,7 @@ export interface DocumentInfo {
   origin: string;
   origin_url: string;
   license_note: string;
+  license_id?: string | null;
   author: string;
   year: number | null;
   sha256: string;
@@ -330,7 +331,7 @@ export interface HistoricalEvent extends EventInput {
   is_demo: boolean;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
-  sources: { source_id: number; citation: string; verification_status: VerificationStatus; pages: string; note: string }[];
+  sources: { source_id: number; citation: string; verification_status: VerificationStatus; pages: string; note: string; license_ids?: string[] }[];
   knowledge: KnowledgeItem[];
   entity_id: number | null;
   source_warning: string | null;
@@ -496,6 +497,7 @@ export interface SeriesInfo {
   source_label: string;
   source_url: string;
   license_note: string;
+  license_id?: string | null;
   unit: string;
   frequency: Frequency;
   start_date: string | null;
@@ -767,3 +769,13 @@ export interface DiscoveryOverview {
 export type LibrarySummary =
   | { available: false }
   | { available: true; events: number; series: number; entities: number; relations: number; sources: number; documents: number };
+
+/** NEXUS Copyright & Data Policy: una scheda del registro delle licenze. */
+export type Permission = 'yes' | 'conditional' | 'no';
+export interface LicenseEntry {
+  id: string; name: string; publisher: string; homepage: string; applies_to: string; license: string; license_url: string;
+  attribution: string; commercial: Permission; commercial_note: string; redistribution: Permission; redistribution_note: string;
+  territorial: string; modifications: string; terms_url: string; verified_on: string; status: 'verified' | 'per_item'; notes: string;
+  library_counts: Partial<Record<'series' | 'documents' | 'events' | 'entities' | 'relations', number>>;
+}
+export interface LicenseRegistry { version: string; updated: string; library_licenses: string[]; licenses: LicenseEntry[] }

@@ -10,7 +10,7 @@ from ..core.errors import ConfirmationRequiredError, ValidationFailedError
 from ..history import dates
 from ..models import Entity, EventSource, HistoricalEvent, KnowledgeItem, Source, User
 from ..research.citations import format_citation
-from ..core import library
+from ..core import library, licenses
 from . import activity, graph
 
 
@@ -22,7 +22,8 @@ def to_out(db: Session, e: HistoricalEvent) -> EventOut:
     for link in e.source_links:
         s = db.get(Source, link.source_id)
         if s:
-            srcs.append(EventSourceOut(source_id=s.id, citation=format_citation(s), verification_status=s.verification_status, pages=link.pages, note=link.note))
+            srcs.append(EventSourceOut(source_id=s.id, citation=format_citation(s), verification_status=s.verification_status, pages=link.pages, note=link.note,
+                                      license_ids=licenses.for_source_record(s.url, s.notes)))
     out.sources = srcs
     out.knowledge = [KnowledgeOut.model_validate(k) for k in e.knowledge]
     ent = db.scalar(select(Entity.id).where(Entity.event_id == e.id))

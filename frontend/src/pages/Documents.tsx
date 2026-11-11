@@ -1,3 +1,4 @@
+import { LicenseBox } from '../components/License';
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Download, FileUp, Library, Trash2 } from 'lucide-react';
@@ -219,6 +220,7 @@ export function DocumentDetailPage() {
           <Link to="/bibliography" className="text-xs text-gold-300 hover:underline">Gestisci bibliografia</Link>
         </div>
         {d.license_note && <p className="mt-3 text-xs text-steel-500">Licenza: {d.license_note}</p>}
+        <LicenseBox ids={[d.license_id]} />
         {saveError && <div className="mt-2"><ErrorBox error={saveError} /></div>}
       </Card>
       <Card title="Testo estratto">

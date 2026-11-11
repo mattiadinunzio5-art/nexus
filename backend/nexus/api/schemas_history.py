@@ -60,6 +60,8 @@ class EventSourceOut(BaseModel):
     verification_status: str
     pages: str
     note: str
+    # Schede del registro licenze (Copyright & Data Policy), es. ["wikidata", "wikipedia"].
+    license_ids: list[str] = []
 
 
 class KnowledgeIn(BaseModel):

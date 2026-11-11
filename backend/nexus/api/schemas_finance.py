@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, StringConstraints, model_validator
+from pydantic import BaseModel, Field, StringConstraints, computed_field, model_validator
+
+from ..core import licenses
 
 from .schemas import CleanStr, ORMModel, UTCDateTime
 
@@ -61,6 +63,12 @@ class SeriesOut(ORMModel):
     last_value: float | None = None
     last_date: str | None = None
     created_at: UTCDateTime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license_id(self) -> str | None:
+        """Scheda del registro licenze (NEXUS Copyright & Data Policy); None per fonti non registrate (es. CSV propri)."""
+        return licenses.for_series(self.source_url, self.source_series_id)
 
 
 class ObservationOut(BaseModel):

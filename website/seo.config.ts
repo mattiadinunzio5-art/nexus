@@ -26,6 +26,9 @@ function pagesFor(lang: Lang): Page[] {
     page('/signup', `${t.auth.createAccount} — NEXUS`, t.auth.signUpSub, false),
     page('/privacy', `${lang === 'it' ? 'Informativa sulla privacy' : 'Privacy policy'} — NEXUS`,
       lang === 'it' ? 'Quali dati personali tratta NEXUS, perché e con quali diritti.' : 'Which personal data NEXUS processes, why, and your rights.'),
+    page('/data-policy', 'Copyright & Data Policy — NEXUS',
+      lang === 'it' ? 'Da dove viene ogni dato di NEXUS, con quale licenza e a quali condizioni si può riutilizzare.'
+        : 'Where every piece of NEXUS data comes from, under which licence, and on what terms it can be reused.'),
   ];
 }
 

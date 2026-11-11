@@ -17,6 +17,7 @@ const EN = {
     modules: 'Modules',
     tagline: 'Open data · Verifiable sources · No invented figures',
     privacy: 'Privacy',
+    dataPolicy: 'Copyright & Data Policy',
     contact: 'Contact',
   },
   meta: {
@@ -197,6 +198,7 @@ const IT: Strings = {
     modules: 'Moduli',
     tagline: 'Dati aperti · Fonti verificabili · Nessuna cifra inventata',
     privacy: 'Privacy',
+    dataPolicy: 'Copyright & Data Policy',
     contact: 'Contatti',
   },
   meta: {

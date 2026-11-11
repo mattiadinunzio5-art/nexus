@@ -97,7 +97,7 @@ def test_series_import_goes_through_service_and_is_idempotent(run, monkeypatch):
         if country == "EMPTY":
             raise connectors.ConnectorError("Nessun dato World Bank per EMPTY")
         return connectors.FetchResult(name=f"{indicator} — {country}", unit="%", frequency="A", source_label="World Bank (fixture)",
-                                      source_url="https://example.org", license_note="fixture", source_last_updated="",
+                                      source_url=f"https://data.worldbank.org/indicator/{indicator}?locations={country}", license_note="fixture", source_last_updated="",
                                       observations=[("2000-01-01", 1.0), ("2001-01-01", None), ("2002-01-01", 3.0)], description="",
                                       country=country)
 

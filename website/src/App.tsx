@@ -11,6 +11,7 @@ import { useI18n } from './lib/i18n';
 // Le pagine secondarie si caricano solo quando servono.
 const ModulePage = lazy(() => import('./pages/ModulePage').then((m) => ({ default: m.ModulePage })));
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const DataPolicy = lazy(() => import('./pages/DataPolicy').then((m) => ({ default: m.DataPolicy })));
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 const auth = () => import('./pages/Auth');
 const SignIn = lazy(() => auth().then((m) => ({ default: m.SignIn })));
@@ -35,6 +36,7 @@ const PAGES: [string, React.ReactNode][] = [
   ['/reset-password', <ResetPassword />],
   ['/account', <RequireAuth><Account /></RequireAuth>],
   ['/privacy', <Privacy />],
+  ['/data-policy', <DataPolicy />],
 ];
 
 function SkipLink() {

@@ -60,6 +60,11 @@ def import_bytes(
         raise ValidationFailedError(f"File troppo grande (massimo {settings.max_upload_mb} MB).")
     quotas.check(db, user, "documents", extra_bytes=len(data))
     _check_refs(db, user, project_id, None)
+    from ..core import library, licenses
+
+    if library.is_library(db, user.id) and licenses.for_document(origin, origin_url) is None:
+        # Copyright & Data Policy: nella Biblioteca entrano solo testi con una scheda nel registro delle licenze.
+        raise ValidationFailedError("Biblioteca NEXUS: questo testo non ha una licenza registrata (core/licenses.py).")
     filename = Path(filename).name[:300] or "documento"
     try:
         kind = detect_kind(filename, data[:8192])
