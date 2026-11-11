@@ -19,7 +19,7 @@ import json
 import time
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..agents import guard, llm
 from ..core.config import Settings
@@ -108,8 +108,10 @@ class Runner:
     def data(self):
         uid = self.user.id
         sc = self.s.scope or {}
-        events = list(self.db.scalars(select(HistoricalEvent).where(HistoricalEvent.owner_id == uid)))
-        series = list(self.db.scalars(select(Series).where(Series.owner_id == uid)))
+        # Caricamento in blocco delle collezioni usate dai rilevatori (evita una query per ogni evento o serie).
+        events = list(self.db.scalars(select(HistoricalEvent).where(HistoricalEvent.owner_id == uid)
+                                      .options(selectinload(HistoricalEvent.source_links), selectinload(HistoricalEvent.knowledge))))
+        series = list(self.db.scalars(select(Series).where(Series.owner_id == uid).options(selectinload(Series.observations))))
         entities = {e.id: e for e in self.db.scalars(select(Entity).where(Entity.owner_id == uid))}
         rels = list(self.db.scalars(select(Relation).where(Relation.owner_id == uid)))
         if sc.get("restricted"):
@@ -197,10 +199,13 @@ class Runner:
     def step_connections(self, t0: float) -> None:
         events, series, entities, rels, ent_scope, _, _ = self.data()
         ent_of_event = {e.event_id: e.id for e in entities.values() if e.event_id}
+        event_of_ent: dict[int, int] = {}
+        for ev_id, en_id in ent_of_event.items():  # come prima: il primo evento che punta all'entità
+            event_of_ent.setdefault(en_id, ev_id)
         known = set()
         for r in rels:
-            a = next((("event", ev) for ev, en in ent_of_event.items() if en == r.source_entity_id), ("entity", r.source_entity_id))
-            b = next((("event", ev) for ev, en in ent_of_event.items() if en == r.target_entity_id), ("entity", r.target_entity_id))
+            a = ("event", event_of_ent[r.source_entity_id]) if r.source_entity_id in event_of_ent else ("entity", r.source_entity_id)
+            b = ("event", event_of_ent[r.target_entity_id]) if r.target_entity_id in event_of_ent else ("entity", r.target_entity_id)
             known.add(frozenset((a, b)))
         cands = cx.event_connections(self.db, events, known)
         cands += cx.graph_connections(self.db, self.user, entities, rels, ent_scope)

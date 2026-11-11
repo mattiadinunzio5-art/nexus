@@ -94,6 +94,18 @@ invece dai servizi (`create_event`, `create_source`, `link_source`).
 anomalie). I risultati appartengono alla Biblioteca e oggi non compaiono nelle pagine Discovery degli utenti, che
 analizzano l'archivio personale.
 
+Su archivi grandi (oltre 1.500 eventi o 2.000 nodi del grafo) i rilevatori non confrontano più «tutti con tutti», che
+sulla Biblioteca significava centinaia di milioni di coppie e un workflow fermato dopo 6 ore. Si confrontano solo le
+coppie che possono dare un risultato, trovate con indici: attori condivisi, termini rari del titolo citati nel testo,
+vicini comuni nel grafo, eventi dello stesso paese, serie dello stesso indicatore. I test verificano che i risultati
+siano identici al confronto completo. Due limiti, solo per gli archivi grandi:
+
+- un attore presente in più di 200 eventi è trattato come «comune» (come già accade a quelli presenti in metà degli
+  eventi) e non genera connessioni;
+- un nodo del grafo con più di 300 collegamenti non genera coppie candidate, ma conta nel punteggio delle coppie trovate.
+
+La sessione Discovery della Biblioteca ha un limite di 3 ore invece dei 120 secondi pensati per l'app.
+
 ## Prestazioni
 
 Con la Biblioteca le liste sono paginate (`limit`/`offset`), il grafo si esplora con visite in ampiezza via SQL
