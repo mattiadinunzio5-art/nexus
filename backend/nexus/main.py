@@ -51,7 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
-        allow_headers=["Content-Type", "X-Nexus-Client", "Authorization"],
+        allow_headers=["Content-Type", "X-Nexus-Client", "X-Nexus-Lang", "Authorization"],
         expose_headers=["Content-Disposition"],
     )
 
@@ -64,7 +64,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return JSONResponse(status_code=403, content={"error": {"code": "csrf", "message": "Richiesta non consentita (intestazione X-Nexus-Client mancante)."}})
         from .core.locale import current_lang
 
-        token = current_lang.set("en" if request.headers.get("authorization", "").startswith("Bearer demo.en.") else "it")
+        # Lingua dei testi generati dal server: demo inglese, oppure interfaccia in inglese (intestazione X-Nexus-Lang).
+        en = request.headers.get("authorization", "").startswith("Bearer demo.en.") or request.headers.get("x-nexus-lang", "") == "en"
+        token = current_lang.set("en" if en else "it")
         try:
             response = await call_next(request)
         finally:
