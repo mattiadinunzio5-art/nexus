@@ -289,3 +289,20 @@ def test_istat_sdmx_csv_rejects_multiple_series(tmp_path):
     with pytest.raises(connectors.ConnectorError, match="2 serie"):
         connectors.fetch_istat(fetcher(tmp_path, h), "X", "A..")
     assert "sdmx.data+csv" in seen["accept"]
+
+
+def test_owid_bulk_handles_header_case_annotations_and_aggregates(tmp_path):
+    # Formato attuale (intestazioni minuscole, colonna di annotazioni) e formato precedente («Entity», «Year»).
+    meta = {"chart": {"title": "GDP per capita"}, "columns": {"gdp_per_capita": {"titleShort": "GDP per capita", "unit": "int.-$"}}}
+    for csv_text in ("entity,code,year,gdp_per_capita,gdp_per_capita__annotations\nItaly,ITA,1,1407,\nItaly,ITA,1801,2515,\nWorld,OWID_WRL,2000,9000,\nEurope,,2000,20000,\n",
+                     "Entity,Code,Year,gdp_per_capita\nItaly,ITA,1,1407\nItaly,ITA,1801,2515\nWorld,OWID_WRL,2000,9000\nEurope,,2000,20000\n"):
+        def h(req, csv_text=csv_text):
+            if req.url.path.endswith(".json"):
+                return httpx.Response(200, json=meta)
+            return httpx.Response(200, text=csv_text)
+
+        bulk = connectors.fetch_owid_bulk(fetcher(tmp_path / str(len(csv_text)), h), "gdp-per-capita-maddison-project-database")
+        assert list(bulk) == ["Italy"]  # solo paesi: niente «World» o continenti
+        assert bulk["Italy"].observations == [("0001-01-01", 1407.0), ("1801-01-01", 2515.0)]
+        assert bulk["Italy"].name == "GDP per capita — Italy"
+        assert connectors.fetch_owid(fetcher(tmp_path / f"s{len(csv_text)}", h), "gdp-per-capita-maddison-project-database", "ita").observations[0] == ("0001-01-01", 1407.0)

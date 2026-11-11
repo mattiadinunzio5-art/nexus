@@ -273,7 +273,15 @@ def fetch_fred(f: HttpFetcher, series_id: str, api_key: str | None, force: bool 
 OWID_LICENSE = "Our World in Data: grafici CC BY; i dati di terze parti restano soggetti alle licenze delle fonti originali indicate."
 
 
-def fetch_owid(f: HttpFetcher, slug: str, entity: str, force: bool = False) -> FetchResult:
+def _owid_value_column(fields: list[str]) -> str:
+    """Prima colonna di valori: esclude identificativi e annotazioni (es. «gdp_per_capita__annotations»)."""
+    cols = [c for c in fields if c.lower() not in ("entity", "code", "year", "day") and not c.endswith("__annotations")]
+    if not cols:
+        raise ConnectorError("Formato OWID inatteso.")
+    return cols[0]
+
+
+def _owid_load(f: HttpFetcher, slug: str, force: bool = False):
     if not re.fullmatch(r"[a-z0-9-]{2,120}", slug):
         raise ConnectorError("Slug OWID non valido (es. 'inflation-of-consumer-prices').")
     base = f"https://ourworldindata.org/grapher/{slug}"
@@ -281,20 +289,27 @@ def fetch_owid(f: HttpFetcher, slug: str, entity: str, force: bool = False) -> F
     meta = json.loads(f.get(f"{base}.metadata.json", q, force=force)[0])
     txt, cached, when = f.get(f"{base}.csv", q, force=force)
     reader = csv.DictReader(io.StringIO(txt))
-    cols = [c for c in (reader.fieldnames or []) if c not in ("entity", "code", "year", "day")]
-    if not cols:
+    # Le intestazioni sono cambiate nel tempo («Entity» → «entity»): si confrontano senza maiuscole.
+    fields = list(reader.fieldnames or [])
+    low = {c.lower(): c for c in fields}
+    col = _owid_value_column(fields)
+    time_col = low.get("day") or low.get("year")
+    if not low.get("entity") or not time_col:
         raise ConnectorError("Formato OWID inatteso.")
-    col = cols[0]
-    time_col = "day" if "day" in (reader.fieldnames or []) else "year"
+    rows = [{"entity": r[low["entity"]], "code": r.get(low.get("code", ""), "") or "", "time": r[time_col], "value": r[col]} for r in reader]
+    return meta, col, "day" if time_col == low.get("day") else "year", rows, cached, when
+
+
+def _owid_result(slug: str, meta: dict, col: str, time_kind: str, entity: str, rows: list[dict], cached: bool, when: str) -> FetchResult:
     obs, freq = [], "A"
-    for row in reader:
-        if row["entity"].lower() == entity.lower() or (row.get("code") or "").lower() == entity.lower():
-            if time_col == "year":
-                iso = f"{int(row['year']):04d}-01-01" if int(row["year"]) > 0 else None
-            else:
-                iso, freq = row["day"], "D"
-            if iso:
-                obs.append((iso, _to_float(row[col])))
+    for row in rows:
+        if time_kind == "year":
+            year = int(row["time"])
+            iso = f"{year:04d}-01-01" if year > 0 else None  # anni prima di Cristo: fuori dal calendario delle serie
+        else:
+            iso, freq = row["time"], "D"
+        if iso:
+            obs.append((iso, _to_float(row["value"])))
     if not obs:
         raise ConnectorError(f"Entità '{entity}' non presente nel dataset OWID.")
     cmeta = meta.get("columns", {}).get(col, {})
@@ -306,6 +321,30 @@ def fetch_owid(f: HttpFetcher, slug: str, entity: str, force: bool = False) -> F
         license_note=OWID_LICENSE, source_last_updated=cmeta.get("lastUpdated", ""), observations=sorted(obs),
         description=meta.get("chart", {}).get("subtitle", "")[:4000], country=entity, from_cache=cached, retrieved_at=when,
     )
+
+
+def fetch_owid(f: HttpFetcher, slug: str, entity: str, force: bool = False) -> FetchResult:
+    meta, col, kind, rows, cached, when = _owid_load(f, slug, force)
+    mine = [r for r in rows if r["entity"].lower() == entity.lower() or r["code"].lower() == entity.lower()]
+    return _owid_result(slug, meta, col, kind, entity, mine, cached, when)
+
+
+def fetch_owid_bulk(f: HttpFetcher, slug: str, countries_only: bool = True, force: bool = False) -> dict[str, FetchResult]:
+    """Un dataset OWID per TUTTE le entità con un solo download (stessa elaborazione di fetch_owid).
+    Con ``countries_only`` solo i paesi (codice ISO a 3 lettere: esclude continenti e aggregati)."""
+    meta, col, kind, rows, cached, when = _owid_load(f, slug, force)
+    by_entity: dict[str, list[dict]] = {}
+    for r in rows:
+        if countries_only and len(r["code"]) != 3:
+            continue
+        by_entity.setdefault(r["entity"], []).append(r)
+    out = {}
+    for ent, rs in by_entity.items():
+        try:
+            out[ent] = _owid_result(slug, meta, col, kind, ent, rs, cached, when)
+        except ConnectorError:
+            continue  # nessun anno dopo Cristo per questa entità
+    return out
 
 
 # --- Eurostat ----------------------------------------------------------------

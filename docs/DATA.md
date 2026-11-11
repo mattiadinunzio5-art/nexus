@@ -48,7 +48,7 @@ in `data/imports/*.state.json`), con **cache su disco** (`data/cache`), pause tr
 | Area | Fonte | Licenza / termini | Note |
 |---|---|---|---|
 | Serie | World Bank WDI (15 indicatori, tutti i paesi) | CC BY 4.0 per la maggior parte dei dataset ([termini](https://www.worldbank.org/en/about/legal/terms-of-use-for-datasets)) | prima G20, Italia, Spagna e UE |
-| Serie | Our World in Data: Maddison Project 2023 (PIL pro capite di lungo periodo), popolazione, speranza di vita | OWID CC BY; Maddison Project Database 2023 CC BY 4.0 ([pagina](https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2023)) | solo paesi (codice ISO a 3 lettere) |
+| Serie | Our World in Data: Maddison Project 2023 (PIL pro capite di lungo periodo), popolazione, speranza di vita | OWID CC BY; Maddison Project Database 2023 CC BY 4.0 ([pagina](https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2023)) | solo paesi (codice ISO a 3 lettere); un download per dataset; anni prima di Cristo esclusi (fuori dal calendario delle serie) |
 | Serie | Eurostat (debito pubblico, disoccupazione, inflazione HICP; UE27) | riuso consentito con attribuzione ([avviso](https://ec.europa.eu/eurostat/help/copyright-notice)) | |
 | Serie | BCE (tassi di cambio mensili) | [condizioni BCE](https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html) | saltata se non raggiungibile |
 | Eventi, grafo | Wikidata | CC0 1.0 | classi verificate per etichetta all'avvio |

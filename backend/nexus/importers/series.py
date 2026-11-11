@@ -5,8 +5,6 @@ I buchi restano buchi: nessuna interpolazione.
 
 from __future__ import annotations
 
-import csv
-import io
 import json
 import time
 
@@ -31,6 +29,9 @@ WB_FIRST = ["ITA", "ESP", "USA", "GBR", "DEU", "FRA", "JPN", "CHN", "IND", "BRA"
             "ARG", "ZAF", "IDN", "AUT", "BEL", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LVA", "LTU",
             "LUX", "MLT", "NLD", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
+# Prima i paesi più richiesti (come per la World Bank), poi gli altri in ordine alfabetico.
+OWID_FIRST = ["Italy", "United States", "United Kingdom", "Germany", "France", "Spain", "Japan", "China", "India", "Brazil",
+              "Russia", "Canada", "Netherlands", "Belgium", "Portugal", "Greece", "Austria", "Switzerland", "Sweden", "Argentina"]
 OWID_SLUGS = {"gdp-per-capita-maddison-project-database": "gdp", "population": "other", "life-expectancy": "other"}
 MADDISON_LICENSE = ("Maddison Project Database, version 2023 by Jutta Bolt and Jan Luiten van Zanden — Creative Commons "
                     "Attribution 4.0 International (CC BY 4.0). https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2023 "
@@ -125,16 +126,24 @@ def world_bank(run: Run) -> None:
 
 def owid(run: Run) -> None:
     f = _fetcher(run)
-    q = {"v": "1", "csvType": "full", "useColumnShortNames": "true"}
+    # Un download per dataset, poi una serie per paese (codice ISO a 3 lettere): niente continenti o aggregati.
     for slug, cat in OWID_SLUGS.items():
-        txt, _, _ = f.get(f"https://ourworldindata.org/grapher/{slug}.csv", q)
-        reader = csv.DictReader(io.StringIO(txt))
-        entities = sorted({r["Entity"] for r in reader if len(r.get("Code") or "") == 3})  # solo paesi (codice ISO a 3 lettere)
+        try:
+            bulk = connectors.fetch_owid_bulk(f, slug)
+        except connectors.ConnectorError as exc:
+            run.error("series", f"owid:{slug}", str(exc))
+            continue
         lic = MADDISON_LICENSE if "maddison" in slug else None
-        for ent in entities:
+        rank = {e: i for i, e in enumerate(OWID_FIRST)}
+        for ent in sorted(bulk, key=lambda e: (rank.get(e, len(rank)), e)):
             if not run.budget_left():
                 return
-            _import(run, "owid", f"{slug}:{ent}", SeriesImportIn(connector="owid", slug=slug, entity=ent, category=cat), lic)
+            res = bulk[ent]
+            if not any(v is not None for _, v in res.observations):
+                run.report.add("series", "skipped")
+                continue
+            _import(run, "owid", f"{slug}:{ent}", SeriesImportIn(connector="owid", slug=slug, entity=ent, category=cat), lic, prefetched=res)
+        run.sleep()
 
 
 def eurostat(run: Run) -> None:
