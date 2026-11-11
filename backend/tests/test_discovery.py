@@ -355,3 +355,69 @@ def test_stale_running_session_is_recovered(client, db, user):
     assert client.post("/api/discovery/sessions", json={"mode": "autonomous"}).status_code == 201
     db.refresh(s)
     assert s.status == "failed" and "riavvio" in s.error
+
+
+# --- Archivi grandi (Biblioteca NEXUS): stessi risultati con gli indici -----------------------------
+
+
+def _key(cands):
+    return [(c.kind, c.title, c.score, c.period, c.reliability, tuple(c.source_ids), tuple(e["id"] for e in c.elements)) for c in cands]
+
+
+def test_large_archive_event_connections_match_full_comparison(db, user, monkeypatch):
+    import random
+
+    rng = random.Random(7)
+    words = ["crisi", "bancaria", "guerra", "trattato", "oro", "debito", "panico", "borsa", "londra", "parigi", "riforma", "moneta"]
+    people = ["Mario Rossi", "Anna Bianchi", "Luigi Verdi", "Carla Neri", "Paolo Gialli"]
+    evs = [_event(db, user, " ".join(rng.sample(words, rng.randint(1, 3))).capitalize() + f" {i}", rng.randint(1800, 1950),
+                  causes=" ".join(rng.choices(words, k=rng.randint(0, 8))), people=rng.sample(people, rng.randint(0, 2)),
+                  countries=rng.sample(["Italy", "France", "Spain"], rng.randint(0, 2)))
+           for i in range(60)]
+    full = cx.event_connections(db, evs, set())
+    monkeypatch.setattr(cx, "EXACT_MAX_EVENTS", 0)
+    monkeypatch.setattr(cx, "MAX_ACTOR_EVENTS", 10**9)
+    monkeypatch.setattr(cx, "KEEP", 10**9)
+    indexed = cx.event_connections(db, evs, set())
+    # In un archivio grande i candidati escono già ordinati per punteggio (come li salva la sessione).
+    assert full and _key(indexed) == _key(sorted(full, key=lambda c: -c.score))
+
+
+def test_large_graph_proximity_matches_full_comparison(db, user, monkeypatch):
+    import random
+
+    from nexus.models import Relation
+
+    rng = random.Random(3)
+    ents = [graph.create_entity(db, user, EntityIn(entity_type="institution", name=f"Istituzione {i}")) for i in range(40)]
+    seen = set()
+    for _ in range(120):
+        a, b = rng.sample(ents, 2)
+        if frozenset((a.id, b.id)) in seen:
+            continue
+        seen.add(frozenset((a.id, b.id)))
+        graph.create_relation(db, user, RelationIn(source_entity_id=a.id, target_entity_id=b.id, relation_type="involved_in", provenance="user_hypothesis"))
+    emap = {e.id: e for e in db.scalars(select(Entity))}
+    rels = list(db.scalars(select(Relation)))
+    full = cx.graph_connections(db, user, emap, rels, None, limit=1000)
+    monkeypatch.setattr(cx, "EXACT_MAX_NODES", 0)
+    monkeypatch.setattr(cx, "MAX_HUB_DEGREE", 10**9)
+    assert full and _key(cx.graph_connections(db, user, emap, rels, None, limit=1000)) == _key(full)
+
+
+def test_library_discovery_gets_a_longer_time_budget(db, monkeypatch):
+    from nexus.importers import discovery_run
+
+    seen = {}
+    monkeypatch.setattr(discovery_run.discovery, "run_in_background", lambda database, settings, sid: seen.setdefault("sid", sid))
+
+    class R:  # Run ridotto all'essenziale
+        def __init__(self):
+            self.db, self.lib, self.database = db, db.scalar(select(User)), None
+            from nexus.core.config import get_settings
+            self.settings = get_settings()
+            self.report = type("Rep", (), {"add": lambda *a: None, "note": lambda *a: None})()
+
+    discovery_run.run_discovery(R())
+    s = db.get(DiscoverySession, seen["sid"])
+    assert s.limits["max_seconds"] == discovery_run.LIBRARY_MAX_SECONDS

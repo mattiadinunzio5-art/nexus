@@ -90,12 +90,17 @@ def _event_el(e: HistoricalEvent) -> dict:
     return {"type": "event", "id": e.id, "label": e.title}
 
 
-def _event_sources(db: Session, e: HistoricalEvent) -> list[Source]:
-    return [s for link in e.source_links if (s := db.get(Source, link.source_id))]
+def _event_sources(db: Session, e: HistoricalEvent, cache: dict | None = None) -> list[Source]:
+    if cache is not None and e.id in cache:
+        return cache[e.id]
+    out = [s for link in e.source_links if (s := db.get(Source, link.source_id))]
+    if cache is not None:
+        cache[e.id] = out
+    return out
 
 
-def _grade_events(db: Session, evs: list[HistoricalEvent]) -> tuple[str, list[str], list[int]]:
-    sources = {s.id: s for e in evs for s in _event_sources(db, e)}
+def _grade_events(db: Session, evs: list[HistoricalEvent], cache: dict | None = None) -> tuple[str, list[str], list[int]]:
+    sources = {s.id: s for e in evs for s in _event_sources(db, e, cache)}
     level, reasons, _ = ev.grade(db, list(sources.values()))
     disputed = [e.title for e in evs if e.reliability in ("disputed", "unverified")]
     if disputed:
@@ -121,6 +126,94 @@ def _mentions(text: str, title: str) -> bool:
     return len(tt) >= 2 and len(tt & set(terms(text))) / len(tt) >= 0.8
 
 
+# Oltre queste dimensioni il confronto «tutti con tutti» non è praticabile (la Biblioteca NEXUS ha decine di migliaia di
+# eventi ed entità): si confrontano solo le coppie che possono dare un risultato, trovate con indici. Sotto la soglia resta
+# il confronto completo, identico a prima.
+EXACT_MAX_EVENTS = 1500
+EXACT_MAX_NODES = 2000
+MAX_ACTOR_EVENTS = 200   # in un archivio grande, un attore presente in più eventi di così è «comune» e non distingue nulla
+MAX_HUB_DEGREE = 300     # nodi del grafo con più collegamenti di così non generano coppie candidate (restano nel punteggio)
+KEEP = 500               # candidati conservati per rilevatore (il salvataggio ne tiene comunque al massimo `max_items`)
+
+
+def _event_pair(db: Session, a: HistoricalEvent, b: HistoricalEvent, common_actors: set[str], grade) -> Candidate | None:
+    """Confronta due eventi (a precede b nell'ordine dell'archivio). `grade` calcola l'affidabilità quando serve."""
+    first, second = (a, b) if event_year(a) <= event_year(b) else (b, a)
+    s1, e1 = event_span(first)
+    s2, e2 = event_span(second)
+    gap = max(0, s2 - e1)
+    period = fmt_years(min(s1, s2), max(e1, e2))
+    # Riferimento testuale: cause/descrizione del secondo citano il primo.
+    later_text = " ".join([second.causes, second.description, second.economic_implications])
+    if _mentions(later_text, first.title):
+        level, reasons, src_ids = grade(a, b)
+        return Candidate(
+            kind="textual_reference", title=f"«{second.title}» richiama «{first.title}»",
+            elements=[_event_el(first), _event_el(second)], period=period,
+            evidence=[{"kind": "text", "label": f"Scheda «{second.title}»: cause e descrizione", "detail": "Il testo cita l'evento precedente.", "ref": {"event_id": second.id}}],
+            source_ids=src_ids, score=3.0 + (1 if gap <= 10 else 0),
+            explanation=(f"La scheda di «{second.title}» menziona «{first.title}» tra cause o contesto, e il primo evento precede il secondo"
+                         f"{' di ' + str(gap) + ' anni' if gap else ''}. È un collegamento dichiarato nel tuo archivio, non ancora una relazione documentata da una fonte."),
+            caveats=[NOT_CAUSAL, "Il riferimento proviene dal testo inserito nell'archivio: va confermato con una fonte."],
+            reliability=level, reliability_reasons=reasons,
+        )
+    shared = {k: v for k, v in _actors(a).items() if k in _actors(b) and k not in common_actors}
+    if not (shared and gap <= 30):
+        return None
+    ca = {country_key(c) for c in a.countries or []}
+    cb = {country_key(c) for c in b.countries or []}
+    countries = ca & cb
+    cats = set(a.categories or []) & set(b.categories or [])
+    names = sorted(shared.values())
+    level, reasons, src_ids = grade(a, b)
+    return Candidate(
+        kind="shared_actors", title=f"{first.title} ↔ {second.title}",
+        elements=[_event_el(first), _event_el(second)], period=period,
+        evidence=[{"kind": "actors", "label": "Attori comuni", "detail": ", ".join(names)},
+                  *([{"kind": "context", "label": "Paesi comuni", "detail": ", ".join(sorted(countries))}] if countries else []),
+                  *([{"kind": "context", "label": "Categorie comuni", "detail": ", ".join(sorted(cats))}] if cats else [])],
+        source_ids=src_ids, score=2.0 * len(shared) + 0.5 * len(countries) + 0.25 * len(cats) + (1 if gap <= 5 else 0),
+        explanation=(f"Gli stessi attori ({', '.join(names)}) compaiono in entrambi gli eventi, a {gap} anni di distanza. "
+                     "Gli attori condivisi suggeriscono una possibile continuità di decisioni o interessi."),
+        caveats=[NOT_CAUSAL, "Lo stesso attore può partecipare a eventi indipendenti."],
+        reliability=level, reliability_reasons=reasons,
+    )
+
+
+def _candidate_event_pairs(events: list[HistoricalEvent], common_actors: set[str]) -> list[tuple[int, int]]:
+    """Coppie (i, j), i < j, che possono dare un risultato: attore non comune condiviso, oppure il testo dell'uno contiene
+    abbastanza termini del titolo dell'altro. Per il titolo basta indicizzare i suoi m+1 termini più rari, dove m è il
+    numero di termini che possono mancare restando sopra l'80%: almeno uno di essi compare per forza nel testo."""
+    pairs: set[tuple[int, int]] = set()
+    by_actor: dict[str, list[int]] = {}
+    for i, e in enumerate(events):
+        for k in _actors(e):
+            if k not in common_actors:
+                by_actor.setdefault(k, []).append(i)
+    for idx in by_actor.values():
+        pairs.update(combinations(idx, 2))
+    title_terms = [set(terms(e.title)) for e in events]
+    df: dict[str, int] = {}
+    for tt in title_terms:
+        for w in tt:
+            df[w] = df.get(w, 0) + 1
+    by_term: dict[str, list[int]] = {}
+    for i, tt in enumerate(title_terms):
+        if not tt:
+            continue
+        missing = len(tt) - math.ceil(0.8 * len(tt) - 1e-9)
+        for w in sorted(tt, key=lambda x: (df[x], x))[:missing + 1]:
+            by_term.setdefault(w, []).append(i)
+    for j, e in enumerate(events):
+        text_terms = set(terms(" ".join([e.causes, e.description, e.economic_implications])))
+        hits = {i for w in text_terms for i in by_term.get(w, ()) if i != j}
+        for i in hits:  # stesso criterio di _mentions (titolo intero, oppure almeno 2 termini e l'80% presente)
+            tt = title_terms[i]
+            if len(tt & text_terms) / len(tt) >= 0.8:
+                pairs.add((min(i, j), max(i, j)))
+    return sorted(pairs)
+
+
 def event_connections(db: Session, events: list[HistoricalEvent], known_pairs: set[frozenset]) -> list[Candidate]:
     out: list[Candidate] = []
     # Un attore presente in quasi tutti gli eventi (es. la banca centrale di riferimento) non distingue nulla:
@@ -130,48 +223,31 @@ def event_connections(db: Session, events: list[HistoricalEvent], known_pairs: s
         for k in _actors(e):
             df[k] = df.get(k, 0) + 1
     common_actors = {k for k, n in df.items() if len(events) >= 4 and n > max(2, len(events) // 2)}
-    for a, b in combinations(events, 2):
+    large = len(events) > EXACT_MAX_EVENTS
+    if large:
+        common_actors |= {k for k, n in df.items() if n > MAX_ACTOR_EVENTS}
+        pairs = ((events[i], events[j]) for i, j in _candidate_event_pairs(events, common_actors))
+    else:
+        pairs = combinations(events, 2)
+    cache: dict[int, list[Source]] = {}
+
+    def grade(a: HistoricalEvent, b: HistoricalEvent):
+        if large:
+            return "low", [], []  # calcolata dopo, solo per i candidati conservati
+        return _grade_events(db, [a, b])
+
+    kept: list[tuple[Candidate, HistoricalEvent, HistoricalEvent]] = []
+    for a, b in pairs:
         if frozenset((("event", a.id), ("event", b.id))) in known_pairs:
             continue  # già collegati nel grafo: non è una scoperta
-        first, second = (a, b) if event_year(a) <= event_year(b) else (b, a)
-        s1, e1 = event_span(first)
-        s2, e2 = event_span(second)
-        gap = max(0, s2 - e1)
-        period = fmt_years(min(s1, s2), max(e1, e2))
-        level, reasons, src_ids = _grade_events(db, [a, b])
-        # Riferimento testuale: cause/descrizione del secondo citano il primo.
-        later_text = " ".join([second.causes, second.description, second.economic_implications])
-        if _mentions(later_text, first.title):
-            out.append(Candidate(
-                kind="textual_reference", title=f"«{second.title}» richiama «{first.title}»",
-                elements=[_event_el(first), _event_el(second)], period=period,
-                evidence=[{"kind": "text", "label": f"Scheda «{second.title}»: cause e descrizione", "detail": "Il testo cita l'evento precedente.", "ref": {"event_id": second.id}}],
-                source_ids=src_ids, score=3.0 + (1 if gap <= 10 else 0),
-                explanation=(f"La scheda di «{second.title}» menziona «{first.title}» tra cause o contesto, e il primo evento precede il secondo"
-                             f"{' di ' + str(gap) + ' anni' if gap else ''}. È un collegamento dichiarato nel tuo archivio, non ancora una relazione documentata da una fonte."),
-                caveats=[NOT_CAUSAL, "Il riferimento proviene dal testo inserito nell'archivio: va confermato con una fonte."],
-                reliability=level, reliability_reasons=reasons,
-            ))
-            continue
-        shared = {k: v for k, v in _actors(a).items() if k in _actors(b) and k not in common_actors}
-        ca = {country_key(c) for c in a.countries or []}
-        cb = {country_key(c) for c in b.countries or []}
-        countries = ca & cb
-        cats = set(a.categories or []) & set(b.categories or [])
-        if shared and gap <= 30:
-            names = sorted(shared.values())
-            out.append(Candidate(
-                kind="shared_actors", title=f"{first.title} ↔ {second.title}",
-                elements=[_event_el(first), _event_el(second)], period=period,
-                evidence=[{"kind": "actors", "label": "Attori comuni", "detail": ", ".join(names)},
-                          *([{"kind": "context", "label": "Paesi comuni", "detail": ", ".join(sorted(countries))}] if countries else []),
-                          *([{"kind": "context", "label": "Categorie comuni", "detail": ", ".join(sorted(cats))}] if cats else [])],
-                source_ids=src_ids, score=2.0 * len(shared) + 0.5 * len(countries) + 0.25 * len(cats) + (1 if gap <= 5 else 0),
-                explanation=(f"Gli stessi attori ({', '.join(names)}) compaiono in entrambi gli eventi, a {gap} anni di distanza. "
-                             "Gli attori condivisi suggeriscono una possibile continuità di decisioni o interessi."),
-                caveats=[NOT_CAUSAL, "Lo stesso attore può partecipare a eventi indipendenti."],
-                reliability=level, reliability_reasons=reasons,
-            ))
+        c = _event_pair(db, a, b, common_actors, grade)
+        if c:
+            kept.append((c, a, b))
+    if large:
+        kept = sorted(kept, key=lambda x: -x[0].score)[:KEEP]
+        for c, a, b in kept:
+            c.reliability, c.reliability_reasons, c.source_ids = _grade_events(db, [a, b], cache)
+    out = [c for c, _, _ in kept]
     return out
 
 
@@ -186,7 +262,20 @@ def graph_connections(db: Session, user: User, entities: dict[int, Entity], rels
     if g.number_of_nodes() < 3:
         return []
     nodes = [n for n in g.nodes if scope_ids is None or n in scope_ids]
-    pairs = [(u, v) for u, v in combinations(nodes, 2) if not g.has_edge(u, v)]
+    if len(nodes) <= EXACT_MAX_NODES:
+        pairs = [(u, v) for u, v in combinations(nodes, 2) if not g.has_edge(u, v)]
+    else:
+        # Solo coppie con almeno 2 vicini comuni (le altre non superano il filtro qui sotto), generate dai vicini di ogni
+        # nodo. I nodi con moltissimi collegamenti non generano coppie, ma contano nel punteggio delle coppie trovate.
+        pos = {n: i for i, n in enumerate(nodes)}
+        count: dict[tuple[int, int], int] = {}
+        for c in g.nodes:
+            nb = sorted((n for n in g.neighbors(c) if n in pos), key=pos.__getitem__)
+            if len(nb) > MAX_HUB_DEGREE:
+                continue
+            for u, v in combinations(nb, 2):
+                count[(u, v)] = count.get((u, v), 0) + 1
+        pairs = sorted(((u, v) for (u, v), n in count.items() if n >= 2 and not g.has_edge(u, v)), key=lambda p: (pos[p[0]], pos[p[1]]))
     scored = []
     for u, v, s in nx.adamic_adar_index(g, pairs):
         common = list(nx.common_neighbors(g, u, v))
@@ -241,6 +330,12 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
                            window: int | None = None, z_min: float = 2.0) -> list[Candidate]:
     out = []
     fixed_window = window
+    cache: dict = {}
+    ekeys_of = {e.id: {country_key(c) for c in e.countries or []} for e in events}
+    by_country: dict[str, list[HistoricalEvent]] = {}
+    for e in events:
+        for k in ekeys_of[e.id]:
+            by_country.setdefault(k, []).append(e)
     for s in series:
         window = fixed_window or WINDOW.get(s.frequency, 2)
         v = series_frame(s)
@@ -254,10 +349,13 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
         if (sums - med).abs().max() <= scale:
             continue  # serie senza variabilità apprezzabile
         skey = country_key(s.country) if s.country else ""
-        for e in events:
-            ekeys = {country_key(c) for c in e.countries or []}
-            if require_country and (not skey or skey not in ekeys):
+        if require_country:
+            if not skey:
                 continue
+            pool = by_country.get(skey, [])  # stessi eventi, nello stesso ordine, senza scorrere tutto l'archivio
+        else:
+            pool = events
+        for e in pool:
             t = pd.Timestamp(year=max(1, e.start_year), month=e.start_month or 1, day=1) if e.start_year > 0 else None
             if t is None or t < v.index[0] or t > v.index[-1]:
                 continue
@@ -273,7 +371,7 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
             similar = int(((sums - med).abs() >= abs(change - med) - 1e-12).sum())
             if abs(z) < z_min or similar / len(sums) > 0.1:
                 continue
-            level, reasons, src_ids = _grade_events(db, [e])
+            level, reasons, src_ids = _grade_events(db, [e], cache)
             reasons.insert(0, f"Serie da fonte {'istituzionale' if s.connector != 'upload' else 'caricata dall’utente'}: {s.source_label}")
             out.append(Candidate(
                 kind="event_data_change", title=f"{e.title} — {s.name}",

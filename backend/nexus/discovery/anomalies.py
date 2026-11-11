@@ -41,13 +41,26 @@ class AnomalyCandidate:
         return fingerprint(self.kind, self.keys)
 
 
-def _events_near(events: list[HistoricalEvent], year: int, country: str) -> list[str]:
+def _year_index(events: list[HistoricalEvent]) -> dict[int, list[tuple[int, HistoricalEvent]]]:
+    idx: dict[int, list[tuple[int, HistoricalEvent]]] = {}
+    for i, e in enumerate(events):
+        idx.setdefault(e.start_year, []).append((i, e))
+    return idx
+
+
+def _events_near(events: list[HistoricalEvent], year: int, country: str, index: dict | None = None) -> list[str]:
+    """Eventi entro un anno, nello stesso paese. Con `index` (anno → eventi) non scorre tutto l'archivio."""
     ck = country_key(country) if country else ""
-    return [e.title for e in events if abs(e.start_year - year) <= 1 and (not ck or ck in {country_key(c) for c in e.countries or []})]
+    if index is None:
+        pool = list(enumerate(events))
+    else:
+        pool = sorted((p for y in (year - 1, year, year + 1) for p in index.get(y, ())), key=lambda p: p[0])
+    return [e.title for _, e in pool if abs(e.start_year - year) <= 1 and (not ck or ck in {country_key(c) for c in e.countries or []})]
 
 
 def series_anomalies(series: list[Series], events: list[HistoricalEvent], skipped: dict) -> list[AnomalyCandidate]:
     out = []
+    years = _year_index(events)
     for s in series:
         v = series_frame(s)
         if len(v) < MIN_CHANGES + 1:
@@ -59,7 +72,7 @@ def series_anomalies(series: list[Series], events: list[HistoricalEvent], skippe
         official = s.connector != "upload"
         for a in analytics.anomalies(v, z=4.0):
             year = int(a["date"][:4])
-            near = _events_near(events, year, s.country)
+            near = _events_near(events, year, s.country, years)
             alts = ["Revisione o cambio di metodologia della fonte", "Cambio di base o di definizione dell'indicatore",
                     "Errore di trascrizione nei dati (da controllare sulla fonte)"]
             if near:
@@ -105,7 +118,14 @@ def _comparable_units(a: str, b: str) -> bool:
 def source_discrepancies(series: list[Series], skipped: dict, tolerance_abs: float = 0.5, tolerance_rel: float = 0.1) -> list[AnomalyCandidate]:
     """Stesso indicatore (categoria, paese, unità comparabili) da fonti diverse: differenze oltre la tolleranza."""
     out = []
-    for a, b in combinations(series, 2):
+    # Solo coppie dello stesso indicatore (categoria e paese): le altre sono escluse subito qui sotto.
+    groups: dict[tuple, list[int]] = {}
+    for i, s in enumerate(series):
+        if s.category != "other" and s.country:
+            groups.setdefault((s.category, country_key(s.country)), []).append(i)
+    pairs = sorted(p for idx in groups.values() for p in combinations(idx, 2))
+    for i, j in pairs:
+        a, b = series[i], series[j]
         if a.category != b.category or a.category == "other" or a.connector == b.connector:
             continue
         if not a.country or not b.country or country_key(a.country) != country_key(b.country) or not _comparable_units(a.unit, b.unit):
@@ -145,7 +165,11 @@ def source_discrepancies(series: list[Series], skipped: dict, tolerance_abs: flo
 
 def chronology_issues(db: Session, events: list[HistoricalEvent], relations: list[Relation], entities: dict[int, Entity]) -> list[AnomalyCandidate]:
     out = []
-    by_entity = {e.id: ev for ev in events if (e := next((x for x in entities.values() if x.event_id == ev.id), None))}
+    first_entity: dict[int, int] = {}
+    for x in entities.values():  # come prima: per ogni evento, la prima entità collegata
+        if x.event_id is not None:
+            first_entity.setdefault(x.event_id, x.id)
+    by_entity = {first_entity[ev.id]: ev for ev in events if ev.id in first_entity}
     for e in events:
         if e.end_year is not None and (e.end_year, e.end_month or 12) < (e.start_year, e.start_month or 1):
             out.append(AnomalyCandidate(
