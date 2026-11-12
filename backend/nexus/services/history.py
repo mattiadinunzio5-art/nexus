@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..api.schemas_history import EventIn, EventLinkIn, EventOut, EventSourceOut, KnowledgeIn, KnowledgeOut, RelationIn
@@ -93,13 +93,20 @@ def list_events(
     offset: int = 0, origin: str | None = None,
 ) -> list[HistoricalEvent]:
     owners = library.visible_owner_ids(db, user)
+    year_search = False
     stmt = (select(HistoricalEvent).where(HistoricalEvent.owner_id.in_(owners))
             .options(selectinload(HistoricalEvent.source_links), selectinload(HistoricalEvent.knowledge)))
     if origin == "mine":
         stmt = stmt.where(HistoricalEvent.owner_id == user.id)
     elif origin == "library":
         stmt = stmt.where(HistoricalEvent.owner_id != user.id)
-    if q:
+    if q and q.strip().lstrip("-").isdigit() and len(q.strip().lstrip("-")) <= 4:
+        # Un anno (es. «1931»): eventi in corso in quell'anno, non quelli che lo citano nel testo.
+        y = int(q.strip())
+        year_search = True
+        stmt = stmt.where(HistoricalEvent.start_year <= y,
+                          or_(HistoricalEvent.start_year == y, func.coalesce(HistoricalEvent.end_year, HistoricalEvent.start_year) >= y))
+    elif q:
         like = f"%{q}%"
         stmt = stmt.where(or_(HistoricalEvent.title.ilike(like), HistoricalEvent.description.ilike(like)))
     if from_year is not None:
@@ -108,7 +115,10 @@ def list_events(
         stmt = stmt.where(HistoricalEvent.start_year <= to_year)
     if reliability:
         stmt = stmt.where(HistoricalEvent.reliability == reliability)
-    stmt = stmt.order_by(HistoricalEvent.start_year, HistoricalEvent.start_month, HistoricalEvent.start_day, HistoricalEvent.id)
+    if year_search:  # prima gli eventi iniziati in quell'anno, poi quelli iniziati prima e ancora in corso
+        stmt = stmt.order_by(HistoricalEvent.start_year.desc(), HistoricalEvent.start_month, HistoricalEvent.start_day, HistoricalEvent.id)
+    else:
+        stmt = stmt.order_by(HistoricalEvent.start_year, HistoricalEvent.start_month, HistoricalEvent.start_day, HistoricalEvent.id)
     if not category and not country:
         return list(db.scalars(stmt.offset(offset).limit(limit)))
     # Filtri su liste JSON applicati in Python (portabile tra SQLite e PostgreSQL), a blocchi:

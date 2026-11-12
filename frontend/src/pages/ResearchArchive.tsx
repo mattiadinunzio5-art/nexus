@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useStickyState } from '../lib/useStickyState';
 import { api, ApiError } from '../api/client';
 import type { AskResult, RetrievalResult } from '../api/types';
 import { CLAIM, PassageCard, SUPPORT } from '../components/research';
@@ -44,15 +45,15 @@ export function AskResultView({ result }: { result: AskResult }) {
 }
 
 export function ResearchArchivePage() {
-  const [tab, setTab] = useState<'ask' | 'search'>('ask');
-  const [question, setQuestion] = useState('');
-  const [query, setQuery] = useState('');
-  const [mode, setMode] = useState('hybrid');
+  const [tab, setTab] = useStickyState<'ask' | 'search'>('research.tab', 'ask');
+  const [question, setQuestion] = useStickyState('research.question', '');
+  const [query, setQuery] = useStickyState('research.query', '');
+  const [mode, setMode] = useStickyState('research.mode', 'hybrid');
   const [useAi, setUseAi] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError>();
-  const [ask, setAsk] = useState<AskResult>();
-  const [search, setSearch] = useState<RetrievalResult>();
+  const [ask, setAsk] = useStickyState<AskResult | undefined>('research.ask', undefined);
+  const [search, setSearch] = useStickyState<RetrievalResult | undefined>('research.search', undefined);
 
   useContextPanel(
     <div className="space-y-2 text-steel-300">

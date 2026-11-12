@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useStickyState } from '../lib/useStickyState';
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArrowRight, Check, GitBranch, Pause, Play, Search, Square, X } from 'lucide-react';
 import { api } from '../api/client';
@@ -137,7 +138,7 @@ function List({ items }: { items: string[] }) {
 export function DiscoveryDashboardPage() {
   const o = useAsync(() => api.discoveryOverview(), []);
   const nav = useNavigate();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useStickyState('discovery.q', '');
   const { busy, run, view } = useAction();
   return (
     <Shell title="Discovery Intelligence" description="Connessioni, ipotesi, anomalie, catene causali e scenari costruiti sul tuo archivio, con evidenze e fonti.">
