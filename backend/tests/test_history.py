@@ -143,3 +143,12 @@ def test_event_list_does_not_query_once_per_event(client):
     assert len(items) == 12 and all(i["sources"] for i in items)
     # Fisse: utente, eventi, fonti collegate, conoscenze, fonti, entità (+ ricerca della Biblioteca, assente nei test).
     assert count["n"] - len(items) < 10, count["n"]
+
+
+def test_country_filter_matches_italian_and_english_names(client):
+    client.post("/api/history/events", json={"title": "Crash", "start_year": 1929, "countries": ["United States"]})
+    client.post("/api/history/events", json={"title": "Tariffa", "start_year": 1930, "countries": ["Stati Uniti"]})
+    client.post("/api/history/events", json={"title": "Altro", "start_year": 1930, "countries": ["Serbia"]})
+    for q in ("Stati Uniti", "United States", "stati uniti"):
+        titles = {e["title"] for e in client.get("/api/history/events", params={"country": q}).json()}
+        assert titles == {"Crash", "Tariffa"}, (q, titles)

@@ -483,4 +483,5 @@ export const EN: Record<string, string> = {
     'NEXUS does not alter source values: missing data stay missing, and every computed transformation is labelled as such.',
   'Le condizioni sono riassunte dalle pagine ufficiali di ciascuna fonte, indicate in ogni scheda con la data di verifica. Questa pagina non costituisce parere legale: in caso di dubbio fa fede il testo della licenza originale.':
     "Terms are summarised from each source's official pages, linked in every entry with the date they were checked. This page is not legal advice: if in doubt, the original licence text prevails.",
+  'Aggiornamento in corso…': 'Updating…', 'es. Stati Uniti': 'e.g. United States',
 };

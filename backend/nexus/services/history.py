@@ -57,6 +57,36 @@ def _source(db: Session, user: User, source_id: int | None) -> None:
         raise ValidationFailedError("Fonte inesistente.")
 
 
+# Nomi italiani dei paesi più cercati ↔ nomi inglesi usati da Wikidata (Biblioteca): «Stati Uniti» trova anche «United States».
+_COUNTRY_IT_EN = {
+    "stati uniti": "united states", "stati uniti d'america": "united states", "usa": "united states",
+    "regno unito": "united kingdom", "gran bretagna": "united kingdom", "inghilterra": "england", "germania": "germany",
+    "francia": "france", "italia": "italy", "spagna": "spain", "portogallo": "portugal", "giappone": "japan", "cina": "china",
+    "unione sovietica": "soviet union", "urss": "soviet union", "russia": "russia", "impero russo": "russian empire",
+    "impero ottomano": "ottoman empire", "turchia": "turkey", "austria": "austria", "austria-ungheria": "austria-hungary",
+    "ungheria": "hungary", "svizzera": "switzerland", "paesi bassi": "netherlands", "olanda": "netherlands", "belgio": "belgium",
+    "grecia": "greece", "svezia": "sweden", "norvegia": "norway", "danimarca": "denmark", "finlandia": "finland",
+    "polonia": "poland", "irlanda": "ireland", "messico": "mexico", "brasile": "brazil", "argentina": "argentina",
+    "cile": "chile", "canada": "canada", "india": "india", "egitto": "egypt", "sudafrica": "south africa",
+    "corea del sud": "south korea", "australia": "australia",
+}
+_COUNTRY_EN_IT: dict[str, set[str]] = {}
+for _it, _en in _COUNTRY_IT_EN.items():
+    _COUNTRY_EN_IT.setdefault(_en, set()).add(_it)
+
+
+def country_names(country: str) -> set[str]:
+    """Il nome cercato più i suoi equivalenti italiano/inglese, in minuscolo."""
+    c = country.strip().lower()
+    names = {c}
+    if c in _COUNTRY_IT_EN:
+        en = _COUNTRY_IT_EN[c]
+        names |= {en} | _COUNTRY_EN_IT[en]
+    if c in _COUNTRY_EN_IT:
+        names |= _COUNTRY_EN_IT[c]
+    return names
+
+
 def list_events(
     db: Session, user: User, *, q: str | None = None, category: str | None = None, country: str | None = None,
     from_year: int | None = None, to_year: int | None = None, reliability: str | None = None, limit: int = 500,
@@ -83,13 +113,13 @@ def list_events(
         return list(db.scalars(stmt.offset(offset).limit(limit)))
     # Filtri su liste JSON applicati in Python (portabile tra SQLite e PostgreSQL), a blocchi:
     # ci si ferma appena raggiunto il limite, senza caricare l'intero archivio in memoria.
-    c = country.lower() if country else None
+    names = country_names(country) if country else None
     out: list[HistoricalEvent] = []
     skipped = 0
     for e in db.scalars(stmt.execution_options(yield_per=500)):
         if category and category not in e.categories:
             continue
-        if c and not (any(c == x.lower() for x in e.countries) or c in e.region.lower()):
+        if names and not (any(x.lower() in names for x in e.countries) or any(n in e.region.lower() for n in names)):
             continue
         if skipped < offset:
             skipped += 1
