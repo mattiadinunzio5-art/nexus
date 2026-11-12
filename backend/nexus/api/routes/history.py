@@ -28,9 +28,9 @@ def list_events(
     reliability: Reliability | None = None, limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
     origin: Literal["mine", "library"] | None = None,
 ):
-    return [svc.to_out(db, e) for e in svc.list_events(db, user, q=q, category=category, country=country,
-                                                       from_year=from_year, to_year=to_year, reliability=reliability,
-                                                       limit=limit, offset=offset, origin=origin)]
+    return svc.to_out_many(db, svc.list_events(db, user, q=q, category=category, country=country,
+                                               from_year=from_year, to_year=to_year, reliability=reliability,
+                                               limit=limit, offset=offset, origin=origin))
 
 
 @router.post("/events", response_model=EventOut, status_code=status.HTTP_201_CREATED)

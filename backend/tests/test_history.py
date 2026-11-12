@@ -119,3 +119,27 @@ def test_timeline_without_date_shows_everything(client):
     ev(client, CRASH), ev(client, BW)
     t = client.get("/api/history/timeline").json()
     assert len(t["events"]) == 2 and all(e["status_at_date"] == "not_applicable" for e in t["events"])
+
+
+def test_event_list_does_not_query_once_per_event(client):
+    """L'elenco eventi non fa una query per evento (N+1): sul database remoto costava secondi."""
+    from sqlalchemy import event as sa_event
+
+    src = client.post("/api/sources", json={"source_type": "book", "title": "Fonte", "authors": ["A"], "year": 1990}).json()
+    for i in range(12):
+        e = client.post("/api/history/events", json={"title": f"Evento {i}", "start_year": 1900 + i}).json()
+        client.post(f"/api/history/events/{e['id']}/sources", json={"source_id": src["id"]})
+    engine = client.app.state.database.engine
+    count = {"n": 0}
+
+    def before(*_a, **_k):
+        count["n"] += 1
+
+    sa_event.listen(engine, "before_cursor_execute", before)
+    try:
+        items = client.get("/api/history/events").json()
+    finally:
+        sa_event.remove(engine, "before_cursor_execute", before)
+    assert len(items) == 12 and all(i["sources"] for i in items)
+    # Fisse: utente, eventi, fonti collegate, conoscenze, fonti, entità (+ ricerca della Biblioteca, assente nei test).
+    assert count["n"] - len(items) < 10, count["n"]

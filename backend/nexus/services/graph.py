@@ -242,7 +242,12 @@ def explore(
                   degree=int(sub.degree(n)), betweenness=round(float(btw.get(n, 0.0)), 4), is_focus=n == focus)
         for n in sub.nodes
     ]
-    edges = [relation_out(db, rels[k]) for _, _, k in sub.edges(keys=True)]
+    edge_rels = [rels[k] for _, _, k in sub.edges(keys=True)]
+    src_ids = {r.source_id for r in edge_rels if r.source_id}
+    # Una sola query per le fonti delle relazioni (niente N+1 sul database remoto); la lista le tiene nella identity map.
+    loaded = list(db.scalars(select(Source).where(Source.id.in_(src_ids)))) if src_ids else []
+    edges = [relation_out(db, r) for r in edge_rels]
+    del loaded
     stats = {
         "entities": db.scalar(select(func.count(Entity.id)).where(Entity.owner_id.in_(owners))) or 0,
         "relations": db.scalar(select(func.count(Relation.id)).where(*conds)) or 0,
