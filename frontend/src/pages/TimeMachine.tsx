@@ -20,6 +20,8 @@ export function TimeMachinePage() {
   const [draftYear, setDraftYear] = useState(year);
   const hindsight = params.get('hindsight') === '1';
   const country = params.get('country') ?? '';
+  // Il paese si applica con Invio o uscendo dal campo: una richiesta per lettera intasava il server.
+  const [draftCountry, setDraftCountry] = useState(country);
   const category = params.get('category') ?? '';
   const eventId = params.get('event') ?? '';
   const update = (patch: Record<string, string>) => {
@@ -51,7 +53,11 @@ export function TimeMachinePage() {
               <Input inputMode="numeric" value={draftYear} onChange={(e) => setDraftYear(e.target.value)} onBlur={() => update({ year: draftYear.trim() })} placeholder="es. 1931" />
             </form>
           </Field>
-          <Field label="Paese / area"><Input value={country} onChange={(e) => update({ country: e.target.value })} /></Field>
+          <Field label="Paese / area">
+            <form onSubmit={(e) => { e.preventDefault(); update({ country: draftCountry.trim() }); }}>
+              <Input value={draftCountry} onChange={(e) => setDraftCountry(e.target.value)} onBlur={() => update({ country: draftCountry.trim() })} placeholder="es. Stati Uniti" />
+            </form>
+          </Field>
           <Field label="Categoria">
             <Select value={category} onChange={(e) => update({ category: e.target.value })}>
               <option value="">Tutte</option>
@@ -68,7 +74,8 @@ export function TimeMachinePage() {
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
       {data && (
-        <>
+        <div className={loading ? 'pointer-events-none opacity-50 transition-opacity' : 'transition-opacity'} aria-busy={loading}>
+          {loading && <p className="mb-2 text-xs text-gold-300">Aggiornamento in corso…</p>}
           {data.notes.map((n) => <p key={n} className="mb-2 flex items-start gap-2 text-xs text-steel-400"><History className="mt-0.5 size-3.5 shrink-0 text-gold-400" aria-hidden />{n}</p>)}
           {data.hidden_future_events > 0 && <p className="mb-4 text-xs text-steel-500">{data.hidden_future_events} eventi successivi alla data sono nascosti.</p>}
           {data.indicators.length > 0 && (
@@ -117,7 +124,7 @@ export function TimeMachinePage() {
               ))}
             </ol>
           )}
-        </>
+        </div>
       )}
     </>
   );
