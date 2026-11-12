@@ -39,7 +39,7 @@ LESSONS: list[dict] = [
         "steps": [
             {"title": "Importa i dati", "detail": "Importa le due serie FRED proposte (serve la chiave FRED gratuita in Sistema → Credenziali).", "module": "/financial"},
             {"title": "Costruisci la cronologia", "detail": "In Historical Intelligence aggiungi le date chiave come eventi, citando per ognuno una fonte della bibliografia.", "module": "/history"},
-            {"title": "Guarda senza il senno di poi", "detail": "Apri la Time Machine al 1930: cosa si sapeva allora? Annota cosa non era ancora noto.", "module": "/time-machine"},
+            {"title": "Guarda senza il senno di poi", "detail": "Apri la Time Machine al 1930: cosa si sapeva allora? Annota cosa non era ancora noto.", "module": "/time-machine?year=1930&country=Stati+Uniti&category=economic"},
             {"title": "Confronta le serie", "detail": "Confronta produzione e prezzi tra 1929 e 1933 e descrivi l'andamento con le tue parole, citando la serie.", "module": "/financial"},
             {"title": "Fatti e interpretazioni", "detail": "Nel rapporto separa i fatti (date, dati) dalle interpretazioni (es. il ruolo della politica monetaria secondo Friedman e Schwartz).", "module": "/studio"},
         ],

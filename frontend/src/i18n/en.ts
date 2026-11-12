@@ -484,4 +484,8 @@ export const EN: Record<string, string> = {
   'Le condizioni sono riassunte dalle pagine ufficiali di ciascuna fonte, indicate in ogni scheda con la data di verifica. Questa pagina non costituisce parere legale: in caso di dubbio fa fede il testo della licenza originale.':
     "Terms are summarised from each source's official pages, linked in every entry with the date they were checked. This page is not legal advice: if in doubt, the original licence text prevails.",
   'Aggiornamento in corso…': 'Updating…', 'es. Stati Uniti': 'e.g. United States',
+  'Video: la lezione passo per passo': 'Video: the lesson step by step',
+  'Circa 2 minuti, in italiano: come usare Historical Intelligence, Financial Intelligence, Time Machine e Discovery su questo caso. Poi segui i passi qui sotto.':
+    'About 2 minutes, in Italian: how to use Historical Intelligence, Financial Intelligence, Time Machine and Discovery on this case. Then follow the steps below.',
+  'Video della lezione: {0}': 'Lesson video: {0}',
 };
