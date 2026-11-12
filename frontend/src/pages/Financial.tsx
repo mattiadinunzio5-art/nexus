@@ -1,4 +1,5 @@
 import { LicenseBox } from '../components/License';
+import { useStickyState } from '../lib/useStickyState';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
@@ -113,9 +114,9 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
 }
 
 export function FinancialPage() {
-  const [category, setCategory] = useState('');
-  const [q, setQ] = useState('');
-  const [query, setQuery] = useState('');
+  const [category, setCategory] = useStickyState('financial.category', '');
+  const [q, setQ] = useStickyState('financial.q', '');
+  const [query, setQuery] = useState(q.trim());
   useEffect(() => {
     const t = setTimeout(() => setQuery(q.trim()), 350);
     return () => clearTimeout(t);

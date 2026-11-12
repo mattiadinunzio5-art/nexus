@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { rememberedSearch } from '../../lib/lastLocation';
 import { ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '../../state/Auth';
 import { ARCHIVE_NAV, MAIN_NAV, MODULE_NAV, WORKSPACE_NAV, type NavItem } from '../../lib/nav';
@@ -8,7 +9,7 @@ function Item({ item, onNavigate, badge }: { item: NavItem; onNavigate: () => vo
   const Icon = item.icon;
   return (
     <NavLink
-      to={item.to}
+      to={item.to + rememberedSearch(item.to)}
       end={item.to === '/'}
       data-module={item.moduleId}
       onClick={onNavigate}

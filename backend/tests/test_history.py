@@ -152,3 +152,12 @@ def test_country_filter_matches_italian_and_english_names(client):
     for q in ("Stati Uniti", "United States", "stati uniti"):
         titles = {e["title"] for e in client.get("/api/history/events", params={"country": q}).json()}
         assert titles == {"Crash", "Tariffa"}, (q, titles)
+
+
+def test_year_search_returns_events_of_that_year(client):
+    client.post("/api/history/events", json={"title": "Restaurazione", "start_year": 1874, "end_year": 1931,
+                                               "description": "Finì nel 1931."})
+    client.post("/api/history/events", json={"title": "Crisi bancaria", "start_year": 1931})
+    client.post("/api/history/events", json={"title": "Citazione", "start_year": 1950, "description": "Ricorda il 1931."})
+    titles = [e["title"] for e in client.get("/api/history/events", params={"q": "1931"}).json()]
+    assert titles == ["Crisi bancaria", "Restaurazione"]

@@ -1,4 +1,5 @@
 import { LicenseBox } from '../components/License';
+import { useDebounced, useStickyState } from '../lib/useStickyState';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, Network, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -108,10 +109,11 @@ export function EventForm({ initial, onSubmit, onCancel }: { initial?: EventInpu
 }
 
 export function EventsPage() {
-  const [filters, setFilters] = useState({ q: '', category: '', country: '', from_year: '', to_year: '' });
+  const [filters, setFilters] = useStickyState('history.filters', { q: '', category: '', country: '', from_year: '', to_year: '' });
+  const applied = useDebounced(filters);
   const { data, error, loading, reload } = useAsync(
-    () => api.events({ ...filters, from_year: toInt(filters.from_year) ?? undefined, to_year: toInt(filters.to_year) ?? undefined }),
-    [filters],
+    () => api.events({ ...applied, from_year: toInt(applied.from_year) ?? undefined, to_year: toInt(applied.to_year) ?? undefined }),
+    [applied],
   );
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();

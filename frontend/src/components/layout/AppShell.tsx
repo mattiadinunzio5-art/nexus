@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { rememberSearch } from '../../lib/lastLocation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ContextPanel } from './ContextPanel';
@@ -23,6 +24,8 @@ export function AppShell() {
   const location = useLocation();
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
+  // Ricorda i filtri nell'indirizzo (es. Time Machine ?year=1931): il menu riporta lì tornando al modulo.
+  useEffect(() => rememberSearch(location.pathname, location.search), [location.pathname, location.search]);
 
   function togglePanel() {
     setPanelOpen((v) => {

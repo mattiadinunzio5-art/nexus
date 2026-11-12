@@ -1,4 +1,5 @@
 import { LicenseBox } from '../components/License';
+import { useStickyState } from '../lib/useStickyState';
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Download, FileUp, Library, Trash2 } from 'lucide-react';
@@ -111,7 +112,7 @@ function GutenbergForm({ onDone }: { onDone: () => void }) {
 }
 
 export function DocumentsPage() {
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useStickyState('documents.category', '');
   const { data, error, loading, reload } = useAsync(() => api.documents({ category }), [category]);
   const [toDelete, setToDelete] = useState<DocumentInfo>();
   const [showGutenberg, setShowGutenberg] = useState(false);
