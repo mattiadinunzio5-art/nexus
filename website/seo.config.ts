@@ -83,6 +83,11 @@ export function seoPages(): Plugin {
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, renderHead(template, page, base));
       }
+      // Pagina 404 vera: gli indirizzi inesistenti rispondono con stato 404 (non 200), escluse dall'indice.
+      fs.writeFileSync(path.join(outDir, '404.html'), renderHead(template, {
+        path: '/404', alt: '/it/404', lang: 'en', index: false, title: 'Page not found — NEXUS',
+        description: 'This page does not exist. / Questa pagina non esiste.',
+      }, null));
       const robots = ['User-agent: *', 'Allow: /', 'Disallow: /account', 'Disallow: /reset-password', 'Disallow: /it/account', 'Disallow: /it/reset-password'];
       if (base) {
         const today = new Date().toISOString().slice(0, 10);

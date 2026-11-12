@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..api.schemas_history import EventIn, EventLinkIn, EventOut, EventSourceOut, KnowledgeIn, KnowledgeOut, RelationIn
 from ..core.errors import ConfirmationRequiredError, ValidationFailedError
@@ -14,7 +14,22 @@ from ..core import library, licenses
 from . import activity, graph
 
 
-def to_out(db: Session, e: HistoricalEvent) -> EventOut:
+def to_out_many(db: Session, events: list[HistoricalEvent]) -> list[EventOut]:
+    """Come to_out, ma per una lista: fonti ed entità caricate con due sole query (niente N+1 sul database remoto)."""
+    ids = [e.id for e in events]
+    src_ids = {link.source_id for e in events for link in e.source_links}
+    # Tenute in una variabile: la identity map ha riferimenti deboli, così db.get le trova senza interrogare il DB.
+    loaded = list(db.scalars(select(Source).where(Source.id.in_(src_ids)))) if src_ids else []  # noqa: F841
+    entity_ids = dict(db.execute(select(Entity.event_id, Entity.id).where(Entity.event_id.in_(ids))).all()) if ids else {}
+    out = [to_out(db, e, entity_id=entity_ids.get(e.id)) for e in events]
+    del loaded
+    return out
+
+
+_UNSET = object()
+
+
+def to_out(db: Session, e: HistoricalEvent, entity_id=_UNSET) -> EventOut:
     out = EventOut.model_validate(e)
     out.library = library.is_library(db, e.owner_id)
     out.date_label = dates.fmt_range(e.start_year, e.start_month, e.start_day, e.end_year, e.end_month, e.end_day)
@@ -26,8 +41,7 @@ def to_out(db: Session, e: HistoricalEvent) -> EventOut:
                                       license_ids=licenses.for_source_record(s.url, s.notes)))
     out.sources = srcs
     out.knowledge = [KnowledgeOut.model_validate(k) for k in e.knowledge]
-    ent = db.scalar(select(Entity.id).where(Entity.event_id == e.id))
-    out.entity_id = ent
+    out.entity_id = db.scalar(select(Entity.id).where(Entity.event_id == e.id)) if entity_id is _UNSET else entity_id
     if not srcs:
         out.source_warning = "Nessuna fonte bibliografica collegata: le informazioni non sono verificabili."
     elif not any(s.verification_status in ("verified_user", "verified_registry") for s in srcs):
@@ -49,7 +63,8 @@ def list_events(
     offset: int = 0, origin: str | None = None,
 ) -> list[HistoricalEvent]:
     owners = library.visible_owner_ids(db, user)
-    stmt = select(HistoricalEvent).where(HistoricalEvent.owner_id.in_(owners))
+    stmt = (select(HistoricalEvent).where(HistoricalEvent.owner_id.in_(owners))
+            .options(selectinload(HistoricalEvent.source_links), selectinload(HistoricalEvent.knowledge)))
     if origin == "mine":
         stmt = stmt.where(HistoricalEvent.owner_id == user.id)
     elif origin == "library":
