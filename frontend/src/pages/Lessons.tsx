@@ -43,6 +43,11 @@ export function LessonsPage() {
   );
 }
 
+/** Video guidati delle lezioni (file statici in public/lessons). */
+const LESSON_VIDEOS: Record<string, { src: string; poster: string }> = {
+  'crisi-1929': { src: '/lessons/crisi-1929.mp4', poster: '/lessons/crisi-1929.jpg' },
+};
+
 export function LessonDetailPage() {
   const { lessonId = '' } = useParams();
   const l = useAsync(() => api.lesson(lessonId), [lessonId]);
@@ -84,6 +89,15 @@ export function LessonDetailPage() {
           Lezione iniziata: creato il progetto con la guida{started.sources_added ? ` e ${started.sources_added} letture da verificare in bibliografia` : ''}.{' '}
           <Link to="/projects" className="underline">Apri i progetti</Link>
         </p>
+      )}
+      {LESSON_VIDEOS[d.id] && (
+        <Card title="Video: la lezione passo per passo" className="mb-4">
+          <video controls preload="metadata" poster={LESSON_VIDEOS[d.id].poster} className="w-full max-w-4xl rounded-md border border-ink-700 bg-black"
+            aria-label={`Video della lezione: ${d.title}`}>
+            <source src={LESSON_VIDEOS[d.id].src} type="video/mp4" />
+          </video>
+          <p className="mt-2 text-xs text-steel-500">Circa 2 minuti, in italiano: come usare Historical Intelligence, Financial Intelligence, Time Machine e Discovery su questo caso. Poi segui i passi qui sotto.</p>
+        </Card>
       )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Obiettivi">
