@@ -87,7 +87,7 @@ export function WarRoomPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Modulo E" title="Research War Room" description="Ricerca multi-agente supervisionata con controanalisi e approvazione finale." />
+      <PageHeader eyebrow="Modulo E" title="Research War Room" description="La versione avanzata di «Ask the Archive»: più agenti AI (storico, economista, quant, scettico) lavorano sulle evidenze del tuo archivio, con controanalisi e approvazione finale. Richiede un provider AI configurato." />
       <Card title="Nuova ricerca" className="mb-6">
         <p className="mb-3 text-xs text-steel-400">
           Modalità: {status.data ? (local ? <span className="text-paper">locale (nessun provider AI)</span> : <span className="text-paper">AI · {status.data.ai_provider.name}</span>) : '…'}

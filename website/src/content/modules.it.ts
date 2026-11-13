@@ -249,7 +249,7 @@ export const MODULES_IT: ModuleContent[] = [
     kicker: 'Tempo',
     tagline: 'Guarda il passato senza il senno di poi.',
     description:
-      'La Time Machine mostra il tuo archivio come sarebbe apparso a una data scelta. In modalità rigorosa nasconde gli eventi successivi, le conseguenze retrospettive e le conoscenze emerse dopo — la protezione contro il senno di poi.',
+      'Una scheda di Historical Intelligence. La Time Machine mostra il tuo archivio come sarebbe apparso a una data scelta. In modalità rigorosa nasconde gli eventi successivi, le conseguenze retrospettive e le conoscenze emerse dopo — la protezione contro il senno di poi.',
     mainFunction: 'Ricostruire ciò che si poteva sapere in un dato momento e confrontarlo con ciò che sappiamo oggi.',
     whyUseful: [
       'Separa le informazioni contemporanee da scoperte, archivi e storiografia successivi.',

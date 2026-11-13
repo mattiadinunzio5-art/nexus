@@ -22,6 +22,7 @@ describe('authentication (multi-user mode)', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'Archivio-Storico-2026');
     await userEvent.click(screen.getByRole('button', { name: 'Accedi' }));
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /System/ }));
     expect(screen.getByRole('link', { name: /Administration/ })).toBeInTheDocument();
     const loginCall = fetchMock.mock.calls.find(([u, i]) => String(u) === '/api/auth/login' && i?.method === 'POST');
     expect((loginCall?.[1]?.headers as Record<string, string>)['X-Nexus-Client']).toBe('web');

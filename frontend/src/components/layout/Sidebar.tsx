@@ -1,25 +1,28 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { rememberedSearch } from '../../lib/lastLocation';
-import { ShieldCheck, X } from 'lucide-react';
+import { ChevronDown, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '../../state/Auth';
-import { ARCHIVE_NAV, MAIN_NAV, MODULE_NAV, WORKSPACE_NAV, type NavItem } from '../../lib/nav';
-import { useAppState } from '../../state/AppState';
+import { ARCHIVE_NAV, MAIN_NAV, MODULE_NAV, SYSTEM_NAV, type NavItem } from '../../lib/nav';
 
 function Item({ item, onNavigate, badge }: { item: NavItem; onNavigate: () => void; badge?: number }) {
   const Icon = item.icon;
+  const { pathname } = useLocation();
+  const extra = item.alsoActive?.some((p) => pathname === p || pathname.startsWith(p + '/')) ?? false;
   return (
     <NavLink
       to={item.to + rememberedSearch(item.to)}
       end={item.to === '/'}
       data-module={item.moduleId}
       onClick={onNavigate}
-      className={({ isActive }) =>
-        `group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+      className={({ isActive: active }) => {
+        const isActive = active || extra;
+        return `group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
           isActive ? 'bg-ink-800 text-paper' : 'text-steel-400 hover:bg-ink-850 hover:text-paper'
-        }`
-      }
+        }`;
+      }}
     >
-      {({ isActive }) => (
+      {({ isActive: active }) => { const isActive = active || extra; return (
         <>
           <Icon className={`size-4 shrink-0 ${isActive ? 'text-gold-400' : ''}`} aria-hidden />
           {item.code && <span className="w-3 font-mono text-[11px] text-steel-500">{item.code}</span>}
@@ -35,7 +38,7 @@ function Item({ item, onNavigate, badge }: { item: NavItem; onNavigate: () => vo
             </span>
           )}
         </>
-      )}
+      ); }}
     </NavLink>
   );
 }
@@ -49,8 +52,34 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+const SYSTEM_KEY = 'nexus.sidebar.system';
+
+/** Sezione «System» richiudibile: chiusa di default, aperta da sola se si è su una delle sue pagine. */
+function SystemSection({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate: () => void }) {
+  const { pathname } = useLocation();
+  const items = isAdmin ? [...SYSTEM_NAV, { to: '/admin', label: 'Administration', icon: ShieldCheck }] : SYSTEM_NAV;
+  const here = items.some((i) => pathname === i.to || pathname.startsWith(i.to + '/'));
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(SYSTEM_KEY) === '1'; } catch { return false; }
+  });
+  const shown = open || here;
+  const toggle = () => {
+    const next = !shown;
+    setOpen(next);
+    try { localStorage.setItem(SYSTEM_KEY, next ? '1' : '0'); } catch { /* storage non disponibile */ }
+  };
+  return (
+    <div className="mt-5">
+      <button type="button" onClick={toggle} aria-expanded={shown} aria-controls="nexus-system-nav"
+        className="mb-1.5 flex w-full items-center justify-between rounded px-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-steel-500 hover:text-paper">
+        System <ChevronDown className={`size-3.5 transition-transform ${shown ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {shown && <div id="nexus-system-nav" className="space-y-0.5">{items.map((i) => <Item key={i.to} item={i} onNavigate={onNavigate} />)}</div>}
+    </div>
+  );
+}
+
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { unreadCount } = useAppState();
   const { mode, user } = useAuth();
   const isAdmin = mode !== 'local' && user?.role === 'admin';
   return (
@@ -82,12 +111,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           <Section title="Modules">
             {MODULE_NAV.map((i) => <Item key={i.to} item={i} onNavigate={onClose} />)}
           </Section>
-          <Section title="Workspace">
-            {WORKSPACE_NAV.map((i) => (
-              <Item key={i.to} item={i} onNavigate={onClose} badge={i.to === '/notifications' ? unreadCount : undefined} />
-            ))}
-            {isAdmin && <Item item={{ to: '/admin', label: 'Administration', icon: ShieldCheck }} onNavigate={onClose} />}
-          </Section>
+          <SystemSection isAdmin={isAdmin} onNavigate={onClose} />
         </nav>
         <p className="border-t border-ink-700 px-4 py-3 text-[11px] leading-relaxed text-steel-500">
           {mode !== 'local' && user ? <>Connesso come <span className="text-steel-300">{user.display_name}</span> · piano {user.plan}</> : 'Modalità locale personale · dati sul tuo computer'}

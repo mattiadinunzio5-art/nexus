@@ -1,6 +1,5 @@
 import {
   Activity,
-  Bell,
   Newspaper,
   BookMarked,
   FileText,
@@ -12,8 +11,6 @@ import {
   Database,
   FlaskConical,
   FolderKanban,
-  GraduationCap,
-  History,
   Landmark,
   LayoutDashboard,
   Network,
@@ -31,6 +28,8 @@ export interface NavItem {
   code?: string;
   phase?: number;
   moduleId?: string;
+  /** Altri percorsi in cui la voce risulta attiva (es. la Time Machine dentro Historical Intelligence). */
+  alsoActive?: string[];
 }
 
 /**
@@ -38,22 +37,23 @@ export interface NavItem {
  * (core/modules.py), che resta la fonte di verità per stato e contenuti.
  */
 export const MODULE_NAV: NavItem[] = [
-  { to: '/discovery', label: 'Discovery Intelligence', icon: Radar, code: '◆' },
-  { to: '/history', label: 'Historical Intelligence', icon: Landmark, code: 'A', moduleId: 'historical' },
-  { to: '/financial', moduleId: 'financial', label: 'Financial Intelligence', icon: ChartLine, code: 'B' },
-  { to: '/time-machine', label: 'Time Machine', icon: History, code: 'C', moduleId: 'time-machine' },
-  { to: '/graph', label: 'Knowledge Graph', icon: Network, code: 'D', moduleId: 'knowledge-graph' },
-  { to: '/war-room', moduleId: 'war-room', label: 'Research War Room', icon: Swords, code: 'E' },
-  { to: '/lab', moduleId: 'economic-lab', label: 'Economic Laboratory', icon: FlaskConical, code: 'F' },
-  { to: '/studio', moduleId: 'research-studio', label: 'Research Studio', icon: BookOpenText, code: 'G' },
-  { to: '/account', moduleId: 'business', label: 'NEXUS Business', icon: Briefcase, code: 'H' },
+  { to: '/discovery', label: 'Discovery Intelligence', icon: Radar },
+  { to: '/history', label: 'Historical Intelligence', icon: Landmark, moduleId: 'historical', alsoActive: ['/time-machine'] },
+  { to: '/financial', moduleId: 'financial', label: 'Financial Intelligence', icon: ChartLine },
+  { to: '/graph', label: 'Knowledge Graph', icon: Network, moduleId: 'knowledge-graph' },
+  { to: '/war-room', moduleId: 'war-room', label: 'Research War Room', icon: Swords },
+  { to: '/lab', moduleId: 'economic-lab', label: 'Economic Laboratory', icon: FlaskConical },
+  { to: '/studio', moduleId: 'research-studio', label: 'Research Studio', icon: BookOpenText },
 ];
+
+/** Moduli raggiungibili come scheda di un altro (non nel menu, ma con una pagina propria). */
+const MODULE_ROUTES_EXTRA: Record<string, string> = { 'time-machine': '/time-machine', business: '/account' };
 
 export const MAIN_NAV: NavItem[] = [
   { to: '/start', label: 'Inizia da qui', icon: Compass },
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/briefing', label: 'Daily Briefing', icon: Newspaper },
-  { to: '/lessons', label: 'Guided Lessons', icon: GraduationCap },
+  { to: '/projects', label: 'Projects', icon: FolderKanban },
 ];
 
 export const ARCHIVE_NAV: NavItem[] = [
@@ -62,16 +62,16 @@ export const ARCHIVE_NAV: NavItem[] = [
   { to: '/research', label: 'Ask the Archive', icon: MessageSquareQuote },
 ];
 
-export const WORKSPACE_NAV: NavItem[] = [
-  { to: '/projects', label: 'Projects', icon: FolderKanban },
+/** Sezione «System», chiusa per impostazione predefinita. Le notifiche sono nella campanella in alto. */
+export const SYSTEM_NAV: NavItem[] = [
+  { to: '/account', label: 'Account & piano', icon: Briefcase, moduleId: 'business' },
   { to: '/sources', label: 'Sources & Connectors', icon: Database },
   { to: '/activity', label: 'Activity Log', icon: Activity },
-  { to: '/notifications', label: 'Notifications', icon: Bell },
-  { to: '/settings', label: 'System', icon: Settings },
+  { to: '/settings', label: 'Impostazioni', icon: Settings },
   { to: '/data-policy', label: 'Copyright & Data Policy', icon: Scale },
 ];
 
 /** Percorso della pagina di un modulo (pagina reale se implementato, altrimenti scheda «in preparazione»). */
 export function moduleRoute(id: string): string {
-  return MODULE_NAV.find((n) => n.moduleId === id)?.to ?? `/modules/${id}`;
+  return MODULE_NAV.find((n) => n.moduleId === id)?.to ?? MODULE_ROUTES_EXTRA[id] ?? `/modules/${id}`;
 }

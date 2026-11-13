@@ -1,4 +1,5 @@
 import { locale } from '../i18n';
+import { HistoryTabs } from '../components/HistoryTabs';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EyeOff, History } from 'lucide-react';
@@ -45,7 +46,8 @@ export function TimeMachinePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Modulo C" title="Historical Time Machine" description="Cronologia interattiva: cosa si sapeva in un dato momento." />
+      <PageHeader eyebrow="Historical Intelligence" title="Time Machine" description="Gli stessi eventi, visti a una data scelta: cosa si sapeva in quel momento, senza il senno di poi." />
+      <HistoryTabs />
       <Card className="mb-6">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <Field label="Anno (negativo = a.C.)">

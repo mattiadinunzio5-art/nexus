@@ -18,14 +18,13 @@ import { formatDateTime } from '../lib/format';
 import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
-import { GraphPage } from './Graph';
 
 // --- Elementi comuni ------------------------------------------------------------------------------
 
 const TABS = [
   ['/discovery', 'Dashboard'], ['/discovery/search', 'Discovery Search'], ['/discovery/connections', 'Connections'],
   ['/discovery/hypotheses', 'Hypotheses'], ['/discovery/anomalies', 'Anomalies'], ['/discovery/causal', 'Causal Intelligence'],
-  ['/discovery/foresight', 'Strategic Foresight'], ['/discovery/graph', 'Knowledge Graph'],
+  ['/discovery/foresight', 'Strategic Foresight'],
 ] as const;
 
 function Tabs() {
@@ -789,12 +788,3 @@ function ForesightView({ r }: { r: ForesightResult }) {
 }
 
 // --- Knowledge Graph --------------------------------------------------------------------------------
-
-export function DiscoveryGraphPage() {
-  return (
-    <>
-      <Tabs />
-      <GraphPage />
-    </>
-  );
-}
