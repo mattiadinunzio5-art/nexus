@@ -7,10 +7,10 @@ import { counterpart, useI18n } from '../lib/i18n';
 export function useNav() {
   const { t, p } = useI18n();
   return [
-    { label: t.nav.vision, to: p('/#vision') },
-    { label: t.nav.architecture, to: p('/#architecture') },
-    { label: t.nav.workflow, to: p('/#workflow') },
-    { label: t.nav.caseStudy, to: p('/#case-study') },
+    { label: t.nav.vision, to: p('/#why') },
+    { label: t.nav.architecture, to: p('/#modules') },
+    { label: t.nav.workflow, to: p('/#how') },
+    { label: t.nav.caseStudy, to: p('/#case') },
     { label: t.nav.cases, to: p('/cases') },
     { label: t.nav.access, to: p('/#access') },
   ];
