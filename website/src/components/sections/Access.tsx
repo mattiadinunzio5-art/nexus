@@ -17,7 +17,7 @@ export function Access() {
   return (
     <section id="access" className="grain relative overflow-hidden border-t border-line bg-void py-28 md:py-40" aria-label={a.label}>
       <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8">
-        <SectionLabel n="08">{a.label}</SectionLabel>
+        <SectionLabel n="05">{a.label}</SectionLabel>
         <WordsReveal as="h2" key={a.title} text={a.title} className="font-serif text-[clamp(3.4rem,11vw,10rem)] leading-[0.88] tracking-tight" />
         <div className="mt-14 grid gap-6 lg:grid-cols-2">
           <Reveal className="flex flex-col rounded-2xl border border-line bg-coal p-7 md:p-9">

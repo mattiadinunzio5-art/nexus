@@ -74,7 +74,7 @@ def test_lessons_start_creates_project_guide_and_unverified_readings(client):
     from nexus.finance.connectors import _SDMX_KEY
 
     lst = client.get("/api/lessons").json()
-    assert [x["id"] for x in lst] == ["crisi-1929", "inflazione-anni-70", "crisi-2008", "piano-marshall", "fse-1958-1989"]
+    assert [x["id"] for x in lst] == ["crisi-1929", "inflazione-anni-70", "crisi-2008"]
     for lesson in LESSONS:
         for s in lesson["series"]:  # ogni serie proposta è un import valido
             from nexus.api.schemas_finance import SeriesImportIn

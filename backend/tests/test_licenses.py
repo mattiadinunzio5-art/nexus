@@ -104,8 +104,9 @@ def test_website_policy_page_is_in_sync_with_registry():
 
 def test_lesson_tables_cite_a_registered_license():
     from nexus.core.lessons import LESSONS
+    from nexus.core.research_kits import RESEARCH_KITS
 
-    for lesson in LESSONS:
+    for lesson in [*LESSONS, *RESEARCH_KITS]:
         for t in lesson.get("tables", []):
             assert t["source"] and t["columns"] and t["rows"], (lesson["id"], t["title"])
             assert all(len(r) == len(t["columns"]) for r in t["rows"]), t["title"]
@@ -114,9 +115,21 @@ def test_lesson_tables_cite_a_registered_license():
             assert "source" not in k or k["source"]
 
 
-def test_new_lessons_can_be_started(client):
-    for lid in ("piano-marshall", "fse-1958-1989"):
-        d = client.get(f"/api/lessons/{lid}").json()
-        assert d["tables"] and d["key_dates"][0]["source"]
-        r = client.post(f"/api/lessons/{lid}/start")
-        assert r.status_code == 201, r.text
+def test_research_kit_creates_project_with_events_sources_series_and_guide(client, settings):
+    from nexus.core.research_kits import KITS_BY_ID
+    from nexus.models import Note, Project, Series, User
+    from nexus.services import research_kits
+
+    with client.app.state.database.session_factory() as db:
+        user = db.query(User).filter(User.is_local.is_(True)).first() or db.query(User).first()
+        out = research_kits.create(db, user, settings, "fse-1958-1989", fetch_series=False)
+        assert not out["skipped"] and out["events"] == len(KITS_BY_ID["fse-1958-1989"]["key_dates"]) and out["series"] == 1
+        p = db.get(Project, out["project_id"])
+        note = db.query(Note).filter_by(project_id=p.id).one()
+        assert "Cosa manca e dove cercarlo" in note.body and "| 1983 | 7,9 |" in note.body and "Open Parliament Licence" in note.body
+        s = db.query(Series).filter_by(owner_id=user.id, name="Quota del Fondo Sociale Europeo sul bilancio della Comunità").one()
+        assert s.observation_count == 12
+        # Idempotente
+        assert research_kits.create(db, user, settings, "fse-1958-1989", fetch_series=False)["skipped"]
+        out2 = research_kits.create(db, user, settings, "piano-marshall", fetch_series=False)
+        assert out2["events"] == 8 and out2["sources"] >= 5

@@ -2,7 +2,7 @@
 
 const EN = {
   skip: 'Skip to content',
-  nav: { vision: 'Vision', architecture: 'Architecture', workflow: 'Workflow', caseStudy: 'Case Study', cases: 'Cases', access: 'Access' },
+  nav: { vision: 'Why NEXUS', architecture: 'Modules', workflow: 'How it works', caseStudy: 'The 1929 case', cases: 'Cases', access: 'Access' },
   navMain: 'Main',
   signIn: 'Sign in',
   account: 'Account',
@@ -31,7 +31,7 @@ const EN = {
     explore: 'Explore NEXUS',
     enter: 'Enter the Platform',
     demo: 'Try the demo — no account',
-    modules: '13 modules',
+    modules: '7 modules',
     scroll: 'Scroll',
     strip: 'Open data · Verifiable sources',
   },
@@ -183,7 +183,7 @@ export type Strings = typeof EN;
 
 const IT: Strings = {
   skip: 'Vai al contenuto',
-  nav: { vision: 'Visione', architecture: 'Architettura', workflow: 'Metodo', caseStudy: 'Caso di studio', cases: 'Casi', access: 'Accesso' },
+  nav: { vision: 'Perché NEXUS', architecture: 'Moduli', workflow: 'Come funziona', caseStudy: 'Il caso 1929', cases: 'Casi', access: 'Accesso' },
   navMain: 'Principale',
   signIn: 'Accedi',
   account: 'Account',
@@ -212,7 +212,7 @@ const IT: Strings = {
     explore: 'Scopri NEXUS',
     enter: 'Entra nella piattaforma',
     demo: 'Prova la demo — senza account',
-    modules: '13 moduli',
+    modules: '7 moduli',
     scroll: 'Scorri',
     strip: 'Dati aperti · Fonti verificabili',
   },
