@@ -689,9 +689,17 @@ export interface LessonSummary {
   summary: string;
 }
 
+export interface LessonTable {
+  title: string; unit: string; columns: string[]; rows: string[][];
+  source: string; source_url: string; license_id: string | null; notes: string;
+}
+export interface LessonGap { what: string; where: string; url: string }
+
 export interface Lesson extends LessonSummary {
   goals: string[];
-  key_dates: { date: string; event: string }[];
+  key_dates: { date: string; event: string; source?: string }[];
+  tables?: LessonTable[];
+  gaps?: LessonGap[];
   series: { label: string; category: string; params: Record<string, unknown> }[];
   readings: { title: string; authors: string[]; year: number; publisher: string }[];
   steps: { title: string; detail: string; module: string }[];

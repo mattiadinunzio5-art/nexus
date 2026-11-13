@@ -501,4 +501,8 @@ export const EN: Record<string, string> = {
     'The same events, seen at a chosen date: what was known at that moment, without hindsight.',
   'La versione avanzata di «Ask the Archive»: più agenti AI (storico, economista, quant, scettico) lavorano sulle evidenze del tuo archivio, con controanalisi e approvazione finale. Richiede un provider AI configurato.':
     'The advanced version of “Ask the Archive”: several AI agents (historian, economist, quant, sceptic) work on the evidence in your archive, with counter-analysis and final approval. Requires a configured AI provider.',
+  'Cosa manca e dove cercarlo': 'What is missing and where to look',
+  'Questi dati non sono disponibili in rete in forma aperta. NEXUS non li stima né li inventa: indica dove si trovano.':
+    'These data are not openly available online. NEXUS does not estimate or invent them: it shows where they can be found.',
+  'Dove: {0}': 'Where: {0}', 'Unità: {0}': 'Unit: {0}', 'Scarica CSV': 'Download CSV',
 };

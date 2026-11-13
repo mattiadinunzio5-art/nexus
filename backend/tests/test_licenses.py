@@ -100,3 +100,23 @@ def test_website_policy_page_is_in_sync_with_registry():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     assert mod.OUT.read_text(encoding="utf-8") == mod.render()
+
+
+def test_lesson_tables_cite_a_registered_license():
+    from nexus.core.lessons import LESSONS
+
+    for lesson in LESSONS:
+        for t in lesson.get("tables", []):
+            assert t["source"] and t["columns"] and t["rows"], (lesson["id"], t["title"])
+            assert all(len(r) == len(t["columns"]) for r in t["rows"]), t["title"]
+            assert t["license_id"] is None or t["license_id"] in licenses.LICENSES, t["license_id"]
+        for k in lesson["key_dates"]:
+            assert "source" not in k or k["source"]
+
+
+def test_new_lessons_can_be_started(client):
+    for lid in ("piano-marshall", "fse-1958-1989"):
+        d = client.get(f"/api/lessons/{lid}").json()
+        assert d["tables"] and d["key_dates"][0]["source"]
+        r = client.post(f"/api/lessons/{lid}/start")
+        assert r.status_code == 201, r.text
