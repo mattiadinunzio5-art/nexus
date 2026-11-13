@@ -488,4 +488,17 @@ export const EN: Record<string, string> = {
   'Circa 2 minuti, in italiano: come usare Historical Intelligence, Financial Intelligence, Time Machine e Discovery su questo caso. Poi segui i passi qui sotto.':
     'About 2 minutes, in Italian: how to use Historical Intelligence, Financial Intelligence, Time Machine and Discovery on this case. Then follow the steps below.',
   'Video della lezione: {0}': 'Lesson video: {0}',
+  // --- menu riorganizzato --------------------------------------------------------------------------
+  'Account & piano': 'Account & plan', 'Impostazioni': 'Settings', 'Eventi': 'Events',
+  'Schede di Historical Intelligence': 'Historical Intelligence tabs', 'Lezioni guidate': 'Guided lessons',
+  'Tutte le lezioni guidate': 'All guided lessons',
+  'Anteprima del video della lezione sulla crisi del 1929': 'Preview of the video lesson on the 1929 crisis',
+  'Video · Il crollo del 1929: come usare NEXUS modulo per modulo (2 min)': 'Video · The 1929 crash: how to use NEXUS module by module (2 min, Italian)',
+  "Percorsi passo per passo su casi reali: la crisi del 1929, l'inflazione degli anni Settanta, la crisi del 2008.": 'Step-by-step paths on real cases: the 1929 crisis, 1970s inflation, the 2008 crisis.',
+  'Archivio strutturato di eventi storici con cause, conseguenze, fonti e attendibilità. Nella scheda Time Machine gli stessi eventi, visti senza il senno di poi.':
+    'Structured archive of historical events with causes, consequences, sources and reliability. The Time Machine tab shows the same events without hindsight.',
+  'Gli stessi eventi, visti a una data scelta: cosa si sapeva in quel momento, senza il senno di poi.':
+    'The same events, seen at a chosen date: what was known at that moment, without hindsight.',
+  'La versione avanzata di «Ask the Archive»: più agenti AI (storico, economista, quant, scettico) lavorano sulle evidenze del tuo archivio, con controanalisi e approvazione finale. Richiede un provider AI configurato.':
+    'The advanced version of “Ask the Archive”: several AI agents (historian, economist, quant, sceptic) work on the evidence in your archive, with counter-analysis and final approval. Requires a configured AI provider.',
 };

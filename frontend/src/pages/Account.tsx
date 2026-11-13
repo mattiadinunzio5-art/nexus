@@ -28,7 +28,7 @@ export function AccountPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Modulo H" title="Account" description={mode === 'local' ? 'Modalità locale personale: utente unico sul tuo computer, nessun limite.' : 'Profilo, sicurezza, piano e utilizzo.'}
+      <PageHeader eyebrow="System" title="Account" description={mode === 'local' ? 'Modalità locale personale: utente unico sul tuo computer, nessun limite.' : 'Profilo, sicurezza, piano e utilizzo.'}
         actions={mode !== 'local' && <Button onClick={logout}>Esci</Button>} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`mb-3 text-sm ${msg.ok ? 'text-ok' : 'text-bad'}`}>{msg.text}</p>}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -95,7 +95,7 @@ export function AdminPage() {
   const update = async (id: number, data: Record<string, unknown>) => { setErr(undefined); try { await api.adminUpdateUser(id, data); await users.reload(); } catch (e) { setErr(errorText(e)); } };
   return (
     <>
-      <PageHeader eyebrow="Modulo H" title="Administration" description="Utenti, ruoli, piani e stato degli account. Nessun pagamento reale: i piani si assegnano qui." />
+      <PageHeader eyebrow="System" title="Administration" description="Utenti, ruoli, piani e stato degli account. Nessun pagamento reale: i piani si assegnano qui." />
       {stats.data && <p className="mb-4 text-sm text-steel-300">{Object.entries(stats.data).filter(([, v]) => typeof v === 'number').map(([k, v]) => `${k}: ${v}`).join(' · ')}</p>}
       {err && <div className="mb-3"><ErrorBox error={new Error(err)} /></div>}
       {users.loading && !users.data && <Loading />}

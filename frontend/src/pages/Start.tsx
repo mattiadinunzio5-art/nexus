@@ -1,7 +1,7 @@
 import { locale } from '../i18n';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpenText, ChartLine, FolderKanban, GraduationCap, History, Landmark, Network, Radar, Search } from 'lucide-react';
+import { ArrowRight, BookOpenText, Play, ChartLine, FolderKanban, GraduationCap, History, Landmark, Network, Radar, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { LibraryBadge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -80,9 +80,18 @@ export function StartPage() {
         </Step>
       </ol>
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Vuoi una guida?">
-          <p className="mb-3 text-sm text-steel-300">Le lezioni guidate ti accompagnano passo per passo su casi reali, come la crisi del 1929.</p>
-          <Go to="/lessons" icon={<GraduationCap className={icon} aria-hidden />}>Apri le lezioni guidate</Go>
+        <Card title="Lezioni guidate">
+          <Link to="/lessons/crisi-1929" className="group mb-3 block overflow-hidden rounded-md border border-ink-700 hover:border-gold-500">
+            <div className="relative">
+              <img src="/lessons/crisi-1929.jpg" alt="Anteprima del video della lezione sulla crisi del 1929" className="aspect-video w-full object-cover opacity-80 group-hover:opacity-100" loading="lazy" />
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="flex size-12 items-center justify-center rounded-full bg-gold-400 text-ink-950"><Play className="ml-0.5 size-5" aria-hidden /></span>
+              </span>
+            </div>
+            <p className="px-3 py-2 text-sm text-paper">Video · Il crollo del 1929: come usare NEXUS modulo per modulo (2 min)</p>
+          </Link>
+          <p className="mb-3 text-sm text-steel-300">Percorsi passo per passo su casi reali: la crisi del 1929, l'inflazione degli anni Settanta, la crisi del 2008.</p>
+          <Go to="/lessons" icon={<GraduationCap className={icon} aria-hidden />}>Tutte le lezioni guidate</Go>
         </Card>
         <Card title="Le regole di NEXUS">
           <ul className="space-y-1.5 text-sm text-steel-300">

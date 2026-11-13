@@ -5,14 +5,20 @@ import { dashboard, mockApi, modules } from './fixtures';
 import { renderApp } from './render';
 
 describe('navigation', () => {
-  it('lists all eight modules in the sidebar with their phase', async () => {
+  it('groups the sidebar: seven modules, Time Machine inside Historical, System collapsed', async () => {
     mockApi({ 'GET /api/dashboard': dashboard, 'GET /api/notifications': [], 'GET /api/system/status': new Response('{}', { status: 500 }) });
     renderApp('/');
     const nav = await screen.findByRole('complementary', { name: 'Navigazione principale' });
-    for (const label of ['Historical Intelligence', 'Financial Intelligence', 'Time Machine', 'Knowledge Graph', 'Research War Room', 'Economic Laboratory', 'Research Studio', 'NEXUS Business']) {
+    for (const label of ['Discovery Intelligence', 'Historical Intelligence', 'Financial Intelligence', 'Knowledge Graph', 'Research War Room', 'Economic Laboratory', 'Research Studio', 'Projects']) {
       expect(within(nav).getByRole('link', { name: new RegExp(label) })).toBeInTheDocument();
     }
+    expect(within(nav).queryByRole('link', { name: /NEXUS Business|Time Machine|Guided Lessons|Notifications/ })).toBeNull();
     expect(within(nav).getByRole('link', { name: /Financial Intelligence/ })).toHaveAttribute('href', '/financial');
+    // System è chiusa: si apre con un clic.
+    expect(within(nav).queryByRole('link', { name: /Sources & Connectors/ })).toBeNull();
+    await userEvent.click(within(nav).getByRole('button', { name: /System/ }));
+    expect(within(nav).getByRole('link', { name: /Sources & Connectors/ })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: /Copyright & Data Policy/ })).toBeInTheDocument();
   });
 
   it('opens a module page that declares it is in preparation', async () => {

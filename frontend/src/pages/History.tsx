@@ -1,4 +1,5 @@
 import { LicenseBox } from '../components/License';
+import { HistoryTabs } from '../components/HistoryTabs';
 import { useDebounced, useStickyState } from '../lib/useStickyState';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -121,8 +122,9 @@ export function EventsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Modulo A" title="Historical Intelligence" description="Archivio strutturato di eventi storici con cause, conseguenze, fonti e attendibilità."
+      <PageHeader eyebrow="Modulo A" title="Historical Intelligence" description="Archivio strutturato di eventi storici con cause, conseguenze, fonti e attendibilità. Nella scheda Time Machine gli stessi eventi, visti senza il senno di poi."
         actions={!creating && <Button variant="primary" onClick={() => setCreating(true)}><Plus className="size-4" aria-hidden /> Nuovo evento</Button>} />
+      <HistoryTabs />
       {creating && (
         <Card title="Nuovo evento" className="mb-6">
           <EventForm onCancel={() => setCreating(false)} onSubmit={async (d) => { const e = await api.createEvent(d); navigate(`/history/events/${e.id}`); }} />

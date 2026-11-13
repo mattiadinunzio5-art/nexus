@@ -276,7 +276,7 @@ export const MODULES: ModuleContent[] = [
     kicker: 'Time',
     tagline: 'See the past without hindsight.',
     description:
-      'The Time Machine shows your archive as it would have looked at a chosen date. In strict mode it hides later events, retrospective consequences and knowledge that emerged afterwards — the protection against hindsight bias.',
+      'A tab of Historical Intelligence. The Time Machine shows your archive as it would have looked at a chosen date. In strict mode it hides later events, retrospective consequences and knowledge that emerged afterwards — the protection against hindsight bias.',
     mainFunction: 'Reconstruct what was knowable at a given moment, and compare it with what we know today.',
     whyUseful: [
       'Separates contemporary information from later discoveries, archives and historiography.',
