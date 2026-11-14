@@ -7,13 +7,38 @@ import { renderApp } from './render';
 
 const keys = ['abstract', 'introduction', 'methodology', 'analysis', 'evidence', 'counterarguments', 'conclusions', 'limitations'];
 const report: Report = {
-  id: 2, title: 'Debito pubblico', subtitle: '', author: '', status: 'draft', project_id: null, source_ids: [], origin: 'manual', contains_ai_text: false,
+  id: 2, title: 'Debito pubblico', subtitle: '', author: '', status: 'draft', project_id: null, source_ids: [], origin: 'manual', contains_ai_text: false, citation_style: 'footnotes', template: 'thesis',
   created_at: '', updated_at: '2026-11-03T10:00:00Z',
   sections: keys.map((k, i) => ({ id: i + 1, ordinal: i, key: k, title: k, body: k === 'analysis' ? 'Testo [@1]' : '', embeds: [] })),
 };
-const check = { ready: false, empty_sections: ['abstract'], invalid_citations: [7], unverified_sources: [], cited_sources: 1, bibliography_size: 1, embed_problems: [], warnings: [] };
+const check = { ready: false, checklist: [
+  { key: 'sections', label: 'Tutte le sezioni sono compilate', ok: false, blocking: true, detail: 'abstract' },
+  { key: 'cited', label: 'Il testo cita le fonti', ok: true, blocking: false, detail: '1 fonti citate' },
+], empty_sections: ['abstract'], invalid_citations: [7], unverified_sources: [], cited_sources: 1, bibliography_size: 1, embed_problems: [], warnings: [] };
 
 describe('research studio', () => {
+  it('shows the delivery checklist, layout settings and inserts a citation at the cursor', async () => {
+    const { calls } = mockApi({
+      'GET /api/notifications': [], 'GET /api/reports/2/check': check, 'GET /api/reports/2': report,
+      'GET /api/sources': [{ id: 5, citation: 'Tarnoff, Curt. (2018). The Marshall Plan.', verification_status: 'verified_user' }],
+      'PATCH /api/reports/2': { ...report, citation_style: 'author_date' },
+    });
+    renderApp('/studio/reports/2');
+    const list = await screen.findByTestId('checklist');
+    expect(within(list).getByText('Tutte le sezioni sono compilate')).toBeInTheDocument();
+    expect(screen.getByText(/Prima della consegna · 1\/2/)).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Stile delle citazioni'), 'author_date');
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ citation_style: 'author_date' });
+    const analysis = screen.getByTestId('section-analysis');
+    await userEvent.click(within(analysis).getByText('Inserisci citazione'));
+    const ins = within(analysis).getByTestId('cite-inserter');
+    await userEvent.selectOptions(within(ins).getByLabelText('Fonte da citare'), '5');
+    await userEvent.type(within(ins).getByLabelText('Pagina'), 'p. 9');
+    await userEvent.click(within(ins).getByRole('button', { name: /Inserisci/ }));
+    expect(within(analysis).getByLabelText('Testo: analysis')).toHaveValue('Testo [@1] [@5, p. 9]');
+  });
+
+
   it('saves an edited section and blocks approval with a readable error', async () => {
     const { calls } = mockApi({
       'GET /api/notifications': [], 'GET /api/sources': [], 'GET /api/reports/2/check': check, 'GET /api/reports/2': report,

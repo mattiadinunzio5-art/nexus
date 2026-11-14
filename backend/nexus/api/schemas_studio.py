@@ -9,10 +9,28 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from .schemas import CleanStr, ORMModel, UTCDateTime
 
 
+YearOpt = Annotated[int, Field(ge=-5000, le=2200)] | None
+CitationStyle = Literal["numeric", "footnotes", "author_date"]
+Template = Literal["standard", "thesis"]
+
+
 class SeriesEmbed(BaseModel):
     type: Literal["series"]
     series_id: int
     caption: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
+    start_year: YearOpt = None
+    end_year: YearOpt = None
+
+
+class CompareEmbed(BaseModel):
+    """Più serie nello stesso grafico, su un periodo scelto, eventualmente ribasate a 100."""
+
+    type: Literal["compare"]
+    series_ids: list[int] = Field(min_length=1, max_length=8)
+    caption: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
+    start_year: YearOpt = None
+    end_year: YearOpt = None
+    rebase: bool = False
 
 
 class SimulationEmbed(BaseModel):
@@ -24,6 +42,8 @@ class SimulationEmbed(BaseModel):
 class TableEmbed(BaseModel):
     type: Literal["table"]
     caption: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
+    source_note: Annotated[CleanStr, StringConstraints(max_length=600)] = ""
+    document_id: int | None = None
     columns: list[Annotated[str, StringConstraints(max_length=100)]] = Field(min_length=1, max_length=12)
     rows: list[list[Annotated[str, StringConstraints(max_length=300)]]] = Field(max_length=200)
 
@@ -36,7 +56,7 @@ class TableEmbed(BaseModel):
         return rows
 
 
-Embed = Annotated[SeriesEmbed | SimulationEmbed | TableEmbed, Field(discriminator="type")]
+Embed = Annotated[SeriesEmbed | CompareEmbed | SimulationEmbed | TableEmbed, Field(discriminator="type")]
 
 
 class ReportCreate(BaseModel):
@@ -44,6 +64,8 @@ class ReportCreate(BaseModel):
     subtitle: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
     author: Annotated[CleanStr, StringConstraints(max_length=200)] = ""
     project_id: int | None = None
+    citation_style: CitationStyle = "numeric"
+    template: Template = "standard"
 
 
 class ReportUpdate(BaseModel):
@@ -52,6 +74,8 @@ class ReportUpdate(BaseModel):
     author: Annotated[CleanStr, StringConstraints(max_length=200)] | None = None
     project_id: int | None = None
     source_ids: list[int] | None = Field(default=None, max_length=500)
+    citation_style: CitationStyle | None = None
+    template: Template | None = None
 
 
 class SectionIn(BaseModel):
@@ -84,6 +108,8 @@ class ReportOut(ORMModel):
     source_ids: list[int]
     origin: str
     contains_ai_text: bool
+    citation_style: str = "numeric"
+    template: str = "standard"
     created_at: UTCDateTime
     updated_at: UTCDateTime
     sections: list[SectionOut]
@@ -98,8 +124,34 @@ class ReportSummary(ORMModel):
     updated_at: UTCDateTime
 
 
+class CheckItem(BaseModel):
+    key: str
+    label: str
+    ok: bool
+    blocking: bool
+    detail: str = ""
+
+
+class QuoteIn(BaseModel):
+    """Citazione testuale da Ask the Archive da aggiungere a una sezione."""
+
+    text: Annotated[str, StringConstraints(min_length=3, max_length=4000)]
+    document_id: int
+    locator: Annotated[CleanStr, StringConstraints(max_length=40)] = ""
+    comment: Annotated[str, StringConstraints(max_length=2000)] = ""
+
+
+class DocTable(BaseModel):
+    caption: str
+    columns: list[str]
+    rows: list[list[str]]
+    source_note: str
+    truncated: bool
+
+
 class ReportCheck(BaseModel):
     ready: bool
+    checklist: list[CheckItem] = []
     empty_sections: list[str]
     invalid_citations: list[int]
     unverified_sources: list[dict]

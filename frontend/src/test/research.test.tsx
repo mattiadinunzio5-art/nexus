@@ -29,6 +29,22 @@ describe('archive Q&A', () => {
     expect(screen.getByText(/nessun modello AI/)).toBeInTheDocument();
   });
 
+  it('quotes a documented fact into a report section with its locator', async () => {
+    const rep = { id: 4, title: 'Piano Marshall', sections: [{ id: 8, ordinal: 0, key: 'abstract', title: 'Abstract', body: '', embeds: [] }, { id: 9, ordinal: 1, key: 'evidence', title: 'Evidenze', body: '', embeds: [] }] };
+    const { calls } = mockApi({
+      'GET /api/reports': [{ id: 4, title: 'Piano Marshall', status: 'draft', project_id: null, origin: 'manual', updated_at: '' }],
+      'GET /api/reports/4': rep,
+      'POST /api/reports/4/sections/9/quote': rep,
+    });
+    render(<AskResultView result={result} />);
+    await userEvent.click(screen.getByText('Cita nel rapporto'));
+    await userEvent.selectOptions(await screen.findByLabelText('Rapporto'), '4');
+    expect(await screen.findByLabelText('Sezione')).toHaveValue('9');
+    await userEvent.click(screen.getByRole('button', { name: 'Aggiungi' }));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ text: 'Il dollaro era convertibile in oro.', document_id: 1, locator: 'p. 2', comment: '' });
+    expect(await screen.findByRole('status')).toHaveTextContent('Aggiunta a «Evidenze» di «Piano Marshall»');
+  });
+
   it('uploads a document as multipart form data', async () => {
     const { calls, fetchMock } = mockApi({
       'GET /api/notifications': [],

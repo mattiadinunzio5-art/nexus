@@ -32,6 +32,10 @@ class Report(TimestampMixin, Base):
     source_ids: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     origin: Mapped[str] = mapped_column(String(40), default="manual", nullable=False)  # manual | research_run:<id>
     contains_ai_text: Mapped[bool] = mapped_column(default=False, nullable=False)
+    # Stile delle citazioni nell'export: numeric [1, p. 5] | footnotes (note a piè di pagina) | author_date (Autore anno, p. 5)
+    citation_style: Mapped[str] = mapped_column(String(20), default="numeric", server_default="numeric", nullable=False)
+    # Impaginazione: standard | thesis (frontespizio, indice, capitoli numerati, elenchi, appendici)
+    template: Mapped[str] = mapped_column(String(20), default="standard", server_default="standard", nullable=False)
 
     sections: Mapped[list["ReportSection"]] = relationship(cascade="all, delete-orphan", passive_deletes=True, order_by="ReportSection.ordinal")
 

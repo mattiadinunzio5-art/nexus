@@ -7,7 +7,7 @@ from ...services import briefing as briefing_svc
 from ...services import studio as svc
 from ..deps import DB, AppSettings, CurrentUser
 from ..schemas_studio import (
-    BriefingIn, BriefingOut, ChapterIn, NoteIn, NoteOut, ReportCheck, ReportCreate, ReportOut, ReportSummary, ReportUpdate, SectionIn,
+    BriefingIn, BriefingOut, ChapterIn, DocTable, NoteIn, NoteOut, QuoteIn, ReportCheck, ReportCreate, ReportOut, ReportSummary, ReportUpdate, SectionIn,
 )
 
 router = APIRouter(tags=["research-studio"])
@@ -42,6 +42,17 @@ def update_report(report_id: int, data: ReportUpdate, db: DB, user: CurrentUser)
 @router.put("/reports/{report_id}/sections/{section_id}", response_model=ReportOut)
 def update_section(report_id: int, section_id: int, data: SectionIn, db: DB, user: CurrentUser):
     return svc.update_section(db, user, report_id, section_id, data)
+
+
+@router.post("/reports/{report_id}/sections/{section_id}/quote", response_model=ReportOut,
+             summary="Aggiunge una citazione testuale da un documento, con il riferimento alla sua scheda bibliografica")
+def add_quote(report_id: int, section_id: int, data: QuoteIn, db: DB, user: CurrentUser):
+    return svc.add_quote(db, user, report_id, section_id, data)
+
+
+@router.get("/reports-tables/{document_id}", response_model=DocTable, summary="Tabella da un documento CSV/XLSX, da inserire in un rapporto")
+def document_table(document_id: int, db: DB, user: CurrentUser, settings: AppSettings):
+    return svc.document_table(db, user, settings, document_id)
 
 
 @router.post("/reports/{report_id}/chapters", response_model=ReportOut, status_code=status.HTTP_201_CREATED)
