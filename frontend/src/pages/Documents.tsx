@@ -1,5 +1,5 @@
 import { LicenseBox } from '../components/License';
-import { useStickyState } from '../lib/useStickyState';
+import { recalledFile, rememberFile, useDraft, useFileDraft, useStickyState } from '../lib/useStickyState';
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Download, FileUp, Library, Trash2 } from 'lucide-react';
@@ -26,15 +26,16 @@ function formatSize(n: number) {
 
 function UploadForm({ onDone }: { onDone: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [category, setCategory] = useState<keyof typeof CATEGORY_LABEL>('source_material');
+  const [title, setTitle, clearTitle] = useDraft('documents.upload.title', '');
+  const [author, setAuthor, clearAuthor] = useDraft('documents.upload.author', '');
+  const [category, setCategory, clearCategory] = useDraft<keyof typeof CATEGORY_LABEL>('documents.upload.category', 'source_material');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
+  useFileDraft('documents.upload', fileRef);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const file = fileRef.current?.files?.[0];
+    const file = fileRef.current?.files?.[0] ?? recalledFile('documents.upload');
     if (!file) return setMsg({ ok: false, text: 'Seleziona un file.' });
     const form = new FormData();
     form.append('file', file);
@@ -46,8 +47,10 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     try {
       const d = await api.uploadDocument(form);
       setMsg({ ok: true, text: `Importato «${d.title}»: ${d.chunk_count} segmenti indicizzati.` });
-      setTitle('');
-      setAuthor('');
+      clearTitle();
+      clearAuthor();
+      clearCategory();
+      rememberFile('documents.upload', null);
       if (fileRef.current) fileRef.current.value = '';
       onDone();
     } catch (err) {
@@ -60,7 +63,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   return (
     <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Field label="File (PDF, DOCX, CSV, XLSX, TXT, MD — max 25 MB)" className="sm:col-span-2">
-        <input ref={fileRef} type="file" accept=".pdf,.docx,.csv,.xlsx,.txt,.md" className="block w-full text-sm text-steel-300 file:mr-3 file:rounded-md file:border file:border-ink-600 file:bg-ink-800 file:px-3 file:py-1.5 file:text-paper" />
+        <input ref={fileRef} type="file" onChange={(e) => rememberFile('documents.upload', e.target.files?.[0])} accept=".pdf,.docx,.csv,.xlsx,.txt,.md" className="block w-full text-sm text-steel-300 file:mr-3 file:rounded-md file:border file:border-ink-600 file:bg-ink-800 file:px-3 file:py-1.5 file:text-paper" />
       </Field>
       <Field label="Titolo (facoltativo)"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} /></Field>
       <Field label="Autore (facoltativo)"><Input value={author} onChange={(e) => setAuthor(e.target.value)} maxLength={300} /></Field>
@@ -78,9 +81,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
 }
 
 function GutenbergForm({ onDone }: { onDone: () => void }) {
-  const [id, setId] = useState('');
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
+  const [id, setId, clearId] = useDraft('documents.gutenberg.id', '');
+  const [title, setTitle, clearTitle] = useDraft('documents.gutenberg.title', '');
+  const [author, setAuthor, clearAuthor] = useDraft('documents.gutenberg.author', '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   async function submit(e: FormEvent) {
@@ -92,6 +95,7 @@ function GutenbergForm({ onDone }: { onDone: () => void }) {
     try {
       const d = await api.importGutenberg({ ebook_id: n, title: title.trim(), author: author.trim() });
       setMsg({ ok: true, text: `Importato «${d.title}».` });
+      clearId(); clearTitle(); clearAuthor();
       onDone();
     } catch (err) {
       setMsg({ ok: false, text: err instanceof ApiError ? err.message : String(err) });
@@ -115,7 +119,7 @@ export function DocumentsPage() {
   const [category, setCategory] = useStickyState('documents.category', '');
   const { data, error, loading, reload } = useAsync(() => api.documents({ category }), [category]);
   const [toDelete, setToDelete] = useState<DocumentInfo>();
-  const [showGutenberg, setShowGutenberg] = useState(false);
+  const [showGutenberg, setShowGutenberg] = useStickyState('documents.gutenberg.open', false);
 
   useContextPanel(
     <div className="space-y-2 text-steel-300">

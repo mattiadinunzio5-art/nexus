@@ -8,6 +8,7 @@ _setLangForTests('it');
 
 afterEach(() => {
   cleanup();
+  try { sessionStorage.clear(); } catch { /* jsdom senza storage */ }
   vi.restoreAllMocks();
 });
 

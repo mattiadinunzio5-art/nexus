@@ -15,6 +15,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { useContextPanel } from '../state/AppState';
 
 const inputCls =
@@ -25,14 +26,16 @@ export function ProjectForm({
   submitLabel,
   onSubmit,
   onCancel,
+  draftKey = 'project.new',
 }: {
+  draftKey?: string;
   initial?: Pick<Project, 'title' | 'description'>;
   submitLabel: string;
   onSubmit: (data: { title: string; description: string }) => Promise<void>;
   onCancel?: () => void;
 }) {
-  const [title, setTitle] = useState(initial?.title ?? '');
-  const [description, setDescription] = useState(initial?.description ?? '');
+  const [title, setTitle, clearTitle] = useDraft(`${draftKey}.title`, initial?.title ?? '');
+  const [description, setDescription, clearDescription] = useDraft(`${draftKey}.description`, initial?.description ?? '');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
@@ -46,6 +49,8 @@ export function ProjectForm({
     setError(undefined);
     try {
       await onSubmit({ title: t, description: description.trim() });
+      clearTitle();
+      clearDescription();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : String(err));
     } finally {
@@ -65,7 +70,7 @@ export function ProjectForm({
       </label>
       {error && <p role="alert" className="text-sm text-bad">{error}</p>}
       <div className="flex justify-end gap-2">
-        {onCancel && <Button onClick={onCancel} disabled={busy}>Annulla</Button>}
+        {onCancel && <Button onClick={() => { clearTitle(); clearDescription(); onCancel(); }} disabled={busy}>Annulla</Button>}
         <Button type="submit" variant="primary" disabled={busy}>{submitLabel}</Button>
       </div>
     </form>
@@ -74,7 +79,7 @@ export function ProjectForm({
 
 function SharePanel({ projectId }: { projectId: number }) {
   const members = useAsync(() => api.members(projectId), [projectId]);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useDraft(`project.${projectId}.shareEmail`, '');
   const [role, setRole] = useState('viewer');
   const [confirming, setConfirming] = useState(false);
   const [err, setErr] = useState<string>();
@@ -104,7 +109,7 @@ function SharePanel({ projectId }: { projectId: number }) {
 function CollabPanel({ projectId }: { projectId: number }) {
   const comments = useAsync(() => api.comments(projectId), [projectId]);
   const history = useAsync(() => api.projectHistory(projectId), [projectId]);
-  const [body, setBody] = useState('');
+  const [body, setBody] = useDraft(`project.${projectId}.comment`, '');
   const [err, setErr] = useState<string>();
   const [tab, setTab] = useState<'comments' | 'history'>('comments');
 
@@ -175,8 +180,9 @@ export function ProjectsPage() {
   const [discussing, setDiscussing] = useState<number>();
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<ProjectStatus>('active');
-  const [creating, setCreating] = useState(params.get('new') === '1');
-  const [editingId, setEditingId] = useState<number>();
+  const [creatingSticky, setCreating] = useStickyState('projects.creating', false);
+  const creating = creatingSticky || params.get('new') === '1';
+  const [editingId, setEditingId] = useStickyState<number | undefined>('projects.editing', undefined);
   const [toDelete, setToDelete] = useState<Project>();
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState<Error>();
@@ -265,6 +271,7 @@ export function ProjectsPage() {
               {editingId === p.id ? (
                 <ProjectForm
                   initial={p}
+                  draftKey={`project.${p.id}.edit`}
                   submitLabel="Salva"
                   onCancel={() => setEditingId(undefined)}
                   onSubmit={async (d) => {

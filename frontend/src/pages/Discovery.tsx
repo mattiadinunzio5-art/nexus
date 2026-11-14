@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { useStickyState } from '../lib/useStickyState';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArrowRight, Check, GitBranch, Pause, Play, Search, Square, X } from 'lucide-react';
 import { api } from '../api/client';
@@ -291,7 +291,8 @@ function SessionView({ id, onChange }: { id: number; onChange: () => void }) {
 
 export function DiscoverySearchPage() {
   const [params, setParams] = useSearchParams();
-  const [q, setQ] = useState(params.get('q') ?? '');
+  const [qDraft, setQ] = useDraft('discovery.search.q', '');
+  const q = params.get('q') && !qDraft ? params.get('q')! : qDraft;
   const sessions = useAsync(() => api.discoverySessions(), []);
   const selected = Number(params.get('session')) || sessions.data?.[0]?.id;
   const { busy, run, view } = useAction();
@@ -412,8 +413,8 @@ export function ConnectionDetailPage() {
 // --- Ipotesi ---------------------------------------------------------------------------------------
 
 export function HypothesesPage() {
-  const [status, setStatus] = useState('');
-  const [archived, setArchived] = useState(false);
+  const [status, setStatus] = useStickyState('discovery.hypotheses.status', '');
+  const [archived, setArchived] = useStickyState('discovery.hypotheses.archived', false);
   const [origin, setOrigin] = useOrigin();
   const list = useAsync(() => api.discoveryHypotheses({ status: status || undefined, archived, origin }), [status, archived, origin]);
   const [compare, setCompare] = useState<number[]>([]);
@@ -468,7 +469,7 @@ export function HypothesisDetailPage() {
   const h = useAsync(() => api.discoveryHypothesis(id), [id]);
   const { busy, run, view } = useAction();
   const [decision, setDecision] = useState<HypothesisStatus>('inconclusive');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useDraft(`hypothesis.${id}.note`, '');
   if (h.loading && !h.data) return <Shell title="Hypotheses"><Loading /></Shell>;
   if (h.error) return <Shell title="Hypotheses"><ErrorBox error={h.error} onRetry={h.reload} /></Shell>;
   const d = h.data as DiscoveryHypothesis;
@@ -524,7 +525,7 @@ export function HypothesisDetailPage() {
 // --- Anomalie --------------------------------------------------------------------------------------
 
 export function AnomaliesPage() {
-  const [status, setStatus] = useState('open');
+  const [status, setStatus] = useStickyState('discovery.anomalies.status', 'open');
   const [origin, setOrigin] = useOrigin();
   const list = useAsync(() => api.discoveryAnomalies(status || undefined, origin), [status, origin]);
   const [notes, setNotes] = useState<Record<number, string>>({});
@@ -614,8 +615,8 @@ export function CausalPage() {
   const series = useAsync(() => api.seriesList(), []);
   const templates = useAsync(() => api.causalTemplates(), []);
   const saved = useAsync(() => api.discoveryAnalyses(), []);
-  const [a, setA] = useState('');
-  const [b, setB] = useState('');
+  const [a, setA] = useDraft('discovery.causal.a', '');
+  const [b, setB] = useDraft('discovery.causal.b', '');
   const [chain, setChain] = useState<CausalChainResult>();
   const [rows, setRows] = useState<{ id: string; label: string }[]>([{ id: '', label: '' }, { id: '', label: '' }]);
   const [trans, setTrans] = useState<{ steps: TransmissionStep[]; notes: string[] }>();
@@ -688,8 +689,8 @@ export function ForesightPage() {
   const series = useAsync(() => api.seriesList(), []);
   const saved = useAsync(() => api.discoveryAnalyses('foresight'), []);
   const [vars, setVars] = useState<{ id: string; favorable: 'up' | 'down' }[]>([{ id: '', favorable: 'up' }]);
-  const [horizon, setHorizon] = useState('2');
-  const [triggers, setTriggers] = useState('');
+  const [horizon, setHorizon] = useDraft('discovery.foresight.horizon', '2');
+  const [triggers, setTriggers] = useDraft('discovery.foresight.triggers', '');
   const [res, setRes] = useState<ForesightResult>();
   const { busy, run, view } = useAction();
   const sopts = series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>);

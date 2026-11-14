@@ -1,5 +1,5 @@
 import { locale } from '../i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
@@ -16,6 +16,7 @@ import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { formatDateTime } from '../lib/format';
 import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { useContextPanel } from '../state/AppState';
 
 export function StudioPage() {
@@ -23,8 +24,8 @@ export function StudioPage() {
   const notes = useAsync(() => api.notes(), []);
   const runs = useAsync(() => api.runs(), []);
   const projects = useAsync(() => api.projects('active'), []);
-  const [form, setForm] = useState({ title: '', author: '', project_id: '' });
-  const [note, setNote] = useState({ title: '', body: '' });
+  const [form, setForm, clearForm] = useDraft('studio.newReport', { title: '', author: '', project_id: '' });
+  const [note, setNote, clearNote] = useDraft('studio.newNote', { title: '', body: '' });
   const [err, setErr] = useState<string>();
   const navigate = useNavigate();
   const approvedRuns = runs.data?.filter((r) => r.status === 'approved') ?? [];
@@ -41,7 +42,7 @@ export function StudioPage() {
               <Field label="Progetto"><Select value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}><option value="">—</option>{projects.data?.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</Select></Field>
               <div className="flex items-end"><Button variant="primary" disabled={!form.title.trim()} onClick={async () => {
                 setErr(undefined);
-                try { const r = await api.createReport({ title: form.title.trim(), author: form.author.trim(), project_id: form.project_id ? Number(form.project_id) : null }); navigate(`/studio/reports/${r.id}`); } catch (e) { setErr(errorText(e)); }
+                try { const r = await api.createReport({ title: form.title.trim(), author: form.author.trim(), project_id: form.project_id ? Number(form.project_id) : null }); clearForm(); navigate(`/studio/reports/${r.id}`); } catch (e) { setErr(errorText(e)); }
               }}><Plus className="size-4" aria-hidden /> Crea</Button></div>
             </div>
             {approvedRuns.length > 0 && (
@@ -76,7 +77,7 @@ export function StudioPage() {
           <div className="space-y-2">
             <Input aria-label="Titolo appunto" placeholder="Titolo" value={note.title} onChange={(e) => setNote({ ...note, title: e.target.value })} />
             <Textarea aria-label="Testo appunto" placeholder="Appunto…" value={note.body} onChange={(e) => setNote({ ...note, body: e.target.value })} />
-            <Button disabled={!note.title.trim()} onClick={async () => { await api.createNote(note); setNote({ title: '', body: '' }); await notes.reload(); }}>Salva appunto</Button>
+            <Button disabled={!note.title.trim()} onClick={async () => { await api.createNote(note); clearNote(); await notes.reload(); }}>Salva appunto</Button>
           </div>
           <ul className="mt-4 space-y-3">
             {notes.data?.map((n) => (
@@ -117,13 +118,13 @@ function EmbedRow({ e, onChange, onRemove, label }: { e: Embed; onChange: (e: Em
   );
 }
 
-function EmbedEditor({ embeds, onChange, projectId }: { embeds: Embed[]; onChange: (e: Embed[]) => void; projectId: number | null }) {
+function EmbedEditor({ embeds, onChange, projectId, draftKey }: { embeds: Embed[]; onChange: (e: Embed[]) => void; projectId: number | null; draftKey: string }) {
   const series = useAsync(() => api.seriesList(), []);
   const sims = useAsync(() => api.simulations(), []);
   const docs = useAsync(() => api.documents(), []);
-  const [tableCsv, setTableCsv] = useState('');
-  const [cmp, setCmp] = useState<{ ids: number[]; from: string; to: string; rebase: boolean }>({ ids: [], from: '', to: '', rebase: false });
-  const [openCmp, setOpenCmp] = useState(false);
+  const [tableCsv, setTableCsv] = useDraft(`${draftKey}.tableCsv`, '');
+  const [cmp, setCmp] = useDraft<{ ids: number[]; from: string; to: string; rebase: boolean }>(`${draftKey}.compare`, { ids: [], from: '', to: '', rebase: false });
+  const [openCmp, setOpenCmp] = useStickyState(`${draftKey}.compareOpen`, false);
   const [err, setErr] = useState<string>();
   const tableDocs = (docs.data ?? []).filter((d) => d.kind === 'csv' || d.kind === 'xlsx')
     .sort((x, y) => Number(y.project_id === projectId) - Number(x.project_id === projectId));
@@ -189,7 +190,7 @@ function EmbedEditor({ embeds, onChange, projectId }: { embeds: Embed[]; onChang
 
 function CiteInserter({ onInsert }: { onInsert: (code: string) => void }) {
   const sources = useAsync(() => api.sources(), []);
-  const [src, setSrc] = useState('');
+  const [src, setSrc] = useStickyState('cite.source', '');
   const [loc, setLoc] = useState('');
   return (
     <div className="flex flex-wrap items-center gap-1.5" data-testid="cite-inserter">
@@ -204,15 +205,25 @@ function CiteInserter({ onInsert }: { onInsert: (code: string) => void }) {
 }
 
 function SectionEditor({ report, section, onSaved, onError }: { report: Report; section: ReportSection; onSaved: (r: Report) => void; onError: (e: string) => void }) {
-  const [body, setBody] = useState(section.body);
-  const [title, setTitle] = useState(section.title);
-  const [embeds, setEmbeds] = useState<Embed[]>(section.embeds);
-  const [showEmbeds, setShowEmbeds] = useState(section.embeds.length > 0);
-  const [cite, setCite] = useState(false);
+  // Bozza della sezione: resta se cambi sezione dell'app e torni; si scarta se nel frattempo la sezione è cambiata sul server.
+  const key = `report.${report.id}.section.${section.id}`;
+  type D = { base: string; body: string; title: string; embeds: Embed[] };
+  const base = JSON.stringify([section.body, section.title, section.embeds]);
+  const fresh = (): D => ({ base, body: section.body, title: section.title, embeds: section.embeds });
+  const [draft, setDraft, clearDraft] = useDraft<D>(key, fresh());
+  const [b0, t0, e0] = JSON.parse(draft.base) as [string, string, Embed[]];
+  const edited = draft.body !== b0 || draft.title !== t0 || JSON.stringify(draft.embeds) !== JSON.stringify(e0);
+  const conflict = draft.base !== base && edited; // la sezione è cambiata altrove mentre avevi modifiche non salvate
+  const d = draft.base === base || conflict ? draft : fresh();
+  const body = d.body, title = d.title, embeds = d.embeds;
+  const setBody = (v: string) => setDraft({ ...d, body: v });
+  const setTitle = (v: string) => setDraft({ ...d, title: v });
+  const setEmbeds = (v: Embed[]) => setDraft({ ...d, embeds: v });
+  const [showEmbeds, setShowEmbeds] = useStickyState(`${key}.showEmbeds`, section.embeds.length > 0);
+  const [cite, setCite] = useStickyState(`${key}.cite`, false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const caret = useRef<number | null>(null);
   const dirty = body !== section.body || title !== section.title || JSON.stringify(embeds) !== JSON.stringify(section.embeds);
-  useEffect(() => { setBody(section.body); setTitle(section.title); setEmbeds(section.embeds); }, [section]);
   const chapter = section.key === 'chapter';
   const words = body.trim() ? body.trim().split(/\s+/).length : 0;
   const cites = (body.match(/\[@\d+/g) ?? []).length;
@@ -242,11 +253,14 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
         <button className="text-xs text-gold-300 hover:underline" onClick={() => setCite((v) => !v)}>{cite ? 'Chiudi citazione' : 'Inserisci citazione'}</button>
         <span className="flex-1" />
         {dirty && <Button variant="primary" className="text-xs" onClick={async () => {
-          try { onSaved(await api.updateSection(report.id, section.id, { body, embeds, ...(chapter ? { title } : {}) })); } catch (e) { onError(errorText(e)); }
+          try { const r = await api.updateSection(report.id, section.id, { body, embeds, ...(chapter ? { title } : {}) }); clearDraft(); onSaved(r); } catch (e) { onError(errorText(e)); }
         }}>Salva sezione</Button>}
       </div>
       {cite && <div className="mt-2"><CiteInserter onInsert={insert} /></div>}
-      {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} projectId={report.project_id} />}
+      {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} projectId={report.project_id} draftKey={key} />}
+      {dirty && !conflict && <p className="mt-1 text-[11px] text-warn">Modifiche non salvate: restano qui anche se cambi sezione, finché non premi «Salva sezione».</p>}
+      {conflict && <p className="mt-1 text-[11px] text-warn">Questa sezione è stata modificata altrove (per esempio con «Cita nel rapporto») mentre avevi modifiche non salvate: qui vedi la tua bozza. Salvandola sostituisci la versione salvata.{' '}
+        <button className="text-gold-300 underline" onClick={clearDraft}>Usa la versione salvata</button></p>}
     </section>
   );
 }
@@ -311,11 +325,15 @@ function LayoutSettings({ r, onSaved }: { r: Report; onSaved: (r: Report) => voi
 
 export function ReportEditorPage() {
   const id = Number(useParams().reportId);
+  return <ReportEditor key={id} id={id} />;
+}
+
+function ReportEditor({ id }: { id: number }) {
   const rep = useAsync(() => api.report(id), [id]);
   const check = useAsync(() => api.checkReport(id), [id, rep.data?.updated_at]);
   const sources = useAsync(() => api.sources(), []);
   const [err, setErr] = useState<string>();
-  const [chapter, setChapter] = useState('');
+  const [chapter, setChapter, clearChapter] = useDraft(`report.${id}.newChapter`, '');
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   useContextPanel(
@@ -364,7 +382,7 @@ export function ReportEditorPage() {
       <Card className="mt-4">
         <div className="flex flex-wrap items-end gap-2">
           <Field label="Nuovo capitolo (inserito dopo «Analisi»)" className="min-w-64 flex-1"><Input value={chapter} onChange={(e) => setChapter(e.target.value)} /></Field>
-          <Button disabled={!chapter.trim()} onClick={async () => { saved(await api.addChapter(r.id, chapter.trim(), 'analysis')); setChapter(''); }}><Plus className="size-4" aria-hidden /> Aggiungi capitolo</Button>
+          <Button disabled={!chapter.trim()} onClick={async () => { saved(await api.addChapter(r.id, chapter.trim(), 'analysis')); clearChapter(); }}><Plus className="size-4" aria-hidden /> Aggiungi capitolo</Button>
         </div>
         <p className="mt-2 text-xs text-steel-500">La bibliografia è generata automaticamente dalle fonti citate, con lo stato di verifica di ciascuna.</p>
       </Card>
