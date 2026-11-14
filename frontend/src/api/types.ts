@@ -623,18 +623,23 @@ export interface SimulationSummary { id: number; kind: string; title: string; co
 // --- Fase 7: Research Studio -------------------------------------------------------------
 
 export type Embed =
-  | { type: 'series'; series_id: number; caption: string }
+  | { type: 'series'; series_id: number; caption: string; start_year?: number | null; end_year?: number | null }
+  | { type: 'compare'; series_ids: number[]; caption: string; start_year?: number | null; end_year?: number | null; rebase?: boolean }
   | { type: 'simulation'; simulation_id: number; caption: string }
-  | { type: 'table'; caption: string; columns: string[]; rows: string[][] };
+  | { type: 'table'; caption: string; columns: string[]; rows: string[][]; source_note?: string; document_id?: number | null };
+export type CitationStyle = 'numeric' | 'footnotes' | 'author_date';
+export type ReportTemplate = 'standard' | 'thesis';
+export interface CheckItem { key: string; label: string; ok: boolean; blocking: boolean; detail: string }
+export interface DocTable { caption: string; columns: string[]; rows: string[][]; source_note: string; truncated: boolean }
 
 export interface ReportSection { id: number; ordinal: number; key: string; title: string; body: string; embeds: Embed[] }
 export interface Report {
   id: number; title: string; subtitle: string; author: string; status: 'draft' | 'approved'; project_id: number | null; source_ids: number[];
-  origin: string; contains_ai_text: boolean; created_at: string; updated_at: string; sections: ReportSection[];
+  origin: string; contains_ai_text: boolean; citation_style: CitationStyle; template: ReportTemplate; created_at: string; updated_at: string; sections: ReportSection[];
 }
 export interface ReportSummary { id: number; title: string; status: 'draft' | 'approved'; project_id: number | null; origin: string; updated_at: string }
 export interface ReportCheck {
-  ready: boolean; empty_sections: string[]; invalid_citations: number[]; unverified_sources: { id: number; citation: string; status: string }[];
+  ready: boolean; checklist: CheckItem[]; empty_sections: string[]; invalid_citations: number[]; unverified_sources: { id: number; citation: string; status: string }[];
   cited_sources: number; bibliography_size: number; embed_problems: string[]; warnings: string[];
 }
 export interface NoteItem { id: number; title: string; body: string; project_id: number | null; source_id: number | null; document_id: number | null; created_at: string; updated_at: string }

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useStickyState } from '../lib/useStickyState';
 import { api, ApiError } from '../api/client';
-import type { AskResult, RetrievalResult } from '../api/types';
+import type { AskResult, Report, ReportSummary, RetrievalHit, RetrievalResult } from '../api/types';
 import { CLAIM, PassageCard, SUPPORT } from '../components/research';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -11,8 +11,61 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { useContextPanel } from '../state/AppState';
 
+function QuoteToReport({ text, passage }: { text: string; passage: RetrievalHit }) {
+  const [open, setOpen] = useState(false);
+  const [reports, setReports] = useState<ReportSummary[]>();
+  const [rep, setRep] = useState<Report>();
+  const [section, setSection] = useState('');
+  const [comment, setComment] = useState('');
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; doc?: number }>();
+  const [locator, setLocator] = useState(passage.locator || (passage.page ? `p. ${passage.page}` : ''));
+  async function toggle() {
+    setOpen((v) => !v);
+    if (!reports) setReports(await api.reports());
+  }
+  async function pick(id: string) {
+    setRep(undefined); setSection('');
+    if (id) { const r = await api.report(Number(id)); setRep(r); setSection(String(r.sections.find((x) => x.key === 'evidence')?.id ?? r.sections[0]?.id ?? '')); }
+  }
+  async function send() {
+    if (!rep || !section) return;
+    try {
+      await api.addQuote(rep.id, Number(section), { text, document_id: passage.document_id, locator, comment });
+      setMsg({ ok: true, text: `Aggiunta a «${rep.sections.find((x) => String(x.id) === section)?.title}» di «${rep.title}», con il riferimento alla fonte${locator ? ` (${locator})` : ''}.` });
+      setComment('');
+    } catch (e) {
+      const err = e as ApiError;
+      const d = err.details as { code?: string } | undefined;
+      setMsg({ ok: false, text: err.message, doc: d?.code === 'no_source' ? passage.document_id : undefined });
+    }
+  }
+  return (
+    <div className="mt-1">
+      <button className="text-[11px] text-gold-300 hover:underline" onClick={toggle}>{open ? 'Chiudi' : 'Cita nel rapporto'}</button>
+      {open && (
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded border border-ink-700 p-2" data-testid="quote-form">
+          <Select aria-label="Rapporto" className="!w-auto max-w-64 py-1 text-xs" value={rep?.id ?? ''} onChange={(e) => pick(e.target.value)}>
+            <option value="">Rapporto…</option>
+            {reports?.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
+          </Select>
+          {rep && <Select aria-label="Sezione" className="!w-auto py-1 text-xs" value={section} onChange={(e) => setSection(e.target.value)}>
+            {[...rep.sections].sort((a, b) => a.ordinal - b.ordinal).map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
+          </Select>}
+          <Input aria-label="Pagina" title="Pagina del file: se il documento ha una numerazione stampata diversa, correggila" className="!w-24 py-1 text-xs" value={locator} onChange={(e) => setLocator(e.target.value)} />
+          <Input aria-label="Frase introduttiva" className="min-w-48 flex-1 py-1 text-xs" placeholder="Frase introduttiva (facoltativa), es. «Secondo il CRS,»" value={comment} onChange={(e) => setComment(e.target.value)} />
+          <Button className="py-1 text-xs" variant="primary" disabled={!rep || !section} onClick={send}>Aggiungi</Button>
+          {reports?.length === 0 && <span className="text-[11px] text-steel-500">Nessun rapporto: creane uno nel Research Studio.</span>}
+          {msg && <p role={msg.ok ? 'status' : 'alert'} className={`w-full text-[11px] ${msg.ok ? 'text-ok' : 'text-warn'}`}>{msg.text}
+            {msg.doc && <> <a className="text-gold-300 underline" href={`/documents/${msg.doc}`}>Apri il documento</a></>}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AskResultView({ result }: { result: AskResult }) {
   const index = new Map(result.passages.map((p, i) => [p.chunk_id, i + 1]));
+  const byId = new Map(result.passages.map((p) => [p.chunk_id, p]));
   return (
     <div className="space-y-4" data-testid="ask-result">
       <p className="rounded-md border border-ink-700 bg-ink-850 p-3 text-xs text-steel-400">{result.disclaimer}</p>
@@ -30,6 +83,7 @@ export function AskResultView({ result }: { result: AskResult }) {
                 {c.type === 'documented_fact' ? `«${c.text}»` : c.text}
               </p>
               {c.note && <p className="mt-0.5 text-[11px] text-steel-500">{c.note}</p>}
+              {c.type === 'documented_fact' && byId.get(c.evidence[0]) && <QuoteToReport text={c.text} passage={byId.get(c.evidence[0])!} />}
             </li>
           ))}
         </ul>

@@ -1,10 +1,10 @@
 import { locale } from '../i18n';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api } from '../api/client';
-import type { Embed, Report, ReportCheck, ReportSection } from '../api/types';
+import type { CitationStyle, Embed, Report, ReportCheck, ReportSection, ReportTemplate } from '../api/types';
 import { VERIFICATION } from '../components/research';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -93,34 +93,112 @@ export function StudioPage() {
   );
 }
 
-function EmbedEditor({ embeds, onChange }: { embeds: Embed[]; onChange: (e: Embed[]) => void }) {
+const yearOrNull = (v: string) => (v.trim() === '' || Number.isNaN(Number(v)) ? null : Math.trunc(Number(v)));
+
+function EmbedRow({ e, onChange, onRemove, label }: { e: Embed; onChange: (e: Embed) => void; onRemove: () => void; label: string }) {
+  const kind = e.type === 'series' ? 'Grafico serie' : e.type === 'compare' ? 'Confronto' : e.type === 'simulation' ? 'Simulazione' : 'Tabella';
+  return (
+    <div className="space-y-1 rounded border border-ink-800 p-2 text-xs text-steel-300">
+      <div className="flex items-center gap-2">
+        <Badge>{kind}</Badge>
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <button className="text-steel-500 hover:text-bad" onClick={onRemove} aria-label="Rimuovi">rimuovi</button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input aria-label="Didascalia" className="min-w-48 flex-1 py-1 text-xs" placeholder="Didascalia (es. «Aiuti ERP per paese, 1948–1952»)" value={e.caption} onChange={(x) => onChange({ ...e, caption: x.target.value })} />
+        {(e.type === 'series' || e.type === 'compare') && <>
+          <Input aria-label="Dall'anno" className="!w-24 py-1 text-xs" inputMode="numeric" placeholder="dal" value={e.start_year ?? ''} onChange={(x) => onChange({ ...e, start_year: yearOrNull(x.target.value) })} />
+          <Input aria-label="All'anno" className="!w-24 py-1 text-xs" inputMode="numeric" placeholder="al" value={e.end_year ?? ''} onChange={(x) => onChange({ ...e, end_year: yearOrNull(x.target.value) })} />
+        </>}
+        {e.type === 'compare' && <label className="flex items-center gap-1"><input type="checkbox" checked={!!e.rebase} onChange={(x) => onChange({ ...e, rebase: x.target.checked })} />Base 100</label>}
+      </div>
+      {e.type === 'table' && e.source_note && <p className="text-[11px] text-steel-500">{e.source_note}</p>}
+    </div>
+  );
+}
+
+function EmbedEditor({ embeds, onChange, projectId }: { embeds: Embed[]; onChange: (e: Embed[]) => void; projectId: number | null }) {
   const series = useAsync(() => api.seriesList(), []);
   const sims = useAsync(() => api.simulations(), []);
+  const docs = useAsync(() => api.documents(), []);
   const [tableCsv, setTableCsv] = useState('');
+  const [cmp, setCmp] = useState<{ ids: number[]; from: string; to: string; rebase: boolean }>({ ids: [], from: '', to: '', rebase: false });
+  const [openCmp, setOpenCmp] = useState(false);
+  const [err, setErr] = useState<string>();
+  const tableDocs = (docs.data ?? []).filter((d) => d.kind === 'csv' || d.kind === 'xlsx')
+    .sort((x, y) => Number(y.project_id === projectId) - Number(x.project_id === projectId));
+  const name = (id: number) => series.data?.find((s) => s.id === id)?.name ?? `serie ${id}`;
+  const label = (e: Embed) => e.type === 'series' ? name(e.series_id) : e.type === 'compare' ? e.series_ids.map(name).join(' · ')
+    : e.type === 'simulation' ? sims.data?.find((s) => s.id === e.simulation_id)?.title ?? `simulazione ${e.simulation_id}` : `${e.columns.join(', ')} (${e.rows.length} righe)`;
   return (
     <div className="mt-2 space-y-2 rounded-md border border-ink-700 p-2">
-      <p className="text-[11px] text-steel-500">Grafici e tabelle della sezione</p>
-      {embeds.map((e, i) => (
-        <div key={i} className="flex items-center gap-2 text-xs text-steel-300">
-          <Badge>{e.type === 'series' ? 'Grafico serie' : e.type === 'simulation' ? 'Grafico simulazione' : 'Tabella'}</Badge>
-          <span className="min-w-0 flex-1 truncate">{e.type === 'series' ? series.data?.find((s) => s.id === e.series_id)?.name ?? `serie ${e.series_id}` : e.type === 'simulation' ? sims.data?.find((s) => s.id === e.simulation_id)?.title ?? `simulazione ${e.simulation_id}` : `${e.columns.join(', ')} (${e.rows.length} righe)`}</span>
-          <button className="text-steel-500 hover:text-bad" onClick={() => onChange(embeds.filter((_, j) => j !== i))} aria-label="Rimuovi">rimuovi</button>
-        </div>
-      ))}
+      <p className="text-[11px] text-steel-500">Grafici e tabelle della sezione: nell'export sono numerati (Figura 1, Tabella 1) con didascalia e fonte.</p>
+      {embeds.map((e, i) => <EmbedRow key={i} e={e} label={label(e)} onChange={(x) => onChange(embeds.map((y, j) => (j === i ? x : y)))} onRemove={() => onChange(embeds.filter((_, j) => j !== i))} />)}
       <div className="flex flex-wrap gap-2">
-        <Select aria-label="Aggiungi grafico di una serie" className="w-auto py-1 text-xs" value="" onChange={(e) => e.target.value && onChange([...embeds, { type: 'series', series_id: Number(e.target.value), caption: '' }])}>
+        <Select aria-label="Aggiungi grafico di una serie" className="!w-auto py-1 text-xs" value="" onChange={(e) => e.target.value && onChange([...embeds, { type: 'series', series_id: Number(e.target.value), caption: '' }])}>
           <option value="">+ grafico serie…</option>{series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Select>
-        <Select aria-label="Aggiungi grafico di una simulazione" className="w-auto py-1 text-xs" value="" onChange={(e) => e.target.value && onChange([...embeds, { type: 'simulation', simulation_id: Number(e.target.value), caption: '' }])}>
+        <Button className="py-1 text-xs" onClick={() => setOpenCmp((v) => !v)}>+ confronto tra serie</Button>
+        <Select aria-label="Aggiungi tabella da documento" className="!w-auto py-1 text-xs" value="" onChange={async (e) => {
+          const id = Number(e.target.value); if (!id) return; setErr(undefined);
+          try { const t = await api.documentTable(id); onChange([...embeds, { type: 'table', caption: t.caption, columns: t.columns, rows: t.rows, source_note: t.source_note, document_id: id }]); if (t.truncated) setErr('Tabella troncata a 12 colonne e 200 righe.'); }
+          catch (x) { setErr(errorText(x)); }
+        }}>
+          <option value="">+ tabella da documento CSV/XLSX…</option>{tableDocs.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
+        </Select>
+        <Select aria-label="Aggiungi grafico di una simulazione" className="!w-auto py-1 text-xs" value="" onChange={(e) => e.target.value && onChange([...embeds, { type: 'simulation', simulation_id: Number(e.target.value), caption: '' }])}>
           <option value="">+ simulazione…</option>{sims.data?.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
         </Select>
       </div>
-      <Textarea aria-label="Tabella CSV" className="text-xs" placeholder={'Tabella CSV (prima riga intestazione, separatore ;)\nAnno;Valore\n2020;155'} value={tableCsv} onChange={(e) => setTableCsv(e.target.value)} />
-      <Button className="text-xs" disabled={!tableCsv.trim()} onClick={() => {
-        const lines = tableCsv.trim().split('\n').map((l) => l.split(';').map((c) => c.trim()));
-        onChange([...embeds, { type: 'table', caption: '', columns: lines[0], rows: lines.slice(1) }]);
-        setTableCsv('');
-      }}>+ tabella</Button>
+      {openCmp && (
+        <div className="space-y-2 rounded border border-ink-800 p-2 text-xs" data-testid="compare-form">
+          <p className="text-steel-400">Scegli da 1 a 8 serie: compariranno nello stesso grafico, sul periodo indicato.</p>
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+            {series.data?.map((s) => (
+              <label key={s.id} className="flex items-center gap-1.5 text-steel-300">
+                <input type="checkbox" checked={cmp.ids.includes(s.id)} disabled={!cmp.ids.includes(s.id) && cmp.ids.length >= 8}
+                  onChange={() => setCmp({ ...cmp, ids: cmp.ids.includes(s.id) ? cmp.ids.filter((x) => x !== s.id) : [...cmp.ids, s.id] })} />
+                <span className="truncate">{s.name}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input aria-label="Confronto dall'anno" className="!w-24 py-1 text-xs" inputMode="numeric" placeholder="dal" value={cmp.from} onChange={(e) => setCmp({ ...cmp, from: e.target.value })} />
+            <Input aria-label="Confronto all'anno" className="!w-24 py-1 text-xs" inputMode="numeric" placeholder="al" value={cmp.to} onChange={(e) => setCmp({ ...cmp, to: e.target.value })} />
+            <label className="flex items-center gap-1 text-steel-300"><input type="checkbox" checked={cmp.rebase} onChange={(e) => setCmp({ ...cmp, rebase: e.target.checked })} />Ribasa a 100 sul primo anno comune</label>
+            <Button className="py-1 text-xs" variant="primary" disabled={cmp.ids.length === 0} onClick={() => {
+              onChange([...embeds, { type: 'compare', series_ids: cmp.ids, caption: '', start_year: yearOrNull(cmp.from), end_year: yearOrNull(cmp.to), rebase: cmp.rebase }]);
+              setCmp({ ids: [], from: '', to: '', rebase: false }); setOpenCmp(false);
+            }}>Aggiungi confronto</Button>
+          </div>
+        </div>
+      )}
+      {err && <p className="text-xs text-warn">{err}</p>}
+      <details className="text-xs text-steel-400">
+        <summary className="cursor-pointer">Tabella scritta a mano</summary>
+        <Textarea aria-label="Tabella CSV" className="mt-1 text-xs" placeholder={'Tabella CSV (prima riga intestazione, separatore ;)\nAnno;Valore\n2020;155'} value={tableCsv} onChange={(e) => setTableCsv(e.target.value)} />
+        <Button className="mt-1 text-xs" disabled={!tableCsv.trim()} onClick={() => {
+          const lines = tableCsv.trim().split('\n').map((l) => l.split(';').map((c) => c.trim()));
+          onChange([...embeds, { type: 'table', caption: '', columns: lines[0], rows: lines.slice(1) }]);
+          setTableCsv('');
+        }}>+ tabella</Button>
+      </details>
+    </div>
+  );
+}
+
+function CiteInserter({ onInsert }: { onInsert: (code: string) => void }) {
+  const sources = useAsync(() => api.sources(), []);
+  const [src, setSrc] = useState('');
+  const [loc, setLoc] = useState('');
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" data-testid="cite-inserter">
+      <Select aria-label="Fonte da citare" className="!w-auto max-w-72 py-1 text-xs" value={src} onChange={(e) => setSrc(e.target.value)}>
+        <option value="">Cita una fonte…</option>
+        {sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 90)}</option>)}
+      </Select>
+      <Input aria-label="Pagina" className="!w-24 py-1 text-xs" placeholder="p. 12" value={loc} onChange={(e) => setLoc(e.target.value)} />
+      <Button className="py-1 text-xs" disabled={!src} onClick={() => { onInsert(`[@${src}${loc.trim() ? `, ${loc.trim()}` : ''}]`); setLoc(''); }}><Quote className="size-3" aria-hidden /> Inserisci</Button>
     </div>
   );
 }
@@ -130,15 +208,27 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
   const [title, setTitle] = useState(section.title);
   const [embeds, setEmbeds] = useState<Embed[]>(section.embeds);
   const [showEmbeds, setShowEmbeds] = useState(section.embeds.length > 0);
+  const [cite, setCite] = useState(false);
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const caret = useRef<number | null>(null);
   const dirty = body !== section.body || title !== section.title || JSON.stringify(embeds) !== JSON.stringify(section.embeds);
   useEffect(() => { setBody(section.body); setTitle(section.title); setEmbeds(section.embeds); }, [section]);
   const chapter = section.key === 'chapter';
+  const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+  const cites = (body.match(/\[@\d+/g) ?? []).length;
+  const insert = (code: string) => {
+    const pos = caret.current ?? body.length;
+    const before = body.slice(0, pos).replace(/\s+$/, ''); const after = body.slice(pos);
+    setBody(`${before} ${code}${after}`);
+    caret.current = before.length + code.length + 1;
+  };
   return (
     <section className="rounded-lg border border-ink-700 bg-ink-900 p-4" data-testid={`section-${section.key}`}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {chapter ? <Input aria-label="Titolo capitolo" className="max-w-md py-1" value={title} onChange={(e) => setTitle(e.target.value)} /> : <h2 className="font-medium text-paper">{section.title}</h2>}
         {chapter && <Badge>Capitolo</Badge>}
         {!section.body.trim() && !chapter && <Badge tone="warn">Da compilare</Badge>}
+        <span className="text-[11px] text-steel-500">{`${words} parole · ${cites} citazioni`}</span>
         <span className="flex-1" />
         {chapter && <>
           <Button variant="ghost" className="px-1.5" aria-label="Sposta su" onClick={async () => onSaved(await api.moveChapter(report.id, section.id, -1))}><ArrowUp className="size-4" /></Button>
@@ -146,16 +236,36 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
           <Button variant="ghost" className="px-1.5 hover:text-bad" aria-label="Elimina capitolo" onClick={async () => onSaved(await api.deleteChapter(report.id, section.id))}><Trash2 className="size-4" /></Button>
         </>}
       </div>
-      <Textarea aria-label={`Testo: ${section.title}`} className="min-h-32" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Paragrafi separati da una riga vuota; elenchi con «- ». Citazioni: [@id, p. 12]" />
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <Textarea ref={ref} onSelect={(e) => { caret.current = e.currentTarget.selectionStart; }} aria-label={`Testo: ${section.title}`} className="min-h-32" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Paragrafi separati da una riga vuota; elenchi con «- ». Citazioni: [@id, p. 12]" />
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <button className="text-xs text-gold-300 hover:underline" onClick={() => setShowEmbeds((v) => !v)}>{showEmbeds ? 'Nascondi grafici e tabelle' : `Grafici e tabelle (${embeds.length})`}</button>
+        <button className="text-xs text-gold-300 hover:underline" onClick={() => setCite((v) => !v)}>{cite ? 'Chiudi citazione' : 'Inserisci citazione'}</button>
         <span className="flex-1" />
         {dirty && <Button variant="primary" className="text-xs" onClick={async () => {
           try { onSaved(await api.updateSection(report.id, section.id, { body, embeds, ...(chapter ? { title } : {}) })); } catch (e) { onError(errorText(e)); }
         }}>Salva sezione</Button>}
       </div>
-      {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} />}
+      {cite && <div className="mt-2"><CiteInserter onInsert={insert} /></div>}
+      {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} projectId={report.project_id} />}
     </section>
+  );
+}
+
+function Checklist({ check }: { check?: ReportCheck }) {
+  if (!check) return <Loading />;
+  const done = check.checklist.filter((c) => c.ok).length;
+  return (
+    <Card title={`Prima della consegna · ${done}/${check.checklist.length}`} className="mb-4">
+      <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm md:grid-cols-2" data-testid="checklist">
+        {check.checklist.map((c) => (
+          <li key={c.key} className="flex items-start gap-2">
+            {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-ok" aria-label="ok" /> : <AlertTriangle className={`mt-0.5 size-4 shrink-0 ${c.blocking ? 'text-bad' : 'text-warn'}`} aria-label="da sistemare" />}
+            <span><span className={c.ok ? 'text-steel-300' : 'text-paper'}>{c.label}</span>{c.detail && <span className="block text-[11px] text-steel-500">{c.detail}</span>}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] text-steel-500">In rosso i punti che impediscono l'approvazione; in giallo quelli consigliati per un lavoro accademico.</p>
+    </Card>
   );
 }
 
@@ -164,13 +274,38 @@ function CheckPanel({ check }: { check?: ReportCheck }) {
   return (
     <div className="space-y-2 text-steel-300">
       <p className={`flex items-center gap-1.5 ${check.ready ? 'text-ok' : 'text-warn'}`}>{check.ready ? <CheckCircle2 className="size-4" /> : <AlertTriangle className="size-4" />}{check.ready ? 'Pronto per l\'approvazione' : 'Non ancora approvabile'}</p>
-      {check.empty_sections.length > 0 && <p>Sezioni vuote: {check.empty_sections.join(', ')}</p>}
-      {check.invalid_citations.length > 0 && <p className="text-bad">Citazioni a fonti inesistenti: {check.invalid_citations.map((i) => `@${i}`).join(', ')}</p>}
-      {check.embed_problems.map((p) => <p key={p} className="text-bad">{p}</p>)}
       <p>Bibliografia: {check.bibliography_size} fonti ({check.cited_sources} citate nel testo)</p>
       {check.unverified_sources.length > 0 && <div><p className="text-warn">Fonti non verificate (segnalate nell'export):</p><ul className="list-disc pl-5 text-xs">{check.unverified_sources.map((s) => <li key={s.id}>{s.citation}</li>)}</ul></div>}
       {check.warnings.map((w) => <p key={w} className="text-xs text-warn">{w}</p>)}
     </div>
+  );
+}
+
+const STYLE_HELP: Record<CitationStyle, string> = {
+  numeric: 'Numeri tra parentesi [1, p. 5], bibliografia numerata.',
+  footnotes: 'Note a piè di pagina (uso delle tesi di storia): citazione completa la prima volta, poi forma breve e «Ivi».',
+  author_date: 'Autore e anno nel testo (Tarnoff 2018, p. 5), bibliografia in ordine alfabetico.',
+};
+
+function LayoutSettings({ r, onSaved }: { r: Report; onSaved: (r: Report) => void }) {
+  return (
+    <Card className="mb-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label="Modello" className="min-w-48"><Select value={r.template} onChange={async (e) => onSaved(await api.updateReport(r.id, { template: e.target.value as ReportTemplate }))}>
+          <option value="standard">Rapporto</option>
+          <option value="thesis">Tesi / tesina</option>
+        </Select></Field>
+        <Field label="Stile delle citazioni" className="min-w-56"><Select value={r.citation_style} onChange={async (e) => onSaved(await api.updateReport(r.id, { citation_style: e.target.value as CitationStyle }))}>
+          <option value="footnotes">Note a piè di pagina</option>
+          <option value="author_date">Autore-data</option>
+          <option value="numeric">Numerico [1]</option>
+        </Select></Field>
+        <p className="min-w-60 flex-1 text-xs text-steel-500">
+          {STYLE_HELP[r.citation_style]} {r.template === 'thesis' ? 'Il modello tesi aggiunge frontespizio, indice, capitoli numerati, elenco di figure e tabelle e due appendici: cronologia degli eventi collegati alle fonti e nota sulle fonti.' : ''}
+          {r.citation_style === 'footnotes' ? ' Nel PDF le note sono in fondo a ogni capitolo; in Word e LaTeX a piè di pagina.' : ''}
+        </p>
+      </div>
+    </Card>
   );
 }
 
@@ -219,6 +354,8 @@ export function ReportEditorPage() {
             : <Button onClick={async () => saved(await api.setReportStatus(r.id, 'draft'))}>Riporta in bozza</Button>}
           <Button onClick={() => setDeleting(true)} aria-label="Elimina rapporto"><Trash2 className="size-4" /></Button>
         </>} />
+      <LayoutSettings r={r} onSaved={saved} />
+      <Checklist check={check.data} />
       {r.contains_ai_text && <p className="mb-3 text-sm text-warn">Contiene testo generato o estratto automaticamente: rivedilo prima di approvare.</p>}
       {err && <div className="mb-3"><ErrorBox error={new Error(err)} /></div>}
       <div className="space-y-3">
