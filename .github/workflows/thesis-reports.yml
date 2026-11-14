@@ -1,0 +1,47 @@
+# Crea nei progetti di ricerca (Piano Marshall, FSE) un rapporto in formato tesi, nell'account dell'amministratore, nel database ONLINE.
+# Si avvia a mano: GitHub → Actions → «Rapporti tesi» → Run workflow. Stessi segreti di «Progetti di ricerca».
+# Il rapporto resta in BOZZA: va riletto e approvato dall'autore. Idempotente: un rapporto già creato non viene toccato.
+name: Rapporti tesi
+
+on:
+  workflow_dispatch:
+    inputs:
+      author:
+        description: "Autore da mostrare nel frontespizio"
+        type: string
+        default: ""
+      kit:
+        description: "Quale rapporto creare"
+        type: choice
+        default: all
+        options: [all, piano-marshall, fse-1958-1989]
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXUS_ENV: production
+      NEXUS_DATABASE_URL: ${{ secrets.NEXUS_DATABASE_URL }}
+      NEXUS_SUPABASE_URL: ${{ secrets.NEXUS_SUPABASE_URL }}
+      NEXUS_SUPABASE_SERVICE_KEY: ${{ secrets.NEXUS_SUPABASE_SERVICE_KEY }}
+      NEXUS_STORAGE_BACKEND: supabase
+      NEXUS_DATA_DIR: ${{ github.workspace }}/data
+      AUTHOR: ${{ inputs.author }}
+      KIT: ${{ inputs.kit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Dipendenze
+        run: pip install -r backend/requirements.txt
+      - name: Controllo dei segreti
+        run: |
+          if [ -z "$NEXUS_DATABASE_URL" ]; then echo "Manca il segreto NEXUS_DATABASE_URL"; exit 1; fi
+      - name: Crea i rapporti
+        run: |
+          if [ "$KIT" = "all" ]; then python scripts/create_thesis_reports.py --author "$AUTHOR"
+          else python scripts/create_thesis_reports.py --author "$AUTHOR" --kit "$KIT"; fi
