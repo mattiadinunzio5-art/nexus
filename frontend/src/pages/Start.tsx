@@ -88,7 +88,7 @@ export function StartPage() {
                 <span className="flex size-12 items-center justify-center rounded-full bg-gold-400 text-ink-950"><Play className="ml-0.5 size-5" aria-hidden /></span>
               </span>
             </div>
-            <p className="px-3 py-2 text-sm text-paper">Video · Il crollo del 1929: come usare NEXUS modulo per modulo (2 min)</p>
+            <p className="px-3 py-2 text-sm text-paper">Video · Il crollo del 1929: dalle fonti al rapporto (2 min e mezzo)</p>
           </Link>
           <p className="mb-3 text-sm text-steel-300">Percorsi passo per passo su casi reali: la crisi del 1929, l'inflazione degli anni Settanta, la crisi del 2008.</p>
           <Go to="/lessons" icon={<GraduationCap className={icon} aria-hidden />}>Tutte le lezioni guidate</Go>

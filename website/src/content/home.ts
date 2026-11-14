@@ -45,11 +45,11 @@ export const HOME_IT: HomeText = {
   case29: {
     label: 'Un caso reale',
     title: 'Il crollo di Wall Street del 1929, modulo per modulo.',
-    text: 'Due minuti per vedere NEXUS al lavoro su una crisi vera: l’evento con le sue fonti, il Dow Jones da 381 a 41 punti, il 1930 visto senza il senno di poi, le ipotesi da verificare.',
+    text: 'Due minuti e mezzo per vedere NEXUS al lavoro su una crisi vera: l’evento con le sue fonti, il Dow Jones da 381 a 41 punti, il 1930 visto senza il senno di poi, le ipotesi da verificare, fino al rapporto esportato.',
     bullets: ['Fonti: Friedman e Schwartz, Kindleberger, Galbraith', 'Dati: FRED e NBER Macrohistory Database', 'Nessuna registrazione per provare la demo'],
     demo: 'Prova la demo',
     lessons: 'Altre lezioni guidate: inflazione degli anni ’70, crisi del 2008',
-    caption: 'Video della lezione guidata sul crollo del 1929 (2 minuti, in italiano)',
+    caption: 'Video della lezione guidata sul crollo del 1929: dalle fonti al rapporto (2 minuti e mezzo, in italiano)',
   },
   trust: 'Fonti e licenze di ogni dato',
 };
@@ -92,11 +92,11 @@ export const HOME_EN: HomeText = {
   case29: {
     label: 'A real case',
     title: 'The 1929 Wall Street crash, module by module.',
-    text: 'Two minutes to see NEXUS at work on a real crisis: the event with its sources, the Dow Jones from 381 to 41 points, 1930 seen without hindsight, hypotheses to check.',
+    text: 'Two and a half minutes to see NEXUS at work on a real crisis: the event with its sources, the Dow Jones from 381 to 41 points, 1930 seen without hindsight, hypotheses to check, up to the exported report.',
     bullets: ['Sources: Friedman and Schwartz, Kindleberger, Galbraith', 'Data: FRED and the NBER Macrohistory Database', 'No sign-up needed to try the demo'],
     demo: 'Try the demo',
     lessons: 'More guided lessons: 1970s inflation, the 2008 crisis',
-    caption: 'Video of the guided lesson on the 1929 crash (2 minutes, in Italian)',
+    caption: 'Video of the guided lesson on the 1929 crash: from sources to report (2.5 minutes, in Italian)',
   },
   trust: 'Sources and licences of every data point',
 };

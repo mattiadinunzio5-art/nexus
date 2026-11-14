@@ -81,6 +81,8 @@ function DataTableCard({ t }: { t: LessonTable }) {
 /** Video guidati delle lezioni (file statici in public/lessons). */
 const LESSON_VIDEOS: Record<string, { src: string; poster: string }> = {
   'crisi-1929': { src: '/lessons/crisi-1929.mp4', poster: '/lessons/crisi-1929.jpg' },
+  'inflazione-anni-70': { src: '/lessons/inflazione-anni-70.mp4', poster: '/lessons/inflazione-anni-70.jpg' },
+  'crisi-2008': { src: '/lessons/crisi-2008.mp4', poster: '/lessons/crisi-2008.jpg' },
 };
 
 export function LessonDetailPage() {
@@ -131,7 +133,7 @@ export function LessonDetailPage() {
             aria-label={`Video della lezione: ${d.title}`}>
             <source src={LESSON_VIDEOS[d.id].src} type="video/mp4" />
           </video>
-          <p className="mt-2 text-xs text-steel-500">Circa 2 minuti, in italiano: come usare Historical Intelligence, Financial Intelligence, Time Machine e Discovery su questo caso. Poi segui i passi qui sotto.</p>
+          <p className="mt-2 text-xs text-steel-500">Circa due minuti e mezzo, in italiano: i moduli di NEXUS su questo caso, dalle fonti fino al rapporto esportato. Poi segui i passi qui sotto.</p>
         </Card>
       )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
