@@ -1,6 +1,6 @@
 import { locale } from '../i18n';
 import { HistoryTabs } from '../components/HistoryTabs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EyeOff, History } from 'lucide-react';
 import { api } from '../api/client';
@@ -15,14 +15,25 @@ import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
 import { RELIABILITY_TONE } from './History';
 
+const TM_KEY = 'nexus.sticky.timemachine.params';
+
 export function TimeMachinePage() {
   const [params, setParams] = useSearchParams();
+  // Tornando alla Time Machine dal menu (senza parametri) si ritrovano anno, paese e filtri della volta precedente.
+  useEffect(() => {
+    try {
+      if (params.toString()) sessionStorage.setItem(TM_KEY, params.toString());
+      else { const saved = sessionStorage.getItem(TM_KEY); if (saved) setParams(new URLSearchParams(saved), { replace: true }); }
+    } catch { /* storage non disponibile */ }
+  }, [params, setParams]);
   const year = params.get('year') ?? '';
   const [draftYear, setDraftYear] = useState(year);
   const hindsight = params.get('hindsight') === '1';
   const country = params.get('country') ?? '';
   // Il paese si applica con Invio o uscendo dal campo: una richiesta per lettera intasava il server.
   const [draftCountry, setDraftCountry] = useState(country);
+  useEffect(() => { setDraftYear(year); }, [year]);
+  useEffect(() => { setDraftCountry(country); }, [country]);
   const category = params.get('category') ?? '';
   const eventId = params.get('event') ?? '';
   const update = (patch: Record<string, string>) => {

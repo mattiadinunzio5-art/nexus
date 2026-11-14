@@ -1,6 +1,6 @@
 import { LicenseBox } from '../components/License';
 import { HistoryTabs } from '../components/HistoryTabs';
-import { useDebounced, useStickyState } from '../lib/useStickyState';
+import { useDebounced, useDraft, useStickyState } from '../lib/useStickyState';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, Network, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -29,16 +29,16 @@ const blank: EventInput = {
   reliability: 'unverified', reliability_note: '',
 };
 
-export function EventForm({ initial, onSubmit, onCancel }: { initial?: EventInput; onSubmit: (d: EventInput) => Promise<void>; onCancel: () => void }) {
+export function EventForm({ initial, onSubmit, onCancel, draftKey = 'event.new' }: { initial?: EventInput; onSubmit: (d: EventInput) => Promise<void>; onCancel: () => void; draftKey?: string }) {
   const init = initial ?? blank;
-  const [f, setF] = useState<Record<string, string>>({
+  const [f, setF, clearF] = useDraft<Record<string, string>>(`${draftKey}.fields`, {
     title: init.title, start_year: String(init.start_year ?? ''), start_month: String(init.start_month ?? ''), start_day: String(init.start_day ?? ''),
     end_year: String(init.end_year ?? ''), end_month: String(init.end_month ?? ''), end_day: String(init.end_day ?? ''),
     period: init.period, region: init.region, countries: fromList(init.countries), people: fromList(init.people), institutions: fromList(init.institutions),
     description: init.description, causes: init.causes, consequences: init.consequences, economic_implications: init.economic_implications,
     reliability: init.reliability, reliability_note: init.reliability_note,
   });
-  const [cats, setCats] = useState<Category[]>(init.categories);
+  const [cats, setCats, clearCats] = useDraft<Category[]>(`${draftKey}.categories`, init.categories);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const bind = (k: string) => ({ value: f[k], onChange: (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value }) });
@@ -58,6 +58,8 @@ export function EventForm({ initial, onSubmit, onCancel }: { initial?: EventInpu
         people: toList(f.people), institutions: toList(f.institutions), economic_implications: f.economic_implications,
         reliability: f.reliability as Reliability, reliability_note: f.reliability_note,
       });
+      clearF();
+      clearCats();
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -102,7 +104,7 @@ export function EventForm({ initial, onSubmit, onCancel }: { initial?: EventInpu
       <Field label="Nota sull'attendibilità" className="sm:col-span-4"><Input {...bind('reliability_note')} /></Field>
       {error && <p role="alert" className="text-sm text-bad sm:col-span-6">{error}</p>}
       <div className="flex justify-end gap-2 sm:col-span-6">
-        <Button onClick={onCancel} disabled={busy}>Annulla</Button>
+        <Button onClick={() => { clearF(); clearCats(); onCancel(); }} disabled={busy}>Annulla</Button>
         <Button type="submit" variant="primary" disabled={busy}>Salva evento</Button>
       </div>
     </form>
@@ -116,7 +118,7 @@ export function EventsPage() {
     () => api.events({ ...applied, from_year: toInt(applied.from_year) ?? undefined, to_year: toInt(applied.to_year) ?? undefined }),
     [applied],
   );
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useStickyState('history.creating', false);
   const navigate = useNavigate();
   const set = (k: keyof typeof filters) => (e: { target: { value: string } }) => setFilters({ ...filters, [k]: e.target.value });
 
@@ -127,7 +129,7 @@ export function EventsPage() {
       <HistoryTabs />
       {creating && (
         <Card title="Nuovo evento" className="mb-6">
-          <EventForm onCancel={() => setCreating(false)} onSubmit={async (d) => { const e = await api.createEvent(d); navigate(`/history/events/${e.id}`); }} />
+          <EventForm onCancel={() => setCreating(false)} onSubmit={async (d) => { const e = await api.createEvent(d); setCreating(false); navigate(`/history/events/${e.id}`); }} />
         </Card>
       )}
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
@@ -175,17 +177,21 @@ function Section({ title, text }: { title: string; text: string }) {
 
 export function EventDetailPage() {
   const id = Number(useParams().eventId);
+  return <EventDetail key={id} id={id} />;
+}
+
+function EventDetail({ id }: { id: number }) {
   const ev = useAsync(() => api.event(id), [id]);
   const sources = useAsync(() => api.sources(), []);
   const others = useAsync(() => api.events(), []);
   const rels = useAsync(async () => (ev.data?.entity_id ? api.entityRelations(ev.data.entity_id) : []), [ev.data?.entity_id]);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useStickyState(`event.${id}.editing`, false);
   const [deleting, setDeleting] = useState(false);
   const [err, setErr] = useState<string>();
-  const [srcSel, setSrcSel] = useState('');
-  const [srcPages, setSrcPages] = useState('');
-  const [k, setK] = useState({ content: '', known_since_year: '', kind: 'contemporary' });
-  const [link, setLink] = useState({ target: '', relation_type: 'caused', provenance: 'user_hypothesis', source_id: '' });
+  const [srcSel, setSrcSel] = useDraft(`event.${id}.source`, '');
+  const [srcPages, setSrcPages] = useDraft(`event.${id}.pages`, '');
+  const [k, setK] = useDraft(`event.${id}.knowledge`, { content: '', known_since_year: '', kind: 'contemporary' });
+  const [link, setLink] = useDraft(`event.${id}.link`, { target: '', relation_type: 'caused', provenance: 'user_hypothesis', source_id: '' });
   const navigate = useNavigate();
 
   useContextPanel(
@@ -225,7 +231,7 @@ export function EventDetailPage() {
           </>
         )} />
       {editing ? (
-        <Card title="Modifica evento"><EventForm initial={e} onCancel={() => setEditing(false)} onSubmit={async (d) => { ev.setData(await api.updateEvent(e.id, d)); setEditing(false); }} /></Card>
+        <Card title="Modifica evento"><EventForm initial={e} draftKey={`event.${e.id}.edit`} onCancel={() => setEditing(false)} onSubmit={async (d) => { ev.setData(await api.updateEvent(e.id, d)); setEditing(false); }} /></Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card title="Scheda" className="lg:col-span-2">

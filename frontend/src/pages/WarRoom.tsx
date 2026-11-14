@@ -13,6 +13,7 @@ import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { formatDateTime } from '../lib/format';
 import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
+import { useDraft } from '../lib/useStickyState';
 import { useAppState, useContextPanel } from '../state/AppState';
 
 export const AGENT_LABEL: Record<AgentStep['agent'], string> = {
@@ -69,8 +70,8 @@ export function WarRoomPage() {
   const runs = useAsync(() => api.runs(), []);
   const series = useAsync(() => api.seriesList(), []);
   const status = useAsync(() => api.systemStatus(), []);
-  const [question, setQuestion] = useState('');
-  const [seriesIds, setSeriesIds] = useState<number[]>([]);
+  const [question, setQuestion, clearQuestion] = useDraft('warroom.question', '');
+  const [seriesIds, setSeriesIds, clearSeries] = useDraft<number[]>('warroom.series', []);
   const [err, setErr] = useState<string>();
   const navigate = useNavigate();
   const local = status.data?.ai_mode !== 'remote' && status.data?.ai_provider.id === 'none';
@@ -111,7 +112,7 @@ export function WarRoomPage() {
         <div className="mt-3 flex justify-end">
           <Button variant="primary" disabled={question.trim().length < 5} onClick={async () => {
             setErr(undefined);
-            try { const r = await api.createRun({ question: question.trim(), series_ids: seriesIds.length ? seriesIds : undefined }); navigate(`/war-room/runs/${r.id}`); } catch (e) { setErr(errorText(e)); }
+            try { const r = await api.createRun({ question: question.trim(), series_ids: seriesIds.length ? seriesIds : undefined }); clearQuestion(); clearSeries(); navigate(`/war-room/runs/${r.id}`); } catch (e) { setErr(errorText(e)); }
           }}>Avvia ricerca</Button>
         </div>
       </Card>
@@ -140,7 +141,7 @@ export function RunDetailPage() {
   const run = useAsync(() => api.run(id), [id]);
   const { refreshUnread } = useAppState();
   const [accepted, setAccepted] = useState<number[]>([]);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useDraft(`run.${id}.note`, '');
   const [err, setErr] = useState<string>();
   const r = run.data;
 

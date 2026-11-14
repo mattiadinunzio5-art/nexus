@@ -1,6 +1,6 @@
 import { LicenseBox } from '../components/License';
-import { useStickyState } from '../lib/useStickyState';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { recalledFile, rememberFile, useDraft, useFileDraft, useStickyState } from '../lib/useStickyState';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../api/client';
@@ -23,11 +23,14 @@ const pct = (v: unknown) => (typeof v === 'number' ? `${formatNumber(v * 100, 4)
 
 function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
   const presets = useAsync(() => api.presets(), []);
-  const [mode, setMode] = useState<'preset' | 'custom' | 'csv'>('preset');
-  const [preset, setPreset] = useState('');
-  const [c, setC] = useState({ connector: 'world-bank', category: 'other', indicator: '', country: '', series_id: '', slug: '', entity: '', dataset: '', filters: '', key: '' });
-  const [csv, setCsv] = useState({ name: '', source_label: '', source_url: '', unit: '', category: 'other' });
-  const [file, setFile] = useState<File>();
+  const [mode, setMode] = useStickyState<'preset' | 'custom' | 'csv'>('financial.import.mode', 'preset');
+  const [preset, setPreset] = useDraft('financial.import.preset', '');
+  const [c, setC] = useDraft('financial.import.custom', { connector: 'world-bank', category: 'other', indicator: '', country: '', series_id: '', slug: '', entity: '', dataset: '', filters: '', key: '' });
+  const [csv, setCsv, clearCsv] = useDraft('financial.import.csv', { name: '', source_label: '', source_url: '', unit: '', category: 'other' });
+  const [file, setFileState] = useState<File | undefined>(() => recalledFile('financial.import.csv'));
+  const setFile = (f: File | undefined) => { rememberFile('financial.import.csv', f); setFileState(f); };
+  const fileRef = useRef<HTMLInputElement>(null);
+  useFileDraft('financial.import.csv', fileRef);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
 
@@ -62,7 +65,7 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
       const f = new FormData();
       f.append('file', file);
       for (const [k, v] of Object.entries(csv)) f.append(k, v);
-      void run(() => api.uploadSeries(f));
+      void run(async () => { const r = await api.uploadSeries(f); clearCsv(); setFile(undefined); if (fileRef.current) fileRef.current.value = ''; return r; });
     }
   }
 
@@ -99,7 +102,7 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
       )}
       {mode === 'csv' && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Field label="File CSV (data, valore)" className="sm:col-span-3"><input type="file" accept=".csv,text/csv" onChange={(e) => setFile(e.target.files?.[0])} className="block w-full text-sm text-steel-300" /></Field>
+          <Field label="File CSV (data, valore)" className="sm:col-span-3"><input ref={fileRef} type="file" accept=".csv,text/csv" onChange={(e) => setFile(e.target.files?.[0])} className="block w-full text-sm text-steel-300" /></Field>
           <Field label="Nome"><Input {...bindCsv('name')} /></Field>
           <Field label="Fonte (obbligatoria)"><Input {...bindCsv('source_label')} /></Field>
           <Field label="URL della fonte"><Input {...bindCsv('source_url')} /></Field>
@@ -122,7 +125,7 @@ export function FinancialPage() {
     return () => clearTimeout(t);
   }, [q]);
   const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined), [category, query]);
-  const [showImport, setShowImport] = useState(false);
+  const [showImport, setShowImport] = useStickyState('financial.import.open', false);
   useContextPanel(
     <div className="space-y-2 text-steel-300">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Dati</h3>
@@ -296,7 +299,7 @@ const ALERT_LABEL: Record<AlertKind, string> = { new_data: 'Nuovo dato pubblicat
 function AlertsCard({ seriesId, unit }: { seriesId: number; unit: string }) {
   const list = useAsync(() => api.alerts(seriesId), [seriesId]);
   const [kind, setKind] = useState<AlertKind>('new_data');
-  const [threshold, setThreshold] = useState('');
+  const [threshold, setThreshold] = useDraft(`alert.${seriesId}.threshold`, '');
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   const [busy, setBusy] = useState(false);
 

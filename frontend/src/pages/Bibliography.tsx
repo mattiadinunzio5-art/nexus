@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
@@ -18,9 +19,9 @@ const TYPES = { book: 'Libro', article: 'Articolo', chapter: 'Capitolo', web: 'P
 
 const empty: Partial<SourceInput> = { source_type: 'book', title: '', authors: [], year: null, publisher: '', container: '', pages: '', doi: '', isbn: '', url: '', accessed_at: '', notes: '' };
 
-export function SourceForm({ initial, onSubmit, onCancel }: { initial?: Partial<SourceInput>; onSubmit: (d: Partial<SourceInput>) => Promise<void>; onCancel: () => void }) {
-  const [f, setF] = useState<Partial<SourceInput>>({ ...empty, ...initial });
-  const [authors, setAuthors] = useState((initial?.authors ?? []).join('; '));
+export function SourceForm({ initial, onSubmit, onCancel, draftKey = 'source.new' }: { initial?: Partial<SourceInput>; onSubmit: (d: Partial<SourceInput>) => Promise<void>; onCancel: () => void; draftKey?: string }) {
+  const [f, setF, clearF] = useDraft<Partial<SourceInput>>(`${draftKey}.fields`, { ...empty, ...initial });
+  const [authors, setAuthors, clearAuthors] = useDraft(`${draftKey}.authors`, (initial?.authors ?? []).join('; '));
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const set = (k: keyof SourceInput) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -32,6 +33,8 @@ export function SourceForm({ initial, onSubmit, onCancel }: { initial?: Partial<
     setError(undefined);
     try {
       await onSubmit({ ...f, year: f.year ? Number(f.year) : null, authors: authors.split(';').map((a) => a.trim()).filter(Boolean) });
+      clearF();
+      clearAuthors();
     } catch (err) {
       const e2 = err as ApiError;
       const details = Array.isArray(e2.details) ? (e2.details as { msg: string }[]).map((d) => d.msg).join('; ') : '';
@@ -57,7 +60,7 @@ export function SourceForm({ initial, onSubmit, onCancel }: { initial?: Partial<
       <Field label="Note" className="sm:col-span-2"><Textarea value={f.notes} onChange={set('notes')} /></Field>
       {error && <p role="alert" className="text-sm text-bad sm:col-span-2">{error}</p>}
       <div className="flex justify-end gap-2 sm:col-span-2">
-        <Button onClick={onCancel} disabled={busy}>Annulla</Button>
+        <Button onClick={() => { clearF(); clearAuthors(); onCancel(); }} disabled={busy}>Annulla</Button>
         <Button type="submit" variant="primary" disabled={busy}>Salva fonte</Button>
       </div>
     </form>
@@ -66,7 +69,9 @@ export function SourceForm({ initial, onSubmit, onCancel }: { initial?: Partial<
 
 export function BibliographyPage() {
   const { data, error, loading, reload } = useAsync(() => api.sources(), []);
-  const [editing, setEditing] = useState<Source | 'new'>();
+  const [editingKey, setEditingKey] = useStickyState<number | 'new' | undefined>('bibliography.editing', undefined);
+  const editing: Source | 'new' | undefined = editingKey === 'new' ? 'new' : data?.find((s) => s.id === editingKey);
+  const setEditing = (v: Source | 'new' | undefined) => setEditingKey(v === undefined ? undefined : v === 'new' ? 'new' : v.id);
   const [toDelete, setToDelete] = useState<Source>();
   const [actionError, setActionError] = useState<Error>();
   const [importMsg, setImportMsg] = useState<string>();
@@ -117,6 +122,8 @@ export function BibliographyPage() {
         <Card title={editing === 'new' ? 'Nuova fonte' : 'Modifica fonte'} className="mb-6">
           <SourceForm
             initial={editing === 'new' ? undefined : editing}
+            key={editing === 'new' ? 'new' : editing.id}
+            draftKey={editing === 'new' ? 'source.new' : `source.${editing.id}`}
             onCancel={() => setEditing(undefined)}
             onSubmit={async (d) => {
               if (editing === 'new') await api.createSource(d);

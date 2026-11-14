@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { errorText, toInt } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { useContextPanel } from '../state/AppState';
 
 const TYPE_COLOR: Record<EntityType, string> = {
@@ -113,17 +114,17 @@ function EntityPanel({ id, onChanged }: { id: number; onChanged: () => void }) {
 export function GraphPage() {
   const [params, setParams] = useSearchParams();
   const focus = toInt(params.get('focus') ?? '') ?? undefined;
-  const [depth, setDepth] = useState(2);
-  const [prov, setProv] = useState<string[]>([]);
-  const [relTypes, setRelTypes] = useState<string[]>([]);
+  const [depth, setDepth] = useStickyState('graph.depth', 2);
+  const [prov, setProv] = useStickyState<string[]>('graph.provenance', []);
+  const [relTypes, setRelTypes] = useStickyState<string[]>('graph.relationTypes', []);
   const [selected, setSelected] = useState<number | undefined>(focus);
   const graph = useAsync(() => api.graph({ focus, depth, provenance: prov, relation_types: relTypes }), [focus, depth, prov, relTypes]);
   const entities = useAsync(() => api.entities(), []);
   const sources = useAsync(() => api.sources(), []);
-  const [form, setForm] = useState<'entity' | 'relation' | 'path'>();
-  const [ent, setEnt] = useState({ entity_type: 'person', name: '', description: '', start_year: '', end_year: '' });
-  const [rel, setRel] = useState({ source_entity_id: '', target_entity_id: '', relation_type: 'influenced', provenance: 'user_hypothesis', source_id: '', evidence_note: '' });
-  const [pathSel, setPathSel] = useState({ a: '', b: '' });
+  const [form, setForm] = useStickyState<'entity' | 'relation' | 'path' | undefined>('graph.form', undefined);
+  const [ent, setEnt, clearEnt] = useDraft('graph.entity', { entity_type: 'person', name: '', description: '', start_year: '', end_year: '' });
+  const [rel, setRel, clearRel] = useDraft('graph.relation', { source_entity_id: '', target_entity_id: '', relation_type: 'influenced', provenance: 'user_hypothesis', source_id: '', evidence_note: '' });
+  const [pathSel, setPathSel] = useDraft('graph.path', { a: '', b: '' });
   const [pathResult, setPathResult] = useState<string>();
   const [err, setErr] = useState<string>();
 
@@ -143,6 +144,8 @@ export function GraphPage() {
     setErr(undefined);
     try {
       await fn();
+      if (form === 'entity') clearEnt();
+      if (form === 'relation') clearRel();
       setForm(undefined);
       await reloadAll();
     } catch (e) {

@@ -14,6 +14,7 @@ import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { formatDateTime } from '../lib/format';
 import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
+import { useDraft, useStickyState } from '../lib/useStickyState';
 import { useContextPanel } from '../state/AppState';
 
 const KINDS = {
@@ -76,7 +77,7 @@ function payload(kind: Kind, f: FormState): Record<string, unknown> {
 }
 
 function SimForm({ kind, onDone }: { kind: Kind; onDone: (id: number) => void }) {
-  const [f, setF] = useState<FormState>(DEFAULTS[kind]);
+  const [f, setF] = useDraft<FormState>(`lab.${kind}`, DEFAULTS[kind]);
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
   const series = useAsync(() => api.seriesList(), []);
@@ -145,7 +146,7 @@ function SimForm({ kind, onDone }: { kind: Kind; onDone: (id: number) => void })
 }
 
 export function LabPage() {
-  const [kind, setKind] = useState<Kind>('debt');
+  const [kind, setKind] = useStickyState<Kind>('lab.kind', 'debt');
   const sims = useAsync(() => api.simulations(), []);
   const navigate = useNavigate();
   useContextPanel(
