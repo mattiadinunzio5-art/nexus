@@ -1,0 +1,183 @@
+{
+ "piano-marshall": {
+  "title": "Il Piano Marshall (1947–1952)",
+  "subtitle": "Aiuti, istituzioni e ripresa europea: una sintesi delle fonti",
+  "sources": {
+   "CRS": {
+    "match": "The Marshall Plan: Design, Accomplishments, and Significance (R45079)"
+   },
+   "HOGAN": {
+    "match": "The Marshall Plan: America, Britain, and the Reconstruction of Western Europe, 1947-1952"
+   },
+   "MILWARD": {
+    "match": "The Reconstruction of Western Europe, 1945-51"
+   },
+   "PRICE": {
+    "match": "The Marshall Plan and its Meaning"
+   }
+  },
+  "documents": [
+   {
+    "file": "CRS-R45079-Marshall-Plan.pdf",
+    "title": "The Marshall Plan: Design, Accomplishments, and Significance (CRS R45079)",
+    "author": "Curt Tarnoff",
+    "source": "CRS"
+   }
+  ],
+  "sections": {
+   "abstract": "La ricerca ricostruisce il Piano Marshall (European Recovery Program, ERP) dalla proposta del giugno 1947 alla conclusione del programma nel 1952. L'obiettivo è sintetizzare fonti abbondanti senza perdere la provenienza dei dati: la cronologia legislativa, la distribuzione degli aiuti per paese, il funzionamento del programma e il ruolo dell'Organizzazione europea per la cooperazione economica (OECE), il confronto con l'andamento del PIL pro capite dei principali beneficiari. I fatti, ciascuno con la sua fonte, sono tenuti distinti dalle interpretazioni storiografiche, che sul peso economico del Piano restano divise.",
+   "introduction": "Il 5 giugno 1947, in un discorso all'Università di Harvard, il Segretario di Stato George C. Marshall propose un programma di aiuti per la ricostruzione europea [@CRS, p. 2]. La risposta europea fu rapida: il 12 luglio 1947 sedici paesi si riunirono a Parigi e istituirono il Comitato di cooperazione economica europea (CEEC), incaricato di raccogliere i dati sui fabbisogni dei paesi partecipanti [@CRS, p. 3].\n\nIl 19 dicembre 1947 il presidente Truman presentò il programma al Congresso [@CRS, p. 4]. Il Senato lo approvò il 13 marzo 1948 con 69 voti contro 17 e la Camera il 31 marzo con 329 voti contro 74; il 3 aprile 1948 entrò in vigore l'Economic Cooperation Act, titolo I del Foreign Assistance Act of 1948 [@CRS, p. 5].\n\nLa domanda di ricerca è duplice: quanto e a chi andarono gli aiuti, e che cosa si può affermare, sulla base dei dati disponibili, del loro rapporto con la ripresa economica europea. La seconda domanda è più difficile della prima, perché la crescita dei paesi beneficiari dipende da molti fattori contemporanei.",
+   "methodology": "La fonte principale è il rapporto del Congressional Research Service R45079 [@CRS], caricato in NEXUS e interrogato con Ask the Archive: le affermazioni riportate tra virgolette sono citazioni testuali, con l'indicazione della pagina. Le cifre per paese provengono dalla Tabella 2 dello stesso rapporto, che riprende dati USAID del 1971 [@CRS, p. 9]; i fondi per periodo dalla Tabella 1 [@CRS, p. 7].\n\nPer il PIL pro capite si usa il Maddison Project Database 2023, distribuito da Our World in Data con licenza CC BY 4.0. Le serie di Italia, Francia, Germania e Regno Unito sono confrontate sul periodo 1946–1955 e ribasate a 100 sul 1946, così da confrontare i ritmi di crescita e non i livelli. Le correlazioni non sono interpretate come rapporti di causa ed effetto.\n\nLa storiografia è rappresentata da Hogan [@HOGAN] e Milward [@MILWARD], scelti perché sostengono letture diverse dell'impatto del Piano; Price [@PRICE] offre una delle prime valutazioni complessive.",
+   "analysis": "Secondo la Tabella 2 del CRS, tra il 3 aprile 1948 e il 30 giugno 1952 gli aiuti ammontarono a 13.325,8 milioni di dollari correnti [@CRS, p. 9]. Il Regno Unito ricevette 3.189,8 milioni (23,9%), la Francia 2.713,6 (20,4%), l'Italia 1.508,8 (11,3%), la Germania Ovest 1.390,6 (10,4%) e i Paesi Bassi 1.083,5 (8,1%): cinque paesi assorbirono quasi tre quarti del totale (Tabella 1).\n\nLa Tabella 1 dello stesso rapporto indica i fondi messi a disposizione dell'Economic Cooperation Administration (ECA): 12.534,9 milioni tra il 1948 e il 1951, di cui 10.902,4 di stanziamenti diretti [@CRS, p. 7]. Nella seconda metà del 1951 l'ECA confluì nella Mutual Security Agency [@CRS, p. 7]. Il programma cominciò a ridursi già nel dicembre 1950, quando furono sospesi gli aiuti al Regno Unito [@CRS, p. 15].\n\nUna parte importante del meccanismo erano i fondi di contropartita, in valuta nazionale, che i governi potevano usare per progetti approvati dall'ECA; nel caso britannico furono invece restituiti al Tesoro per contribuire al pareggio di bilancio [@CRS, p. 12]. L'assistenza tecnica assorbì meno dello 0,5% degli aiuti, ma oltre 6.000 europei si recarono negli Stati Uniti per studiare i metodi di produzione [@CRS, p. 12].\n\nSul piano istituzionale, i paesi partecipanti costituirono l'OECE per mantenere il carattere «congiunto» del programma [@CRS, p. 10]. L'OECE funzionò anche come strumento di pressione reciproca: nell'aprile 1950 gli aiuti alla Grecia furono temporaneamente sospesi per ottenere misure interne [@CRS, p. 14]. Nel 1961 l'OECE si trasformò nell'OCSE [@CRS, p. 19].",
+   "evidence": "Il rapporto del CRS riconosce che la durata «ufficiale» del Piano e gli importi spesi sono oggetto di disaccordo, e riporta stime comprese tra 10,3 e 13,6 miliardi di dollari [@CRS, p. 8]. Espressi in dollari del 2017, i circa 13,3 miliardi corrispondono a una stima di 143 miliardi [@CRS, p. 23].\n\nSecondo il CRS, alla fine del 1951 la produzione industriale dei paesi partecipanti superava del 35% il livello del 1938, oltre l'obiettivo del 30% fissato dal programma, ed era superiore del 55% a quella di soli quattro anni prima [@CRS, p. 16]. Le esportazioni dei paesi OECE verso il Nord America passarono dal 14% delle importazioni nel 1947 a quasi il 50% nel 1952 [@CRS, p. 17].\n\nNel Maddison Project Database il PIL pro capite italiano passa da 3.805 dollari internazionali (prezzi 2011) nel 1946 a 4.814 nel 1948 e a 6.371 nel 1952. Il confronto tra i quattro principali beneficiari mostra una crescita generalizzata nello stesso periodo, con ritmi diversi (Figura 1).",
+   "counterarguments": "La crescita contemporanea agli aiuti non dimostra che gli aiuti ne siano la causa. In Italia il PIL pro capite era già salito da 3.805 a 4.498 dollari tra il 1946 e il 1947, prima dell'arrivo dei fondi ERP; e i paesi che ricevettero di più, come il Regno Unito, non sono quelli che crebbero più in fretta nel periodo considerato (Figura 1).\n\nLa storiografia è divisa. Milward sostiene che la ripresa europea fosse già avviata prima del Piano e ne ridimensiona il peso economico diretto [@MILWARD]. Hogan legge il Piano soprattutto come un progetto politico, volto a riorganizzare l'economia dell'Europa occidentale secondo un modello di integrazione ispirato all'esperienza americana [@HOGAN]. Queste posizioni sono qui riassunte e vanno verificate sui testi originali prima di essere citate con il numero di pagina.\n\nAnche le fonti quantitative vanno lette con cautela: le cifre del CRS sono in dollari correnti e il totale cambia a seconda dei programmi inclusi [@CRS, p. 8].",
+   "conclusions": "Le fonti consentono di ricostruire con precisione la cronologia legislativa e la distribuzione degli aiuti: circa 13,3 miliardi di dollari, concentrati per oltre il 60% su Regno Unito, Francia, Italia e Germania Ovest [@CRS, p. 9]. Il nesso tra aiuti e crescita resta invece una questione interpretativa: i dati sul PIL sono compatibili sia con un effetto rilevante degli aiuti sia con una ripresa già in corso, e solo un confronto più fine (per settore, per anno, per paese) potrebbe distinguere le due ipotesi.\n\nIl contributo meno controverso del Piano appare quello istituzionale e organizzativo: l'OECE, la pratica della cooperazione economica tra paesi europei e l'uso condizionato degli aiuti [@CRS, p. 10].",
+   "limitations": "Le cifre sono in dollari correnti e non sono deflazionate. Le stime del totale variano tra le fonti a seconda della durata considerata e dei programmi inclusi. Il PIL Maddison è una ricostruzione storica con margini di incertezza. La fonte principale è un rapporto del Congresso statunitense, quindi riflette in parte un punto di vista americano. Le opere di Hogan, Milward e Price sono citate in forma sintetica e non ancora consultate direttamente."
+  },
+  "embeds": {
+   "analysis": [
+    {
+     "type": "table_doc",
+     "doc_title": "Aiuti ERP per paese beneficiario, 3 aprile 1948 – 30 giugno 1952",
+     "caption": "Aiuti ERP per paese beneficiario, 3 aprile 1948 – 30 giugno 1952 (milioni di dollari correnti)"
+    }
+   ],
+   "evidence": [
+    {
+     "type": "compare",
+     "series": [
+      "GDP per capita — Italy",
+      "GDP per capita — France",
+      "GDP per capita — Germany",
+      "GDP per capita — United Kingdom"
+     ],
+     "caption": "PIL pro capite di Italia, Francia, Germania e Regno Unito (1946 = 100)",
+     "start_year": 1946,
+     "end_year": 1955,
+     "rebase": true
+    }
+   ]
+  },
+  "quotes": [
+   {
+    "section": "evidence",
+    "question": "What were the top recipients of Marshall Plan aid?",
+    "contains": "top recipients",
+    "page": "p. 8",
+    "comment": "Una seconda stima, citata dallo stesso rapporto, arrotonda diversamente le quote:"
+   }
+  ]
+ },
+ "fse-1958-1989": {
+  "title": "Il Fondo Sociale Europeo dalle origini al 1989",
+  "subtitle": "Cosa sappiamo, cosa non sappiamo e dove cercarlo",
+  "sources": {
+   "IE": {
+    "create": {
+     "source_type": "document",
+     "title": "Report No. 10 – Youth Employment. Appendix: Aid from the European Social Fund",
+     "authors": [
+      "Houses of the Oireachtas, Joint Committee on the Secondary Legislation of the European Communities"
+     ],
+     "year": 1978,
+     "notes": "Rapporto del 3 maggio 1978."
+    }
+   },
+   "UK": {
+    "create": {
+     "source_type": "document",
+     "title": "European Social Fund. Written answer, HC Deb 31 July 1984 vol 65 c166W",
+     "authors": [
+      "House of Commons"
+     ],
+     "year": 1984,
+     "url": "https://api.parliament.uk/historic-hansard/written_answers/1984/jul/31/european-social-fund-1"
+    }
+   },
+   "ESFDE": {
+    "create": {
+     "source_type": "web",
+     "title": "History of the ESF",
+     "authors": [
+      "Bundesministerium für Arbeit und Soziales"
+     ],
+     "url": "https://www.esf.de/portal/EN/About-the-ESF/history-of-the-esf/content.html"
+    }
+   },
+   "REG": {
+    "match": "Regolamento (CEE) n. 2396/71, EUR-Lex"
+   },
+   "DEC83": {
+    "match": "Decisione 83/516/CEE (testo pubblicato)"
+   }
+  },
+  "documents": [
+   {
+    "file": "Oireachtas-1978-Youth-Employment-Appendix.txt",
+    "title": "Report No. 10 – Youth Employment, Appendix (Oireachtas, 1978)",
+    "author": "Houses of the Oireachtas",
+    "source": "IE"
+   },
+   {
+    "file": "Hansard-1984-07-31-European-Social-Fund.txt",
+    "title": "European Social Fund — risposta scritta, Camera dei Comuni, 31 luglio 1984",
+    "author": "House of Commons",
+    "source": "UK"
+   }
+  ],
+  "sections": {
+   "abstract": "La ricerca ricostruisce ciò che si sa del Fondo Sociale Europeo (FSE) tra la sua istituzione nel 1957 e la fine degli anni Ottanta. Si tratta di un tema con fonti scarse: in rete sono accessibili i testi istitutivi e di riforma, alcune risposte parlamentari e pochi dati isolati, mentre mancano serie complete per paese. Il lavoro separa ciò che è documentato da ciò che non lo è, e per ogni lacuna indica l'archivio in cui potrebbe essere colmata. Nessun dato mancante è stato stimato.",
+   "introduction": "Il Fondo Sociale Europeo fu istituito dall'articolo 123 del Trattato di Roma, firmato il 25 marzo 1957, con lo scopo di migliorare le possibilità di occupazione dei lavoratori nel mercato comune e di contribuire così al miglioramento del tenore di vita [@IE, par. 1]. Il suo compito era rendere più facile l'occupazione dei lavoratori e aumentarne la mobilità geografica e professionale all'interno della Comunità [@IE, par. 1].\n\nIl primo regolamento del Fondo fu pubblicato nel 1960. Poco prima dell'adesione dell'Irlanda alla Comunità, una revisione portò alla nascita di un Fondo riformato con la Decisione del Consiglio 71/66/CEE del 1° febbraio 1971 [@IE, par. 1], attuata dal Regolamento (CEE) n. 2396/71 [@REG]. Il «nuovo Fondo» entrò in funzione il 1° maggio 1972 [@IE, par. 1]. Seguirono una revisione generale nel 1977 [@IE, par. 8] e la Decisione 83/516/CEE, che destinò almeno il 75% degli stanziamenti ai giovani [@DEC83].\n\nLa domanda di ricerca è quindi metodologica oltre che storica: che cosa si può ricostruire del Fondo con le fonti accessibili, e che cosa richiede invece una ricerca d'archivio.",
+   "methodology": "Sono state usate solo fonti accessibili in rete: una risposta scritta della Camera dei Comuni del 1984 [@UK], il Report No. 10 – Youth Employment di una commissione del Parlamento irlandese (1978) [@IE], la pagina storica del Ministero federale del Lavoro tedesco [@ESFDE] e i riferimenti ai testi giuridici in EUR-Lex. I documenti sono stati caricati in NEXUS e interrogati con Ask the Archive: le frasi tra virgolette sono citazioni testuali con la loro collocazione.\n\nLe date delle decisioni e dei regolamenti sono state confrontate con più fonti; quelle tratte da riferimenti secondari restano da verificare sui testi originali in EUR-Lex. La quota del Fondo sul bilancio comunitario è stata importata come serie storica per poterla rappresentare in un grafico (Figura 1).",
+   "analysis": "Il quadro giuridico. La riforma del 1971 divise il Fondo in tre bilanci fissati ogni anno in anticipo: gli interventi dell'articolo 4, quelli dell'articolo 5, e una quota molto più piccola per studi preparatori e progetti pilota [@IE, par. 2]. L'articolo 4 riguardava i problemi di occupazione causati da politiche comunitarie o diffusi in tutta la Comunità, per categorie designate dal Consiglio [@IE, par. 3]: nel 1978 erano cinque, cioè lavoratori del tessile e dell'abbigliamento, persone che lasciavano l'agricoltura, lavoratori migranti, giovani sotto i 25 anni e donne [@IE, par. 4]. L'articolo 5 copriva soprattutto le regioni meno sviluppate o in declino, con priorità alla formazione dei disoccupati [@IE, par. 5].\n\nIl finanziamento. La decisione del 1971 prevedeva un contributo del Fondo pari al 50% delle spese ammissibili per le operazioni delle autorità pubbliche [@IE, par. 7]. Dopo la revisione del 1977, nelle cinque regioni meno sviluppate, tra cui tutta l'Irlanda, la quota salì di 10 punti dal 1° gennaio 1978: per le autorità pubbliche irlandesi, il 55% invece del 50% [@IE, par. 7].\n\nI dati quantitativi. La quota del Fondo sul bilancio della Comunità è nota per il periodo 1973–1984 [@UK]: 5,9% nel 1973, 6,5% nel 1974, poi un minimo dell'1,9% nel 1977, anno della revisione del Fondo, e una risalita fino al 7,9% nel 1983 (Figura 1). Per gli anni precedenti esistono solo dati isolati, come le risorse complessive di circa 420 milioni di unità di conto tra il 1961 e il 1972 [@ESFDE].",
+   "evidence": "La fonte britannica precisa che le cifre derivano dai bilanci annuali pubblicati nella Gazzetta ufficiale e riguardano la spesa, non gli impegni [@UK]. Fino alla revisione del 1983 i progetti potevano durare fino a tre anni, quindi i pagamenti di un anno riflettono impegni presi anche negli anni precedenti [@UK].\n\nIl rapporto irlandese mostra come il Fondo fosse percepito da uno Stato appena entrato nella Comunità: un nuovo Fondo «molto più dinamico» del precedente, destinato ad avere un ruolo maggiore nella politica dell'occupazione [@IE, par. 1].",
+   "counterarguments": "Le cifre del bilancio non misurano direttamente l'attività del Fondo. Essendo dati di spesa e non di impegno, il calo del 1977 può riflettere la revisione delle regole e i tempi dei pagamenti più che una minore attività [@UK]. Inoltre la quota sul bilancio dipende anche dalla crescita delle altre voci di spesa comunitarie, in particolare della politica agricola.\n\nLe fonti disponibili sono soprattutto britanniche e irlandesi: raccontano il Fondo dal punto di vista di due Stati entrati nel 1973, non da quello dei sei paesi fondatori.",
+   "conclusions": "Il quadro giuridico del Fondo è ricostruibile con buona precisione dalle fonti accessibili: istituzione nel 1957, riforma del 1971 operativa dal 1972, revisione del 1977, decisione del 1983. Il quadro quantitativo è invece frammentario: una sola serie (1973–1984) [@UK] e pochi dati isolati [@ESFDE].\n\nIl risultato principale della ricerca è quindi una mappa precisa delle lacune e degli archivi da consultare. Per un tema con fonti scarse, dichiarare con esattezza che cosa non si sa è parte del risultato, non un fallimento.",
+   "limitations": "Fonti in prevalenza britanniche e irlandesi; date in parte tratte da riferimenti secondari, da verificare su EUR-Lex; nessun dato stimato per colmare i vuoti; il periodo 1985–1989, compresa la riforma dei Fondi strutturali del 1988, non è coperto da dati quantitativi."
+  },
+  "chapters": [
+   {
+    "title": "Cosa non sappiamo",
+    "body": "Mancano gli importi annui del Fondo per paese tra il 1958 e il 1972 e il numero di lavoratori aiutati: per gli anni precedenti al 1973 la Camera dei Comuni dichiara che i dati si potrebbero ottenere solo «a costo sproporzionato» [@UK]. Mancano anche le relazioni annuali complete dal 1972, una serie omogenea per tutti gli Stati membri, i dati sulla ripartizione tra articolo 4 e articolo 5 e qualsiasi dato quantitativo per gli anni 1985–1989.",
+    "after": "counterarguments"
+   },
+   {
+    "title": "Dove cercarlo",
+    "body": "- Importi per paese 1958–1972 e lavoratori aiutati: Archivi storici dell'Unione europea, Istituto universitario europeo di Firenze (fondi della Commissione, Direzione generale Affari sociali).\n- Relazioni annuali sulle attività del Fondo dal 1972: Archive of European Integration, Università di Pittsburgh (documenti digitalizzati).\n- Testi completi del Regolamento n. 9/1960 e delle Decisioni 71/66, 77/801 e 83/516: EUR-Lex.\n- Dati dagli anni Novanta: relazioni della Commissione e Cohesion Open Data Platform.",
+    "after": "counterarguments"
+   }
+  ],
+  "embeds": {
+   "analysis": [
+    {
+     "type": "series",
+     "series": "Quota del Fondo Sociale Europeo sul bilancio della Comunità",
+     "caption": "Quota del Fondo Sociale Europeo sul bilancio della Comunità, 1973–1984 (%)"
+    }
+   ],
+   "Cosa non sappiamo": [
+    {
+     "type": "table_doc",
+     "doc_title": "Gli altri numeri disponibili in rete",
+     "caption": "I dati isolati disponibili in rete"
+    }
+   ]
+  },
+  "quotes": [
+   {
+    "section": "evidence",
+    "question": "When was the new Fund brought into operation?",
+    "contains": "brought into operation",
+    "page": "par. 1",
+    "comment": "Il rapporto irlandese data con precisione l'entrata in funzione:"
+   },
+   {
+    "section": "Cosa non sappiamo",
+    "question": "back to the foundation of the social fund disproportionate cost",
+    "contains": "disproportionate cost",
+    "page": "c166W",
+    "comment": "La risposta britannica lo dichiara esplicitamente:"
+   }
+  ]
+ }
+}
