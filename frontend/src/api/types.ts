@@ -23,6 +23,7 @@ export interface Project {
   is_demo: boolean;
   research_question?: string;
   objectives?: string;
+  hypotheses?: string;
   scope?: string;
   period_start?: number | null;
   period_end?: number | null;
@@ -814,7 +815,7 @@ export interface LicenseEntry {
 }
 export interface LicenseRegistry { version: string; updated: string; library_licenses: string[]; licenses: LicenseEntry[] }
 
-export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'scope' | 'period_start' | 'period_end'>>;
+export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'hypotheses' | 'scope' | 'period_start' | 'period_end'>>;
 
 export interface ReviewIssue { kind: 'uncited' | 'overclaim' | 'inconsistency' | 'clarity'; quote: string; comment: string }
 export interface SectionReview { mode: 'ai' | 'local'; provider: string; model?: string; issues: ReviewIssue[]; note: string }

@@ -130,6 +130,7 @@ def overview(db: Session, user: User, project_id: int) -> dict:
     checks = [
         {"key": "question", "label": "Domanda di ricerca definita", "ok": bool(project.research_question.strip())},
         {"key": "objectives", "label": "Obiettivi definiti", "ok": bool(project.objectives.strip())},
+        {"key": "hypotheses", "label": "Ipotesi di lavoro formulate", "ok": bool(project.hypotheses.strip())},
         {"key": "period", "label": "Periodo indicato", "ok": project.period_start is not None and project.period_end is not None},
         {"key": "scope", "label": "Perimetro (paesi, settori) indicato", "ok": bool(project.scope.strip())},
         {"key": "documents", "label": "Almeno un documento collegato", "ok": counts["document"] > 0},

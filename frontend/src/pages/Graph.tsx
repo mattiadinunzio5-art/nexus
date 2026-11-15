@@ -1,3 +1,5 @@
+import { useScope } from '../state/Scope';
+import { ProjectLinkButton, linkToActiveProject } from '../components/ProjectLink';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
@@ -83,14 +85,19 @@ function GraphCanvas({ data, selected, onSelect }: { data: GraphData; selected?:
 function EntityPanel({ id, onChanged }: { id: number; onChanged: () => void }) {
   const ent = useAsync(() => api.entity(id), [id]);
   const rels = useAsync(() => api.entityRelations(id), [id]);
-  const names = useAsync(() => api.entities(), []);
-  const nameOf = new Map((names.data ?? []).map((e) => [e.id, e.name]));
+  // Nomi letti uno per uno: le entità collegate possono essere fuori da qualsiasi elenco (Biblioteca).
+  const names = useAsync(async () => {
+    const ids = [...new Set((rels.data ?? []).flatMap((r) => [r.source_entity_id, r.target_entity_id]))];
+    return new Map(await Promise.all(ids.map(async (i) => [i, await api.entity(i).then((x) => x.name).catch(() => `#${i}`)] as const)));
+  }, [rels.data]);
+  const nameOf = names.data ?? new Map<number, string>();
   if (!ent.data) return <Loading />;
   const e = ent.data;
   return (
     <div className="space-y-3">
       <div>
         <h3 className="text-base font-semibold text-paper">{e.name}</h3>
+        <ProjectLinkButton type="entity" id={e.id} onChange={onChanged} />
         <p className="text-xs text-steel-500">{ENTITY_TYPES[e.entity_type]}{e.start_year !== null && ` · ${e.start_year}${e.end_year !== null ? `–${e.end_year}` : ''}`}</p>
       </div>
       {e.description && <p className="text-steel-300">{e.description}</p>}
@@ -102,6 +109,9 @@ function EntityPanel({ id, onChanged }: { id: number; onChanged: () => void }) {
             {nameOf.get(r.source_entity_id)} <span className="text-gold-300">{RELATION_TYPES[r.relation_type].toLowerCase()}</span> {nameOf.get(r.target_entity_id)}
             <span className="block text-[11px] text-steel-500">
               <Badge tone={r.provenance === 'sourced' ? 'ok' : r.provenance === 'ai_hypothesis' ? 'bad' : 'warn'}>{PROVENANCE[r.provenance]}</Badge> {r.evidence_label}
+              {r.evidence_note && <span className="block italic text-steel-400">Motivazione: {r.evidence_note}</span>}
+              {r.ai_run_id && <Link to={`/war-room/runs/${r.ai_run_id}`} className="block text-gold-300 hover:underline">Proposta dalla ricerca #{r.ai_run_id}</Link>}
+              <span className="mt-0.5 inline-block"><ProjectLinkButton type="relation" id={r.id} /></span>
               <button className="ml-2 hover:text-bad" onClick={async () => { await api.deleteRelation(r.id); await rels.reload(); onChanged(); }} aria-label="Elimina relazione"><Trash2 className="inline size-3" /></button>
             </span>
           </li>
@@ -119,7 +129,9 @@ export function GraphPage() {
   const [prov, setProv] = useStickyState<string[]>('graph.provenance', []);
   const [relTypes, setRelTypes] = useStickyState<string[]>('graph.relationTypes', []);
   const [selected, setSelected] = useState<number | undefined>(focus);
-  const graph = useAsync(() => api.graph({ focus, depth, provenance: prov, relation_types: relTypes }), [focus, depth, prov, relTypes]);
+  const scope = useScope();
+  const graph = useAsync(() => api.graph({ focus, depth, provenance: prov, relation_types: relTypes, project_id: scope.params.project_id }),
+    [focus, depth, prov, relTypes, scope.params.project_id]);
   const entities = useAsync(() => api.entities(), []);
   const [form, setForm] = useStickyState<'entity' | 'relation' | 'path' | undefined>('graph.form', undefined);
   const [ent, setEnt, clearEnt] = useDraft('graph.entity', { entity_type: 'person', name: '', description: '', start_year: '', end_year: '' });
@@ -175,7 +187,7 @@ export function GraphPage() {
           </div>
           <div className="mt-3 flex justify-end gap-2">
             <Button onClick={() => setForm(undefined)}>Annulla</Button>
-            <Button variant="primary" disabled={!ent.name.trim()} onClick={() => submit(() => api.createEntity({ ...ent, entity_type: ent.entity_type as EntityType, start_year: toInt(ent.start_year), end_year: toInt(ent.end_year) }))}>Crea entità</Button>
+            <Button variant="primary" disabled={!ent.name.trim()} onClick={() => submit(async () => { const x = await api.createEntity({ ...ent, entity_type: ent.entity_type as EntityType, start_year: toInt(ent.start_year), end_year: toInt(ent.end_year) }); await linkToActiveProject(scope.projectId, 'entity', x.id); return x; })}>Crea entità</Button>
           </div>
         </Card>
       )}
@@ -192,7 +204,7 @@ export function GraphPage() {
           <div className="mt-3 flex justify-end gap-2">
             <Button onClick={() => setForm(undefined)}>Annulla</Button>
             <Button variant="primary" disabled={!rel.source_entity_id || !rel.target_entity_id}
-              onClick={() => submit(() => api.createRelation({ ...rel, source_entity_id: Number(rel.source_entity_id), target_entity_id: Number(rel.target_entity_id), source_id: rel.source_id ? Number(rel.source_id) : null }))}>Crea relazione</Button>
+              onClick={() => submit(async () => { const x = await api.createRelation({ ...rel, source_entity_id: Number(rel.source_entity_id), target_entity_id: Number(rel.target_entity_id), source_id: rel.source_id ? Number(rel.source_id) : null }); await linkToActiveProject(scope.projectId, 'relation', x.id); return x; })}>Crea relazione</Button>
           </div>
         </Card>
       )}

@@ -8,7 +8,7 @@ _setLangForTests('it');
 
 afterEach(() => {
   cleanup();
-  try { sessionStorage.clear(); } catch { /* jsdom senza storage */ }
+  try { sessionStorage.clear(); localStorage.removeItem('nexus.scope'); } catch { /* jsdom senza storage */ }
   vi.restoreAllMocks();
 });
 

@@ -24,6 +24,7 @@ import { StartPage } from './pages/Start';
 import { DataPolicyPage } from './pages/DataPolicy';
 import { SourcesPage } from './pages/Sources';
 import { AppStateProvider } from './state/AppState';
+import { ScopeProvider } from './state/Scope';
 import { AuthProvider } from './state/Auth';
 import { AccountPage, AdminPage } from './pages/Account';
 
@@ -31,6 +32,7 @@ export function App() {
   return (
     <AuthProvider>
     <AppStateProvider>
+    <ScopeProvider>
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
@@ -78,6 +80,7 @@ export function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
+    </ScopeProvider>
     </AppStateProvider>
     </AuthProvider>
   );

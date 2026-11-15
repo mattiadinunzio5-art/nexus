@@ -1,7 +1,10 @@
+import { useScope, scopeKey } from '../state/Scope';
+import { ProjectLinkButton, linkToActiveProject } from '../components/ProjectLink';
+import { ScopeNote } from '../components/ScopeNote';
 import { LicenseBox } from '../components/License';
 import { HistoryTabs } from '../components/HistoryTabs';
 import { useDebounced, useDraft, useStickyState } from '../lib/useStickyState';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, Network, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '../api/client';
@@ -115,9 +118,12 @@ export function EventForm({ initial, onSubmit, onCancel, draftKey = 'event.new' 
 export function EventsPage() {
   const [filters, setFilters] = useStickyState('history.filters', { q: '', category: '', country: '', from_year: '', to_year: '' });
   const applied = useDebounced(filters);
+  const scope = useScope();
+  const [pages, setPages] = useState(1);
+  useEffect(() => setPages(1), [applied, scopeKey(scope.params)]);
   const { data, error, loading, reload } = useAsync(
-    () => api.events({ ...applied, from_year: toInt(applied.from_year) ?? undefined, to_year: toInt(applied.to_year) ?? undefined }),
-    [applied],
+    () => api.events({ ...applied, ...scope.params, limit: EVENTS_PAGE * pages, from_year: toInt(applied.from_year) ?? undefined, to_year: toInt(applied.to_year) ?? undefined }),
+    [applied, scopeKey(scope.params), pages],
   );
   const [creating, setCreating] = useStickyState('history.creating', false);
   const navigate = useNavigate();
@@ -130,7 +136,7 @@ export function EventsPage() {
       <HistoryTabs />
       {creating && (
         <Card title="Nuovo evento" className="mb-6">
-          <EventForm onCancel={() => setCreating(false)} onSubmit={async (d) => { const e = await api.createEvent(d); setCreating(false); navigate(`/history/events/${e.id}`); }} />
+          <EventForm onCancel={() => setCreating(false)} onSubmit={async (d) => { const e = await api.createEvent(d); await linkToActiveProject(scope.projectId, 'event', e.id); setCreating(false); navigate(`/history/events/${e.id}`); }} />
         </Card>
       )}
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
@@ -143,9 +149,10 @@ export function EventsPage() {
         <Input aria-label="Dall'anno" placeholder="Dall'anno" inputMode="numeric" value={filters.from_year} onChange={set('from_year')} />
         <Input aria-label="All'anno" placeholder="All'anno" inputMode="numeric" value={filters.to_year} onChange={set('to_year')} />
       </div>
+      <div className="mb-2"><ScopeNote /></div>
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
-      {data?.length === 0 && <EmptyState>Nessun evento corrispondente.</EmptyState>}
+      {data?.length === 0 && <EmptyState>{scope.mode === 'project' ? 'Nessun evento collegato al progetto: aprine uno e usa «Aggiungi al progetto».' : 'Nessun evento corrispondente.'}</EmptyState>}
       <ul className="space-y-2">
         {data?.map((e) => (
           <li key={e.id}>
@@ -162,9 +169,14 @@ export function EventsPage() {
           </li>
         ))}
       </ul>
+      {data && data.length >= EVENTS_PAGE * pages && pages * EVENTS_PAGE < 500 && (
+        <div className="mt-3 flex justify-center"><Button onClick={() => setPages((n) => n + 1)} disabled={loading}>{loading ? 'Caricamento…' : 'Carica altri eventi'}</Button></div>
+      )}
     </>
   );
 }
+
+const EVENTS_PAGE = 100;
 
 function Section({ title, text }: { title: string; text: string }) {
   if (!text) return null;
@@ -229,6 +241,7 @@ function EventDetail({ id }: { id: number }) {
       <PageHeader eyebrow={<Link to="/history" className="hover:underline">Historical Intelligence</Link>} title={e.title} description={e.date_label}
         actions={!editing && (
           <>
+            <ProjectLinkButton type="event" id={e.id} />
             <Link to={`/time-machine?event=${e.id}&year=${e.start_year}`} className="inline-flex items-center rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800">Apri nella Time Machine</Link>
             {e.entity_id && <Link to={`/graph?focus=${e.entity_id}`} className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-3 py-1.5 text-sm text-paper hover:bg-ink-800"><Network className="size-4" aria-hidden /> Grafo</Link>}
             <Button onClick={() => setEditing(true)}><Pencil className="size-4" aria-hidden /> Modifica</Button>

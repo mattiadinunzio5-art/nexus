@@ -29,6 +29,8 @@ def upgrade() -> None:
         sa.UniqueConstraint("project_id", "item_type", "item_id", name="uq_project_item"),
     )
     op.create_index("ix_project_items_project_id", "project_items", ["project_id"])
+    with op.batch_alter_table("projects") as b:
+        b.add_column(sa.Column("hypotheses", sa.Text(), nullable=False, server_default=""))
     op.create_index("ix_project_items_item", "project_items", ["item_type", "item_id"])
     # I documenti già assegnati a un progetto diventano elementi del progetto.
     op.execute("INSERT INTO project_items (project_id, item_type, item_id, note, created_at, updated_at) "
@@ -36,6 +38,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    with op.batch_alter_table("projects") as b:
+        b.drop_column("hypotheses")
     op.drop_index("ix_project_items_item", table_name="project_items")
     op.drop_index("ix_project_items_project_id", table_name="project_items")
     op.drop_table("project_items")

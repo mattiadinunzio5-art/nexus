@@ -1,3 +1,5 @@
+import { useScope, scopeKey } from '../state/Scope';
+import { ScopeNote } from '../components/ScopeNote';
 import { locale } from '../i18n';
 import { HistoryTabs } from '../components/HistoryTabs';
 import { useEffect, useState } from 'react';
@@ -36,15 +38,15 @@ export function TimeMachinePage() {
   useEffect(() => { setDraftCountry(country); }, [country]);
   const category = params.get('category') ?? '';
   const eventId = params.get('event') ?? '';
-  const mine = params.get('origin') === 'mine';
+  const scope = useScope();
   const update = (patch: Record<string, string>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
     setParams(next, { replace: true });
   };
   const { data, error, loading, reload } = useAsync(
-    () => api.timeline({ as_of_year: toInt(year) ?? undefined, hindsight, country: country || undefined, category: category || undefined, event_id: eventId ? Number(eventId) : undefined, origin: mine ? 'mine' : undefined }),
-    [year, hindsight, country, category, eventId, mine],
+    () => api.timeline({ as_of_year: toInt(year) ?? undefined, hindsight, country: country || undefined, category: category || undefined, event_id: eventId ? Number(eventId) : undefined, ...scope.params }),
+    [year, hindsight, country, category, eventId, scopeKey(scope.params)],
   );
 
   useContextPanel(
@@ -83,10 +85,7 @@ export function TimeMachinePage() {
               <input type="checkbox" checked={hindsight} onChange={(e) => update({ hindsight: e.target.checked ? '1' : '' })} />
               Senno di poi (mostra conoscenze successive)
             </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={mine} onChange={(e) => update({ origin: e.target.checked ? 'mine' : '' })} />
-              Solo i miei eventi (senza la Biblioteca)
-            </label>
+            <ScopeNote />
           </div>
         </div>
         {eventId && <p className="mt-2 text-xs text-steel-400">Filtrato su un solo evento. <button className="text-gold-300 hover:underline" onClick={() => update({ event: '' })}>Mostra tutti</button></p>}

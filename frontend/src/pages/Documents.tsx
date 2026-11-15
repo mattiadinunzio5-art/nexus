@@ -1,3 +1,6 @@
+import { useScope, scopeKey } from '../state/Scope';
+import { ProjectLinkButton } from '../components/ProjectLink';
+import { ScopeNote } from '../components/ScopeNote';
 import { LicenseBox } from '../components/License';
 import { recalledFile, rememberFile, useDraft, useFileDraft, useStickyState } from '../lib/useStickyState';
 import { useRef, useState, type FormEvent } from 'react';
@@ -30,7 +33,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle, clearTitle] = useDraft('documents.upload.title', '');
   const [author, setAuthor, clearAuthor] = useDraft('documents.upload.author', '');
   const [category, setCategory, clearCategory] = useDraft<keyof typeof CATEGORY_LABEL>('documents.upload.category', 'source_material');
-  const [projectId, setProjectId] = useStickyState('documents.upload.project', '');
+  const { projectId: activeProject } = useScope();
+  // Con un progetto attivo, il caricamento va lì per impostazione predefinita.
+  const [projectId, setProjectId] = useStickyState('documents.upload.project', activeProject ? String(activeProject) : '');
   const projects = useAsync(() => api.projects('active'), []);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
@@ -127,7 +132,8 @@ function GutenbergForm({ onDone }: { onDone: () => void }) {
 
 export function DocumentsPage() {
   const [category, setCategory] = useStickyState('documents.category', '');
-  const { data, error, loading, reload } = useAsync(() => api.documents({ category }), [category]);
+  const scope = useScope();
+  const { data, error, loading, reload } = useAsync(() => api.documents({ category, ...scope.params }), [category, scopeKey(scope.params)]);
   const [toDelete, setToDelete] = useState<DocumentInfo>();
   const [showGutenberg, setShowGutenberg] = useStickyState('documents.gutenberg.open', false);
 
@@ -157,6 +163,7 @@ export function DocumentsPage() {
           {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
         <Link to="/research" className="text-sm text-gold-300 hover:underline">Ask the Archive →</Link>
+        <ScopeNote />
       </div>
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
@@ -296,7 +303,8 @@ export function DocumentDetailPage() {
   const d = doc.data!;
   return (
     <>
-      <PageHeader eyebrow="Documento" title={d.title} description={`${d.filename} · ${d.kind.toUpperCase()} · ${d.chunk_count} segmenti`} />
+      <PageHeader eyebrow="Documento" title={d.title} description={`${d.filename} · ${d.kind.toUpperCase()} · ${d.chunk_count} segmenti`}
+        actions={<ProjectLinkButton type="document" id={d.id} />} />
       <Card title="Collegamento bibliografico" className="mb-4">
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Scheda bibliografica" className="min-w-60 flex-1">
