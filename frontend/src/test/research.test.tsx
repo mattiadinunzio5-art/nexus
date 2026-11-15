@@ -78,3 +78,23 @@ describe('archive Q&A', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('DOI non valido');
   });
 });
+
+describe('Ask the Archive: indicatori separati', () => {
+  it('shows relevance, coverage and support apart, and declares unsupported answers', async () => {
+    const { render, screen } = await import('@testing-library/react');
+    const { MemoryRouter } = await import('react-router-dom');
+    const { AskResultView } = await import('../pages/ResearchArchive');
+    const hit = { chunk_id: 1, document_id: 1, document_title: 'Miscellanea', page: 2, locator: 'p. 2', text: 'The plastic bag… oceans… production…', score: 3,
+      relevance: 1, coverage: 1, support: 'weak' as const, matched_terms: ['plastic', 'production', 'oceans'], missing_terms: [], best_sentence: '',
+      citation: 'Miscellanea, p. 2', injection_flag: false, source_label: 'Miscellanea [documento senza scheda bibliografica]' };
+    render(<MemoryRouter><AskResultView result={{ question: 'plastic production in the oceans', mode: 'local_extractive', provider: 'none', disclaimer: 'Locale.',
+      answer_status: 'unsupported', passages: [hit],
+      claims: [{ type: 'missing', text: 'Le fonti trovate non sostengono una risposta.', support: 'none', coverage: 0.67, evidence: [], citations: [], note: '' }] }} /></MemoryRouter>);
+    expect(screen.getByTestId('answer-status')).toHaveTextContent('Le fonti non sostengono una risposta');
+    const ind = screen.getByTestId('indicators');
+    expect(ind).toHaveTextContent('Rilevanza100%');
+    expect(ind).toHaveTextContent('Copertura della domanda100%');
+    expect(ind).toHaveTextContent('Supporto debole');
+    expect(screen.getByText('Miscellanea, p. 2')).toBeInTheDocument();
+  });
+});

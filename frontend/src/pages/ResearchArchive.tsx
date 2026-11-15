@@ -68,6 +68,14 @@ export function AskResultView({ result }: { result: AskResult }) {
   const byId = new Map(result.passages.map((p) => [p.chunk_id, p]));
   return (
     <div className="space-y-4" data-testid="ask-result">
+      {result.answer_status && (
+        <p role="status" data-testid="answer-status" className={`rounded-md border p-3 text-sm ${
+          result.answer_status === 'supported' ? 'border-ok/40 bg-ok/5 text-ok' : result.answer_status === 'partial' ? 'border-gold-500/40 bg-gold-500/5 text-gold-300' : 'border-bad/40 bg-bad/5 text-bad'}`}>
+          {result.answer_status === 'supported' ? 'Risposta sostenuta dalle fonti: almeno una frase riunisce i concetti della domanda. Leggi le citazioni prima di usarle.'
+            : result.answer_status === 'partial' ? 'Risposta solo in parte sostenuta: le frasi trovate coprono alcuni concetti della domanda, non tutti.'
+              : 'Le fonti non sostengono una risposta: i passaggi qui sotto sono correlati alla domanda, ma non rispondono.'}
+        </p>
+      )}
       <p className="rounded-md border border-ink-700 bg-ink-850 p-3 text-xs text-steel-400">{result.disclaimer}</p>
       {result.issues && result.issues.length > 0 && <ul className="text-xs text-warn">{result.issues.map((i) => <li key={i}>• {i}</li>)}</ul>}
       <Card title="Affermazioni">
@@ -82,6 +90,7 @@ export function AskResultView({ result }: { result: AskResult }) {
               <p className={c.type === 'documented_fact' ? 'text-paper' : 'text-steel-300'}>
                 {c.type === 'documented_fact' ? `«${c.text}»` : c.text}
               </p>
+              {c.citations && c.citations.length > 0 && <p className="mt-0.5 text-[11px] text-steel-400">— {c.citations.join('; ')}</p>}
               {c.note && <p className="mt-0.5 text-[11px] text-steel-500">{c.note}</p>}
               {c.type === 'documented_fact' && byId.get(c.evidence[0]) && <QuoteToReport text={c.text} passage={byId.get(c.evidence[0])!} />}
             </li>

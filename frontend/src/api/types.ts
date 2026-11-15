@@ -237,7 +237,16 @@ export interface RetrievalHit {
   locator: string;
   text: string;
   score: number;
+  /** Posizione nella classifica (1 = il più pertinente trovato). */
+  relevance?: number;
+  /** Quota dei concetti della domanda presenti nel passaggio. */
+  coverage?: number;
+  /** Concetti riuniti nella stessa frase (la migliore è best_sentence). */
   support: Support;
+  matched_terms?: string[];
+  missing_terms?: string[];
+  best_sentence?: string;
+  citation?: string;
   injection_flag: boolean;
   source_label: string;
 }
@@ -257,6 +266,7 @@ export interface Claim {
   support: Support;
   coverage: number;
   evidence: number[];
+  citations?: string[];
   note: string;
 }
 
@@ -269,6 +279,7 @@ export interface AskResult {
   disclaimer: string;
   issues?: string[];
   model?: string;
+  answer_status?: 'supported' | 'partial' | 'unsupported';
 }
 
 // --- Fase 3: Historical Intelligence / Time Machine / Knowledge Graph -------------

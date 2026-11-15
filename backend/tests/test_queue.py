@@ -130,3 +130,8 @@ def test_api_run_reports_queue_state(client):
     assert r.status_code == 202
     run = client.get(f"/api/research/runs/{r.json()['id']}").json()
     assert run["status"] == "awaiting_approval" and run["attempts"] == 1 and "analysis" in run["checkpoint_phases"]
+
+
+def test_deep_health_reports_components(client):
+    h = client.get("/api/health/deep").json()
+    assert h["status"] == "ok" and h["database_ok"] and h["search_ok"] and h["research_queue"] == 0

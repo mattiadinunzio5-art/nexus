@@ -138,24 +138,68 @@ export function qs(params: Record<string, string | number | boolean | undefined 
   return s ? `?${s}` : '';
 }
 
+/** Richieste che si possono ripetere senza effetti doppi (letture e ricerche). */
+const RETRYABLE_POST = ['/research/ask', '/research/search', '/credentials/ai-accounts/models'];
+const RETRY_DELAYS = import.meta.env.MODE === 'test' ? [0, 0] : [3000, 8000, 15000];
+const TIMEOUT_MS = 120_000;
+
+export const NETWORK_MESSAGES = {
+  offline: 'Sei offline: controlla la connessione a Internet e riprova.',
+  waking: 'Il server NEXUS non risponde: sul piano gratuito può impiegare fino a un minuto per riavviarsi dopo un periodo di inattività. Riprova tra poco.',
+  timeout: "La richiesta ha impiegato troppo tempo (oltre 2 minuti): riprova, oppure restringi la ricerca a meno documenti.",
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Avvisa l'interfaccia mentre si riprova (banner «riconnessione in corso»). */
+function announce(state: 'retrying' | 'ok') {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('nexus:connection', { detail: state }));
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(BASE + path, {
-      ...init,
-      credentials: 'same-origin',
-      headers: {
-        // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
-        'X-Nexus-Client': 'web',
-        'X-Nexus-Lang': lang(),
-        ...(await authHeaders()),
-        ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
-        ...(init.headers as Record<string, string> | undefined),
-      },
-    });
-  } catch {
-    throw new ApiError(0, 'network_error', 'Backend non raggiungibile. Verifica che il server NEXUS sia avviato.');
+  const method = (init.method ?? 'GET').toUpperCase();
+  const canRetry = method === 'GET' || RETRYABLE_POST.some((p) => path.startsWith(p));
+  let res: Response | undefined;
+  for (let attempt = 0; ; attempt++) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : undefined;
+    let failure: 'network' | 'timeout' | 'unavailable' | undefined;
+    try {
+      res = await fetch(BASE + path, {
+        ...init,
+        signal: ctrl?.signal,
+        credentials: 'same-origin',
+        headers: {
+          // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
+          'X-Nexus-Client': 'web',
+          'X-Nexus-Lang': lang(),
+          ...(await authHeaders()),
+          ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
+          ...(init.headers as Record<string, string> | undefined),
+        },
+      });
+      // 502/503/504: il server si sta riavviando o il proxy non lo raggiunge.
+      if ([502, 503, 504].includes(res.status)) failure = 'unavailable';
+    } catch (e) {
+      failure = (e as { name?: string })?.name === 'AbortError' ? 'timeout' : 'network';
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if (!failure) {
+      if (attempt > 0) announce('ok');
+      break;
+    }
+    if (canRetry && failure !== 'timeout' && attempt < RETRY_DELAYS.length) {
+      announce('retrying');
+      await sleep(RETRY_DELAYS[attempt]);
+      continue;
+    }
+    announce('ok');
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new ApiError(0, 'offline', NETWORK_MESSAGES.offline);
+    if (failure === 'timeout') throw new ApiError(0, 'timeout', NETWORK_MESSAGES.timeout);
+    throw new ApiError(res?.status ?? 0, 'network_error', NETWORK_MESSAGES.waking);
   }
+  if (!res) throw new ApiError(0, 'network_error', NETWORK_MESSAGES.waking);
   if (res.status === 204) return undefined as T;
   let body: unknown = null;
   try {

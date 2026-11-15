@@ -9,7 +9,7 @@ from ..api.schemas_research import AskOut, Claim, RetrievalHit, RetrievalOut
 from ..core.config import Settings
 from ..models import Document, DocumentChunk, Source, User
 from ..research import index
-from ..research.answer import Passage, coverage, extract_claims, support_level
+from ..research.answer import Passage, citation_of, concept_hits, coverage, extract_claims, sentence_support, support_level
 from ..research.citations import format_citation
 
 
@@ -89,17 +89,32 @@ def retrieve(
     return passages, engine
 
 
-def to_hit(q: str, p: Passage) -> RetrievalHit:
+def to_hit(q: str, p: Passage, top: float | None = None) -> RetrievalHit:
+    found, missing = concept_hits(q, p.text)
+    sup, best = sentence_support(q, p.text)
     return RetrievalHit(
         chunk_id=p.chunk_id, document_id=p.document_id, document_title=p.document_title, page=p.page, locator=p.locator,
-        text=p.text, score=p.score, support=support_level(coverage(q, p.text)), injection_flag=p.injection_flag,
-        source_label=p.source_label,
+        text=p.text, score=p.score, relevance=round(p.score / top, 3) if top else 0.0, coverage=round(coverage(q, p.text), 2),
+        support=support_level(sup), matched_terms=found, missing_terms=missing, best_sentence=best,
+        citation=citation_of(p), injection_flag=p.injection_flag, source_label=p.source_label,
     )
+
+
+def hits(q: str, passages: list[Passage]) -> list[RetrievalHit]:
+    top = max((p.score for p in passages), default=0.0)
+    return [to_hit(q, p, top) for p in passages]
+
+
+def answer_status(claims: list[Claim]) -> str:
+    sup = [c.support for c in claims if c.type != "missing"]
+    if "strong" in sup:
+        return "supported"
+    return "partial" if any(s in ("partial", "weak") for s in sup) else "unsupported"
 
 
 def search(db: Session, user: User, settings: Settings, q: str, mode: str, limit: int) -> RetrievalOut:
     passages, engine = retrieve(db, user, settings, q, mode, limit)
-    return RetrievalOut(query=q, mode=mode, semantic_engine=engine if mode != "text" else "—", hits=[to_hit(q, p) for p in passages])
+    return RetrievalOut(query=q, mode=mode, semantic_engine=engine if mode != "text" else "—", hits=hits(q, passages))
 
 
 LOCAL_DISCLAIMER = (
@@ -129,14 +144,15 @@ def ask(db: Session, user: User, settings: Settings, question: str, document_ids
         passages, _ = retrieve(db, user, settings, " ".join([question, *extra]), "hybrid", limit, document_ids)
         return _ask_ai(db, user, settings, question, passages, translations=extra)
     passages, _ = retrieve(db, user, settings, question, "hybrid", limit, document_ids)
-    claims = extract_claims(question, passages)
+    claims = [Claim(**c) for c in extract_claims(question, passages)]
     return AskOut(
         question=question,
         mode="local_extractive",
         provider="none",
-        claims=[Claim(**c) for c in claims],
-        passages=[to_hit(question, p) for p in passages],
+        claims=claims,
+        passages=hits(question, passages),
         disclaimer=LOCAL_DISCLAIMER,
+        answer_status=answer_status(claims),
     )
 
 
@@ -152,7 +168,7 @@ def _ask_ai(db: Session, user: User, settings: Settings, question: str, passages
         raise ValidationFailedError(str(exc)) from exc
     if client is None:
         raise ValidationFailedError("Nessun provider AI configurato: usa la risposta locale o configura un provider in Sistema.")
-    hits = [to_hit(question, p) for p in passages]
+    hit_list = hits(question, passages)
     if not passages:
         return AskOut(question=question, mode="ai_grounded", provider=client.provider, model=client.model, passages=[],
                       claims=[Claim(type="missing", text="Nessun passaggio dell'archivio risponde alla domanda.", support="none", evidence=[])],
@@ -167,11 +183,16 @@ def _ask_ai(db: Session, user: User, settings: Settings, question: str, passages
     claims, issues = guard.validate_claims(data.get("claims"), {k: {"text": p.text} for k, p in ids.items()})
     chunk_of = {k: p.chunk_id for k, p in ids.items()}
     for c in claims:
+        c["citations"] = [citation_of(ids[e]) for e in c["evidence"]]
         c["evidence"] = [chunk_of[e] for e in c["evidence"]]
     from . import activity
 
     activity.record(db, user=user, actor="ai", action="research.ask_ai", summary=f"Domanda all'archivio con {client.provider}: «{question[:80]}»")
     db.commit()
-    return AskOut(question=question, mode="ai_grounded", provider=client.provider, model=res.model, claims=[Claim(**c) for c in claims],
-                  passages=hits, disclaimer=AI_DISCLAIMER,
+    claim_objs = [Claim(**c) for c in claims]
+    if not any(c.type != "missing" and c.support != "none" for c in claim_objs):
+        claim_objs.insert(0, Claim(type="missing", text="Le fonti recuperate non sostengono una risposta alla domanda.", support="none",
+                                   evidence=[], note="Nessuna affermazione del modello è risultata sostenuta dai passaggi citati."))
+    return AskOut(question=question, mode="ai_grounded", provider=client.provider, model=res.model, claims=claim_objs,
+                  passages=hit_list, disclaimer=AI_DISCLAIMER, answer_status=answer_status(claim_objs),
                   issues=issues + res.notes + ([f"Ricerca estesa con la traduzione: «{'», «'.join(translations)}»."] if translations else []))
