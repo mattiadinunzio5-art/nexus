@@ -128,7 +128,7 @@ def translate_query(client: llm.LLMClient | None, q: str) -> list[str]:
                                       'Usa i termini tecnici del settore. Rispondi con {"translations": ["..."]} (massimo 2 varianti brevi).\n'
                                       + wrap_untrusted("Q", "ricerca", q[:500]), 300)
         data = guard.parse_json(res.text)
-    except (llm.ProviderError, guard.ParseError):
+    except Exception:  # noqa: BLE001 - la traduzione è un di più: qualunque errore non deve bloccare la risposta
         return []
     out = [str(t).strip()[:300] for t in (data.get("translations") or []) if str(t).strip()]
     return [t for t in out if _norm(t) != _norm(q)][:2]
