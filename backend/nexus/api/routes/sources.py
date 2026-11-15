@@ -11,8 +11,8 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 @router.get("", response_model=list[SourceOut])
 def list_sources(db: DB, user: CurrentUser, q: str | None = None, limit: int = Query(500, ge=1, le=1000),
-                 offset: int = Query(0, ge=0), origin: Literal["mine", "library"] | None = None):
-    return [_out(s, user) for s in svc.list_sources(db, user, q, limit=limit, offset=offset, origin=origin)]
+                 offset: int = Query(0, ge=0), origin: Literal["mine", "library"] | None = None, project_id: int | None = None):
+    return [_out(s, user) for s in svc.list_sources(db, user, q, limit=limit, offset=offset, origin=origin, project_id=project_id)]
 
 
 def _out(s, user) -> SourceOut:

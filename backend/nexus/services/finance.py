@@ -173,7 +173,7 @@ def refresh(db: Session, user: User, settings: Settings, series_id: int) -> Seri
 
 
 def list_series(db: Session, user: User, category: str | None = None, q: str | None = None, limit: int = 300,
-                offset: int = 0, origin: str | None = None) -> list[Series]:
+                offset: int = 0, origin: str | None = None, project_id: int | None = None) -> list[Series]:
     from ..core import library
 
     stmt = select(Series).where(Series.owner_id.in_(library.visible_owner_ids(db, user)))
@@ -181,6 +181,10 @@ def list_series(db: Session, user: User, category: str | None = None, q: str | N
         stmt = stmt.where(Series.owner_id == user.id)
     elif origin == "library":
         stmt = stmt.where(Series.owner_id != user.id)
+    if project_id is not None:
+        from . import project_scope
+
+        stmt = stmt.where(project_scope.scope_filter(db, user, Series, "series", project_id))
     if category:
         stmt = stmt.where(Series.category == category)
     if q:

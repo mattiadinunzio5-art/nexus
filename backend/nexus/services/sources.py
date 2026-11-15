@@ -18,7 +18,7 @@ def to_out(s: Source) -> SourceOut:
 
 
 def list_sources(db: Session, user: User, q: str | None = None, limit: int = 500, offset: int = 0,
-                 origin: str | None = None) -> list[Source]:
+                 origin: str | None = None, project_id: int | None = None) -> list[Source]:
     from ..core import library
 
     stmt = select(Source).where(Source.owner_id.in_(library.visible_owner_ids(db, user)))
@@ -26,6 +26,10 @@ def list_sources(db: Session, user: User, q: str | None = None, limit: int = 500
         stmt = stmt.where(Source.owner_id == user.id)
     elif origin == "library":
         stmt = stmt.where(Source.owner_id != user.id)
+    if project_id is not None:
+        from . import project_scope
+
+        stmt = stmt.where(project_scope.scope_filter(db, user, Source, "source", project_id))
     if q:
         from sqlalchemy import String, cast
 

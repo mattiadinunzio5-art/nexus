@@ -90,7 +90,7 @@ def country_names(country: str) -> set[str]:
 def list_events(
     db: Session, user: User, *, q: str | None = None, category: str | None = None, country: str | None = None,
     from_year: int | None = None, to_year: int | None = None, reliability: str | None = None, limit: int = 500,
-    offset: int = 0, origin: str | None = None,
+    offset: int = 0, origin: str | None = None, project_id: int | None = None,
 ) -> list[HistoricalEvent]:
     owners = library.visible_owner_ids(db, user)
     year_search = False
@@ -100,6 +100,10 @@ def list_events(
         stmt = stmt.where(HistoricalEvent.owner_id == user.id)
     elif origin == "library":
         stmt = stmt.where(HistoricalEvent.owner_id != user.id)
+    if project_id is not None:
+        from . import project_scope
+
+        stmt = stmt.where(project_scope.scope_filter(db, user, HistoricalEvent, "event", project_id))
     if q and q.strip().lstrip("-").isdigit() and len(q.strip().lstrip("-")) <= 4:
         # Un anno (es. «1931»): eventi in corso in quell'anno, non quelli che lo citano nel testo.
         y = int(q.strip())

@@ -13,10 +13,10 @@ router = APIRouter(prefix="/graph", tags=["knowledge-graph"])
 def explore(
     db: DB, user: CurrentUser, focus: int | None = None, depth: int = Query(2, ge=1, le=4),
     relation_types: list[RelationType] = Query(default=[]), provenance: list[Provenance] = Query(default=[]),
-    entity_types: list[EntityType] = Query(default=[]),
+    entity_types: list[EntityType] = Query(default=[]), project_id: int | None = None,
 ):
     return svc.explore(db, user, focus=focus, depth=depth, relation_types=relation_types or None,
-                       provenance=provenance or None, entity_types=entity_types or None)
+                       provenance=provenance or None, entity_types=entity_types or None, project_id=project_id)
 
 
 @router.get("/path", response_model=PathOut, summary="Percorso più breve tra due entità")
@@ -26,8 +26,9 @@ def path(db: DB, user: CurrentUser, source: int, target: int):
 
 @router.get("/entities", response_model=list[EntityOut])
 def list_entities(db: DB, user: CurrentUser, q: str | None = Query(None, max_length=200), entity_type: EntityType | None = None,
-                  limit: int = Query(500, ge=1, le=1000), origin: Literal["mine", "library"] | None = None):
-    return svc.list_entities(db, user, q, entity_type, limit=limit, origin=origin)
+                  limit: int = Query(500, ge=1, le=1000), origin: Literal["mine", "library"] | None = None,
+                  project_id: int | None = None, offset: int = Query(0, ge=0)):
+    return svc.list_entities(db, user, q, entity_type, limit=limit, origin=origin, project_id=project_id, offset=offset)
 
 
 @router.post("/entities", response_model=EntityOut, status_code=status.HTTP_201_CREATED)

@@ -20,8 +20,9 @@ def presets():
 
 @router.get("/series", response_model=list[SeriesOut])
 def list_series(db: DB, user: CurrentUser, category: SeriesCategory | None = None, q: str | None = Query(None, max_length=200),
-                limit: int = Query(300, ge=1, le=1000), offset: int = Query(0, ge=0), origin: Literal["mine", "library"] | None = None):
-    return [svc.to_out(db, s) for s in svc.list_series(db, user, category, q=q, limit=limit, offset=offset, origin=origin)]
+                limit: int = Query(300, ge=1, le=1000), offset: int = Query(0, ge=0), origin: Literal["mine", "library"] | None = None,
+                project_id: int | None = None):
+    return [svc.to_out(db, s) for s in svc.list_series(db, user, category, q=q, limit=limit, offset=offset, origin=origin, project_id=project_id)]
 
 
 @router.post("/series/import", response_model=SeriesDetailOut, status_code=status.HTTP_201_CREATED,
