@@ -6,9 +6,11 @@ const MODES: [ScopeMode, string][] = [['project', 'Solo progetto'], ['mine', 'Le
 
 /** Ambito globale: progetto attivo e cosa mostrare negli elenchi (Documenti, Bibliografia, Financial, Storia, Grafo, Time Machine). */
 export function ScopeBar() {
-  const { projectId, mode, setProject, setMode } = useScope();
-  const projects = useAsync(() => api.projects('active'), []);
+  const { projectId, projectTitle, mode, setProject, setMode } = useScope();
+  // Si ricarica quando cambia il progetto attivo: un progetto appena creato e attivato compare subito.
+  const projects = useAsync(() => api.projects('active'), [projectId]);
   const list = (projects.data ?? []).filter((p) => !p.library);
+  const missing = projectId && !list.some((p) => p.id === projectId);
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-ink-800 bg-ink-950/60 px-4 py-1.5 text-xs" data-testid="scope-bar">
       <label className="flex items-center gap-1.5 text-steel-400">
@@ -19,6 +21,7 @@ export function ScopeBar() {
             setProject(id, list.find((p) => p.id === id)?.title ?? '');
           }}>
           <option value="">Nessuno</option>
+          {missing && <option value={projectId}>{projectTitle || `Progetto #${projectId}`}</option>}
           {list.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
       </label>

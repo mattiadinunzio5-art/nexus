@@ -21,7 +21,7 @@ class ResearchRun(TimestampMixin, Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
     question: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="queued", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="queued", nullable=False, index=True)
     mode: Mapped[str] = mapped_column(String(10), nullable=False)  # local | ai
     provider: Mapped[str] = mapped_column(String(40), default="none", nullable=False)
     model: Mapped[str] = mapped_column(String(120), default="", nullable=False)
