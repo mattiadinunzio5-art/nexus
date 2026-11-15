@@ -778,9 +778,14 @@ export interface DiscoveryHypothesis {
   id: number; session_id: number | null; connection_id: number | null; title: string; description: string; phenomena: string[];
   motivation: string; supporting: string[]; contrary: string[]; missing: string[]; method: string[]; confidence: DiscoveryLevel;
   library?: boolean;
-  status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string }[];
+  status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string; edited?: string[] }[];
   decision_note: string; decided_at: string | null; origin: string; graph_entity_id: number | null; created_at: string;
+  /** Che cosa dimostra davvero: correlazione, associazione temporale, associazione, ipotesi, causalità documentata. */
+  evidence_level?: { level: 'correlation' | 'temporal_association' | 'association' | 'hypothesis' | 'causal'; label: string; explanation: string; basis: string; basis_label: string };
+  /** Almeno due controlli a favore, di cui uno documentario: solo allora si può confermare. */
+  can_confirm?: boolean;
 }
+export type HypothesisEdit = Partial<Pick<DiscoveryHypothesis, 'title' | 'description' | 'supporting' | 'contrary' | 'missing' | 'method'>>;
 
 export interface DiscoveryAnomaly {
   id: number; kind: string; title: string; what_changed: string; reference: string; period: string; data: Record<string, unknown>;

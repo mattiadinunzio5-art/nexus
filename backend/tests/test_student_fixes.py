@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from nexus.finance import analytics
-from nexus.services.sources import _same_title
+from nexus.research.citations import _norm as _same_title
 
 
 def test_project_research_design_roundtrip(client):

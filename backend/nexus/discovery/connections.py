@@ -430,8 +430,12 @@ def lagged_association(a: pd.Series, b: pd.Series, freq_a: str, freq_b: str, max
 
 
 def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_max: float = 0.01) -> list[Candidate]:
+    """Associazioni tra coppie di serie. Si provano molte coppie: i p-value sono corretti per i ritardi
+    (Bonferroni) e poi per il numero di coppie (Benjamini–Hochberg, q-value)."""
+    from .stats_checks import benjamini_hochberg
+
     frames = {s.id: series_frame(s) for s in series}
-    out = []
+    tested: list[tuple] = []
     for a, b in combinations(series, 2):
         if a.category == b.category and a.category != "other" and a.country and b.country and country_key(a.country) == country_key(b.country):
             continue  # due misure dello stesso fenomeno nello stesso paese: il confronto spetta al controllo delle discrepanze
@@ -442,7 +446,13 @@ def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_
             res = lagged_association(fa, fb, a.frequency, b.frequency)
         except analytics.AnalysisError:
             continue
-        if not res or abs(res["r"]) < r_min or res["p_adj"] > p_max:
+        if res:
+            tested.append((a, b, res))
+    qs = benjamini_hochberg([t[2]["p_adj"] for t in tested])
+    out = []
+    for (a, b, res), q in zip(tested, qs):
+        res["q"] = q
+        if abs(res["r"]) < r_min or q > p_max:
             continue
         lead, follow = (a, b) if res["lag"] >= 0 else (b, a)
         lag = abs(res["lag"])
@@ -452,7 +462,7 @@ def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_
         x, y = frames[a.id], frames[b.id]
         start = max(x.index[0], y.index[0]).year
         end = min(x.index[-1], y.index[-1]).year
-        reasons = [f"r = {res['r']:+.2f} su {res['n']} osservazioni, p corretto = {res['p_adj']:.2g}",
+        reasons = [f"r = {res['r']:+.2f} su {res['n']} osservazioni, p corretto = {res['p_adj']:.2g}, q (FDR, {len(tested)} coppie) = {q:.2g}",
                    "Fonti dei dati: " + "; ".join(sorted({a.source_label, b.source_label}))]
         level = "medium" if res["n"] >= 30 and abs(res["r"]) >= 0.6 else "low"
         out.append(Candidate(
@@ -461,7 +471,8 @@ def series_connections(db: Session, series: list[Series], r_min: float = 0.5, p_
             period=fmt_years(start, end),
             evidence=[{"kind": "statistic", "label": "Correlazione delle variazioni", "detail": f"r = {res['r']:+.3f}, n = {res['n']}, frequenza {res['freq']}"},
                       {"kind": "statistic", "label": "Ritardo", "detail": "nessuno" if lag == 0 else f"«{lead.name}» anticipa di {lag} {unit}"},
-                      {"kind": "statistic", "label": "Significatività", "detail": f"p = {res['p']:.2g}; corretto per i 7 ritardi provati: {res['p_adj']:.2g}"}],
+                      {"kind": "statistic", "label": "Significatività", "detail": f"p = {res['p']:.2g}; corretto per i 7 ritardi provati: {res['p_adj']:.2g}; "
+                                                                                 f"corretto anche per le {len(tested)} coppie confrontate (Benjamini–Hochberg): q = {q:.2g}"}],
             source_ids=[], score=abs(res["r"]) * math.log(res["n"]),
             explanation=(f"Le variazioni delle due serie si muovono {sign}" + (f", con «{lead.name}» in anticipo di {lag} {unit}" if lag else "")
                          + ". Si usano le variazioni e non i livelli, perché due serie con un trend comune sembrano sempre correlate."),

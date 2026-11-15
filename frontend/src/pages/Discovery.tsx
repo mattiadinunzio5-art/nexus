@@ -473,11 +473,12 @@ export function HypothesisDetailPage() {
   if (h.loading && !h.data) return <Shell title="Hypotheses"><Loading /></Shell>;
   if (h.error) return <Shell title="Hypotheses"><ErrorBox error={h.error} onRetry={h.reload} /></Shell>;
   const d = h.data as DiscoveryHypothesis;
-  const last = d.verification.at(-1);
+  const last = [...d.verification].reverse().find((v) => v.checks.length > 0);
+  const lastEdit = d.verification.at(-1)?.edited;
   const decided = ['confirmed', 'rejected', 'inconclusive'].includes(d.status);
   return (
     <Shell title={d.title}
-      description={<span className="flex flex-wrap items-center gap-2">{d.library && <LibraryBadge />}<Badge tone={H_STATUS[d.status].tone}>{H_STATUS[d.status].label}</Badge><LevelBadge level={d.confidence} prefix="confidenza" />{d.archived && <Badge>archiviata</Badge>}</span>}
+      description={<span className="flex flex-wrap items-center gap-2">{d.library && <LibraryBadge />}<Badge tone={H_STATUS[d.status].tone}>{H_STATUS[d.status].label}</Badge><LevelBadge level={d.confidence} prefix="confidenza" />{d.evidence_level && <Badge tone={d.evidence_level.level === 'causal' ? 'ok' : d.evidence_level.level === 'hypothesis' ? 'gold' : 'warn'}>{d.evidence_level.label}</Badge>}{d.archived && <Badge>archiviata</Badge>}</span>}
       actions={d.library ? undefined : <>
         {!decided && <Button variant="primary" disabled={busy} onClick={() => run(async () => h.setData(await api.verifyHypothesis(d.id)), 'Verifica eseguita: leggi i controlli e decidi l’esito.')}>Verifica</Button>}
         {!d.graph_entity_id && <Button disabled={busy} onClick={() => run(async () => h.setData(await api.hypothesisToGraph(d.id)), 'Aggiunta al Knowledge Graph come nodo «ipotesi».')}><GitBranch className="size-4" aria-hidden /> Nel grafo</Button>}
@@ -486,6 +487,12 @@ export function HypothesisDetailPage() {
       {view}
       {d.library && <LibraryNote />}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {d.evidence_level && (
+          <Card title="Che cosa dimostra" className="lg:col-span-2">
+            <p className="text-sm text-paper" data-testid="evidence-level"><strong>{d.evidence_level.label}</strong>: {d.evidence_level.explanation}</p>
+            <p className="mt-1 text-xs text-steel-500">Base dell'ipotesi: {d.evidence_level.basis_label}. Correlazione, associazione temporale, ipotesi e causalità sono livelli diversi: «causalità documentata» richiede una relazione causale con fonte nel Knowledge Graph.</p>
+          </Card>
+        )}
         <Card title="Descrizione" className="lg:col-span-2">
           <p className="whitespace-pre-line text-sm text-steel-200">{d.description}</p>
           <p className="mt-3 text-xs text-steel-500">Fenomeni: {d.phenomena.join(' · ')} · {d.motivation}{d.connection_id && <> · <Link className="text-gold-300 hover:underline" to={`/discovery/connections/${d.connection_id}`}>connessione di origine</Link></>}{d.graph_entity_id && <> · <Link className="text-gold-300 hover:underline" to={`/graph?focus=${d.graph_entity_id}`}>nodo nel grafo</Link></>}</p>
@@ -507,18 +514,48 @@ export function HypothesisDetailPage() {
             </>
           )}
         </Card>
+        {!d.library && <HypothesisEditor d={d} lastEdit={lastEdit} onSaved={(x) => h.setData(x)} />}
         {!d.library && <Card title="Esito (deciso da te)" className="lg:col-span-2">
           {d.decision_note && <p className="mb-3 text-sm text-steel-300"><strong className="text-paper">{H_STATUS[d.status].label}</strong>{d.decided_at && ` il ${formatDateTime(d.decided_at)}`}: {d.decision_note}</p>}
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void run(async () => { h.setData(await api.decideHypothesis(d.id, decision, note)); setNote(''); }, 'Esito registrato.'); }}>
             <Field label="Esito"><Select value={decision} onChange={(e) => setDecision(e.target.value as HypothesisStatus)}>
-              <option value="confirmed">Confermata</option><option value="rejected">Respinta</option><option value="inconclusive">Inconcludente</option><option value="to_verify">Riporta «da verificare»</option>
+              <option value="confirmed" disabled={!d.can_confirm}>Confermata{d.can_confirm ? '' : ' (non ancora possibile)'}</option><option value="rejected">Respinta</option><option value="inconclusive">Inconcludente</option><option value="to_verify">Riporta «da verificare»</option>
             </Select></Field>
             <Field label="Motivazione (obbligatoria)"><Input value={note} onChange={(e) => setNote(e.target.value)} className="min-w-64" placeholder="Su quali evidenze ti basi?" /></Field>
             <Button type="submit" disabled={busy}>Registra</Button>
           </form>
+          {!d.can_confirm && <p className="mt-2 text-xs text-steel-500" data-testid="confirm-rule">Per confermare servono almeno due controlli a favore, di cui uno documentario (passaggi nei documenti, fonti indipendenti o relazioni con fonte nel grafo). Una correlazione, anche robusta, da sola non basta.</p>}
         </Card>}
       </div>
     </Shell>
+  );
+}
+
+const lines = (v: string) => v.split('\n').map((x) => x.trim()).filter(Boolean);
+
+/** L'utente può riformulare l'ipotesi: l'esito precedente decade e va verificata di nuovo. */
+function HypothesisEditor({ d, lastEdit, onSaved }: { d: DiscoveryHypothesis; lastEdit?: string[]; onSaved: (h: DiscoveryHypothesis) => void }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ title: d.title, description: d.description, missing: d.missing.join('\n'), method: d.method.join('\n') });
+  const [err, setErr] = useState<string>();
+  return (
+    <Card title="Modifica l'ipotesi" className="lg:col-span-2">
+      {lastEdit && <p className="mb-2 text-xs text-steel-500">Ultima modifica: {lastEdit.join(', ')}. L'esito precedente è decaduto: verifica di nuovo.</p>}
+      {!open ? <Button onClick={() => { setF({ title: d.title, description: d.description, missing: d.missing.join('\n'), method: d.method.join('\n') }); setOpen(true); }}>Modifica titolo, descrizione e metodo</Button> : (
+        <form className="grid grid-cols-1 gap-3" onSubmit={async (e) => {
+          e.preventDefault(); setErr(undefined);
+          try { onSaved(await api.editHypothesis(d.id, { title: f.title, description: f.description, missing: lines(f.missing), method: lines(f.method) })); setOpen(false); }
+          catch (x) { setErr((x as Error).message); }
+        }}>
+          <Field label="Titolo"><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
+          <Field label="Descrizione"><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
+          <Field label="Informazioni mancanti (una per riga)"><Textarea value={f.missing} onChange={(e) => setF({ ...f, missing: e.target.value })} /></Field>
+          <Field label="Metodo di verifica (uno per riga)"><Textarea value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} /></Field>
+          {err && <p role="alert" className="text-sm text-bad">{err}</p>}
+          <div className="flex gap-2"><Button type="submit" variant="primary">Salva modifiche</Button><Button onClick={() => setOpen(false)}>Annulla</Button></div>
+        </form>
+      )}
+    </Card>
   );
 }
 
