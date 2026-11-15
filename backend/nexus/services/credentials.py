@@ -23,7 +23,7 @@ def list_credentials(db: Session, user: User) -> list[CredentialOut]:
     return [_out(p, rows.get(p)) for p in PROVIDERS]
 
 
-def set_credential(db: Session, user: User, settings: Settings, data: CredentialIn) -> CredentialOut:
+def set_credential(db: Session, user: User, settings: Settings, data: CredentialIn, service: str = "") -> CredentialOut:
     if data.provider in ("fred", "anthropic") and not data.secret:
         raise ValidationFailedError("La chiave API è obbligatoria per questo servizio.")
     if data.provider in ("openai-compatible", "ollama") and data.base_url and not data.base_url.startswith(("http://", "https://")):
@@ -36,7 +36,7 @@ def set_credential(db: Session, user: User, settings: Settings, data: Credential
         db.add(c)
     c.secret_encrypted = secrets.encrypt(settings, data.secret) if data.secret else ""
     c.hint = secrets.hint(data.secret) if data.secret else ""
-    c.config = {k: v for k, v in {"base_url": data.base_url, "model": data.model}.items() if v}
+    c.config = {k: v for k, v in {"base_url": data.base_url, "model": data.model, "service": service}.items() if v}
     activity.record(db, user=user, actor="user", action="credential.set", entity_type="credential", entity_id=data.provider,
                     summary=f"Configurata la credenziale per {data.provider}")
     db.commit()

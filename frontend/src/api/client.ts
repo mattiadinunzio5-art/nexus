@@ -282,6 +282,9 @@ export const api = {
   deleteCredential: (provider: string) => request<void>(`/credentials/${provider}`, { method: 'DELETE' }),
 
   // Fase 5
+  aiAccounts: () => request<{ id: string; name: string; key_url: string; free: string }[]>('/credentials/ai-accounts'),
+  aiAccountModels: (service: string, key: string) => request<string[]>('/credentials/ai-accounts/models', json('POST', { service, key })),
+  connectAiAccount: (service: string, key: string, model: string) => request<{ service: string; name: string; model: string }>('/credentials/ai-accounts/connect', json('POST', { service, key, model })),
   aiStatus: () => request<{ provider: string; shared: boolean; shared_available: boolean; daily_limit: number | null; used_today: number | null }>('/ai/provider'),
   usePlatformAI: () => request<void>('/ai/provider', { method: 'DELETE' }),
   aiPlatform: () => request<{ enabled: boolean; provider: string; daily_limit: number }>('/ai/platform'),
