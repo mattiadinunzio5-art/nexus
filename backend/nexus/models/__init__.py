@@ -5,6 +5,7 @@ from .agents import AgentStep, ResearchRun
 from .collab import ProjectComment, SeriesAlert
 from .connector import ConnectorState
 from .discovery import DiscoveryAnalysis, DiscoveryAnomaly, DiscoveryConnection, DiscoveryHypothesis, DiscoverySession
+from .filesafety import DeletedDocument, SystemCheck
 from .finance import Credential, Observation, Series
 from .document import Document, DocumentChunk
 from .graph import Entity, Relation
@@ -36,6 +37,8 @@ __all__ = [
     "Report",
     "ReportSection",
     "ReportSectionVersion",
+    "DeletedDocument",
+    "SystemCheck",
     "AgentStep",
     "ResearchRun",
     "ConnectorState",

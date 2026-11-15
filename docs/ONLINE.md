@@ -57,3 +57,20 @@ lanciare a mano (Actions → Backup database → *Run workflow*).
    pg_restore --clean --if-exists --no-owner --no-privileges -d "postgresql://…" nexus-AAAAMMGGTHHMMZ.dump
    ```
    Per una prova senza toccare i dati online, ripristina in un database PostgreSQL locale vuoto.
+
+**Prova di ripristino automatica**:
+- ogni settimana, dopo la copia, il workflow «Backup database» ripristina il file in un PostgreSQL 17 temporaneo e
+  confronta tabelle e righe con l'origine (sola lettura): se il ripristino fallisce o mancano tabelle, il workflow si ferma;
+- a ogni push la pipeline «Test» (job «Backup e ripristino») crea dati tramite l'API, fa la copia con le stesse opzioni,
+  la ripristina in un database temporaneo, confronta tabella per tabella righe e impronta MD5 e verifica che l'app
+  legga il database ripristinato (`scripts/backup_restore_check.py`).
+
+## File dei documenti: cestino, orfani, integrità
+
+- Eliminare un documento lo sposta nel **cestino** per 30 giorni (`NEXUS_TRASH_DAYS`): l'eliminazione è dichiarata
+  completata solo dopo aver verificato sullo storage la copia nel cestino e l'assenza del file originale.
+  Il ripristino reimporta il file controllando lo SHA-256.
+- Il **controllo di integrità** (documenti senza file, file orfani, dimensioni o contenuto alterati, cestino scaduto)
+  gira da solo ogni 24 ore (`NEXUS_INTEGRITY_INTERVAL_HOURS`, 0 = disattivato), dall'area Amministrazione
+  («Controlla ora») o da riga di comando: `scripts/py.sh scripts/storage_check.py [--fix] [--json]`.
+- La pulizia rimuove solo file orfani e copie scadute del cestino, mai file collegati a un documento.

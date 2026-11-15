@@ -49,6 +49,48 @@ jobs:
           NEXUS_TEST_PG: postgresql://postgres:postgres@localhost:5432/postgres
         run: python -m pytest -p no:logging
 
+  backup-restore:
+    name: Backup e ripristino (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PG: postgresql://postgres:postgres@localhost:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r backend/requirements.txt
+      - name: Client PostgreSQL 16 (stessa versione del server di prova)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - name: Database di origine con dati creati tramite l'API
+        run: |
+          psql "$PG/postgres" -c "CREATE DATABASE origine" -c "CREATE DATABASE ripristino"
+          python scripts/backup_restore_check.py seed "$PG/origine"
+      - name: Backup con le stesse opzioni del backup settimanale
+        run: |
+          pg_dump "$PG/origine" --schema=public --format=custom --compress=9 --no-owner --no-privileges -f backup.dump
+          pg_restore --list backup.dump > /dev/null
+          ls -lh backup.dump
+      - name: Ripristino completo in un database temporaneo
+        run: pg_restore --clean --if-exists --no-owner --no-privileges --exit-on-error -d "$PG/ripristino" backup.dump
+      - name: Confronto tabella per tabella (righe e impronta MD5)
+        run: python scripts/backup_restore_check.py compare "$PG/origine" "$PG/ripristino"
+      - name: L'app legge il database ripristinato
+        run: python scripts/backup_restore_check.py app "$PG/ripristino"
+
   frontend:
     name: App (tipi, test, build)
     runs-on: ubuntu-latest

@@ -18,6 +18,7 @@ import { Field, Input, Select } from '../components/ui/Form';
 import { SearchPicker } from '../components/ui/SearchPicker';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
+import { errorText } from '../lib/forms';
 import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
@@ -135,6 +136,8 @@ export function DocumentsPage() {
   const scope = useScope();
   const { data, error, loading, reload } = useAsync(() => api.documents({ category, ...scope.params }), [category, scopeKey(scope.params)]);
   const [toDelete, setToDelete] = useState<DocumentInfo>();
+  const [deleteMsg, setDeleteMsg] = useState<{ ok: boolean; text: string }>();
+  const trash = useAsync(() => api.documentTrash(), []);
   const [showGutenberg, setShowGutenberg] = useStickyState('documents.gutenberg.open', false);
 
   useContextPanel(
@@ -194,15 +197,36 @@ export function DocumentsPage() {
       <ConfirmDialog
         open={!!toDelete}
         title="Eliminare il documento?"
-        message={`«${toDelete?.title ?? ''}» e il suo indice verranno eliminati definitivamente dall'archivio.`}
-        confirmLabel="Elimina definitivamente"
+        message={`«${toDelete?.title ?? ''}» passerà nel cestino: potrai ripristinarlo per 30 giorni, poi sarà eliminato definitivamente.`}
+        confirmLabel="Sposta nel cestino"
         onCancel={() => setToDelete(undefined)}
         onConfirm={async () => {
-          if (toDelete) await api.deleteDocument(toDelete.id);
+          if (toDelete) {
+            try {
+              const r = await api.deleteDocument(toDelete.id);
+              setDeleteMsg({ ok: true, text: r.recoverable && r.recoverable_until ? `«${toDelete.title}» spostato nel cestino (eliminazione verificata sullo storage). Recuperabile fino al ${formatDateTime(r.recoverable_until)}.` : `«${toDelete.title}» eliminato (il file originale mancava già).` });
+            } catch (e) { setDeleteMsg({ ok: false, text: errorText(e) }); }
+          }
           setToDelete(undefined);
-          await reload();
+          await Promise.all([reload(), trash.reload()]);
         }}
       />
+      {deleteMsg && <p role={deleteMsg.ok ? 'status' : 'alert'} className={`mt-3 text-sm ${deleteMsg.ok ? 'text-ok' : 'text-bad'}`}>{deleteMsg.text}</p>}
+      {trash.data && trash.data.length > 0 && (
+        <Card title={`Cestino (${trash.data.length})`} className="mt-6">
+          <ul className="space-y-2 text-sm" data-testid="trash">
+            {trash.data.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center gap-2">
+                <span className="min-w-0 flex-1 text-paper">{t.title} <span className="text-xs text-steel-500">· eliminato {formatDateTime(t.deleted_at)} · {t.recoverable ? `recuperabile fino al ${formatDateTime(t.purge_after)}` : 'file non recuperabile'}</span></span>
+                {t.recoverable && <Button className="text-xs" onClick={async () => {
+                  try { await api.restoreDocument(t.id); setDeleteMsg({ ok: true, text: `«${t.title}» ripristinato (contenuto verificato).` }); } catch (e) { setDeleteMsg({ ok: false, text: errorText(e) }); }
+                  await Promise.all([reload(), trash.reload()]);
+                }}>Ripristina</Button>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </>
   );
 }

@@ -96,6 +96,9 @@ class Settings(BaseSettings):
     lab_max_cells: int = 50_000_000  # traiettorie × passi calcolati in tutto
     lab_block_cells: int = 1_000_000  # traiettorie × passi per blocco (memoria di picco)
     lab_fan_points: int = 121  # punti conservati per il ventaglio dei percentili
+    # File: giorni di permanenza nel cestino e intervallo del controllo di integrità automatico (0 = disattivato).
+    trash_days: int = 30
+    integrity_interval_hours: int = 24
 
     @property
     def is_sqlite(self) -> bool:

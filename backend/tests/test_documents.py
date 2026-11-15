@@ -100,7 +100,7 @@ def test_delete_document_requires_confirm_and_removes_file(client, settings):
     path = settings.data_dir / "uploads"
     assert any(path.rglob("*.txt"))
     assert client.delete(f"/api/documents/{d['id']}").status_code == 409
-    assert client.delete(f"/api/documents/{d['id']}?confirm=true").status_code == 204
+    assert client.delete(f"/api/documents/{d['id']}?confirm=true").status_code == 200
     assert not any(path.rglob("*.txt"))
     assert client.get("/api/research/search?q=monetario").json()["hits"] == []
 

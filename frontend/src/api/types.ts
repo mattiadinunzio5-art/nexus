@@ -874,3 +874,12 @@ export interface DocumentProposals {
   entities: (Anchored & { name: string; entity_type: EntityType })[];
   relations: (Anchored & { source: string; target: string; relation_type: string })[];
 }
+
+// --- File: cestino e integrità -----------------------------------------------------------------------
+export interface TrashItem { id: number; document_id: number; title: string; filename: string; kind: string; size_bytes: number; deleted_at: string; purge_after: string; recoverable: boolean }
+export interface StorageCheck {
+  id: number; status: 'ok' | 'problems' | 'failed'; trigger: string; started_at: string; finished_at: string | null;
+  result: { documents?: number; files?: number; trash_items?: number; hash_checked?: number; problems?: number; error?: string;
+    missing_files?: { document_id: number; key: string }[]; size_mismatch?: { document_id: number; key: string }[]; hash_mismatch?: { document_id: number; key: string }[];
+    orphan_files?: { key: string; size: number }[]; trash_missing?: { trash_id: number; key: string }[]; expired_trash?: number[] };
+}

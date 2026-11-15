@@ -28,6 +28,8 @@ import type {
   DocTable,
   ReportCheck,
   ReportTrace,
+  TrashItem,
+  StorageCheck,
   HypothesisEdit,
   SectionVersion,
   ReportSummary,
@@ -270,7 +272,13 @@ export const api = {
   importGutenberg: (data: { ebook_id: number; title: string; author: string }) =>
     request<DocumentInfo>('/documents/gutenberg', json('POST', data)),
   updateDocument: (id: number, data: Partial<DocumentInfo>) => request<DocumentInfo>(`/documents/${id}`, json('PATCH', data)),
-  deleteDocument: (id: number) => request<void>(`/documents/${id}?confirm=true`, { method: 'DELETE' }),
+  deleteDocument: (id: number) => request<{ deleted: boolean; storage_verified: boolean; trash_id: number; recoverable: boolean; recoverable_until: string | null }>(`/documents/${id}?confirm=true`, { method: 'DELETE' }),
+  documentTrash: () => request<TrashItem[]>('/documents/trash'),
+  restoreDocument: (trashId: number) => request<DocumentInfo>(`/documents/trash/${trashId}/restore`, { method: 'POST' }),
+  purgeDocument: (trashId: number) => request<void>(`/documents/trash/${trashId}?confirm=true`, { method: 'DELETE' }),
+  storageCheck: () => request<{ last: StorageCheck | null }>('/admin/storage/check'),
+  runStorageCheck: () => request<StorageCheck>('/admin/storage/check', { method: 'POST' }),
+  storageCleanup: () => request<{ removed_orphans: string[]; purged_trash: number[]; failed: unknown[] }>('/admin/storage/cleanup?confirm=true', { method: 'POST' }),
   chunks: (id: number, offset = 0, limit = 50) => request<Chunk[]>(`/documents/${id}/chunks?offset=${offset}&limit=${limit}`),
   documentFilePath: (id: number) => `/documents/${id}/file`,
 

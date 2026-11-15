@@ -88,6 +88,34 @@ export function AccountPage() {
   );
 }
 
+/** Integrità dei file: database ↔ storage, file orfani, cestino scaduto. */
+function StorageHealth() {
+  const last = useAsync(() => api.storageCheck(), []);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string>();
+  const c = last.data?.last;
+  const r = c?.result;
+  const n = (x?: unknown[]) => x?.length ?? 0;
+  return (
+    <div className="mb-4 rounded-lg border border-ink-700 bg-ink-900 p-3 text-sm" data-testid="storage-health">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-paper">Integrità dei file</span>
+        {c && <Badge tone={c.status === 'ok' ? 'ok' : 'warn'}>{c.status === 'ok' ? 'Nessun problema' : c.status === 'problems' ? `${r?.problems ?? 0} problemi` : 'Controllo non riuscito'}</Badge>}
+        <span className="text-xs text-steel-500">{c ? `ultimo controllo ${formatDateTime(c.started_at)} (${c.trigger})` : 'mai eseguito'}</span>
+        <span className="flex-1" />
+        <Button className="text-xs" disabled={busy} onClick={async () => { setBusy(true); try { await api.runStorageCheck(); await last.reload(); } finally { setBusy(false); } }}>Controlla ora</Button>
+        {c && (n(r?.orphan_files) > 0 || n(r?.expired_trash) > 0) && <Button className="text-xs" disabled={busy} onClick={async () => {
+          setBusy(true);
+          try { const o = await api.storageCleanup(); setMsg(`Rimossi ${o.removed_orphans.length} file orfani e ${o.purged_trash.length} elementi scaduti del cestino.`); await api.runStorageCheck(); await last.reload(); } finally { setBusy(false); }
+        }}>Rimuovi orfani e cestino scaduto</Button>}
+      </div>
+      {r && !r.error && <p className="mt-1 text-xs text-steel-400">{r.documents} documenti · {r.files} file · {r.trash_items} nel cestino · documenti senza file: {n(r.missing_files)} · file orfani: {n(r.orphan_files)} · dimensioni diverse: {n(r.size_mismatch)} · contenuto alterato: {n(r.hash_mismatch)} (su {r.hash_checked} verificati con SHA-256) · cestino scaduto: {n(r.expired_trash)}</p>}
+      {r?.error && <p className="mt-1 text-xs text-bad">{r.error}</p>}
+      {msg && <p role="status" className="mt-1 text-xs text-ok">{msg}</p>}
+    </div>
+  );
+}
+
 export function AdminPage() {
   const users = useAsync(() => api.adminUsers(), []);
   const stats = useAsync(() => api.adminStats(), []);
@@ -100,6 +128,7 @@ export function AdminPage() {
       {err && <div className="mb-3"><ErrorBox error={new Error(err)} /></div>}
       {users.loading && !users.data && <Loading />}
       {users.error && <ErrorBox error={users.error} />}
+      <StorageHealth />
       {users.data && (
         <div className="overflow-x-auto rounded-lg border border-ink-700">
           <table className="w-full min-w-[760px] text-left text-sm">

@@ -19,6 +19,15 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      # Database temporaneo per la prova di ripristino (stessa versione principale del server Supabase).
+      restore:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DB_URL: ${{ secrets.NEXUS_DATABASE_URL }}
       SB_URL: ${{ secrets.NEXUS_SUPABASE_URL }}
@@ -46,6 +55,20 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_restore --list "$FILE" > /dev/null   # il file è leggibile
           echo "FILE=$FILE" >> "$GITHUB_ENV"
           ls -lh "$FILE"
+      - name: Prova di ripristino in un database temporaneo
+        run: |
+          # Il backup vale solo se si ripristina: si carica nel PostgreSQL temporaneo del job e si confrontano
+          # tabelle e righe con l'origine (sola lettura). Piccole differenze possono venire da scritture avvenute
+          # dopo la copia: si segnalano, ma un ripristino che fallisce o tabelle mancanti fermano il workflow.
+          PG_URL=$(printf '%s' "$DB_URL" | sed -E 's#^postgres(ql)?\+[a-z0-9]+://#postgresql://#')
+          TMP=postgresql://postgres:postgres@localhost:5432/postgres
+          /usr/lib/postgresql/17/bin/pg_restore --clean --if-exists --no-owner --no-privileges --exit-on-error -d "$TMP" "$FILE"
+          Q="SELECT table_name, (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM public.%I', table_name), false, true, '')))[1]::text::bigint FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY 1"
+          /usr/lib/postgresql/17/bin/psql "$PG_URL" -AtF' ' -c "$Q" > origine.txt
+          /usr/lib/postgresql/17/bin/psql "$TMP" -AtF' ' -c "$Q" > ripristino.txt
+          if ! diff <(cut -d' ' -f1 origine.txt) <(cut -d' ' -f1 ripristino.txt); then echo "Tabelle diverse dopo il ripristino"; exit 1; fi
+          if diff origine.txt ripristino.txt > /dev/null; then echo "Ripristino conforme: $(wc -l < ripristino.txt) tabelle, righe identiche."
+          else echo "Ripristino completato; righe diverse in alcune tabelle (scritture dopo la copia?):"; diff origine.txt ripristino.txt || true; fi
       - name: Salvataggio nel bucket privato
         run: |
           AUTH=(-H "Authorization: Bearer $SB_KEY" -H "apikey: $SB_KEY")

@@ -84,8 +84,26 @@ def import_bytes(
     from . import storage
 
     key = f"uploads/{user.id}/{sha}.{kind}"
-    storage.for_settings(settings).put(key, data)
+    st = storage.for_settings(settings)
+    st.put(key, data)
+    # Upload controllato: il file deve risultare nello storage con la dimensione giusta prima di registrare il documento.
+    if st.stat(key) != len(data):
+        raise storage.StorageError("Il file caricato non risulta salvato correttamente nello storage: riprova.")
+    try:
+        return _register(db, user, settings, key, data, filename, kind, sha, extracted, title, category, project_id, origin, origin_url,
+                         license_note, author, is_demo)
+    except Exception:
+        # Se il database non registra il documento, il file non deve restare orfano.
+        db.rollback()
+        try:
+            st.delete(key)
+        except Exception:  # noqa: BLE001 - lo troverà il controllo di integrità
+            pass
+        raise
 
+
+def _register(db, user, settings, key, data, filename, kind, sha, extracted, title, category, project_id, origin, origin_url,
+              license_note, author, is_demo) -> Document:
     chunks = chunk_sections(extracted.sections)
     doc = Document(
         owner_id=user.id,
@@ -213,24 +231,11 @@ def update_document(db: Session, user: User, document_id: int, data: DocumentUpd
     return d
 
 
-def delete_document(db: Session, user: User, settings: Settings, document_id: int, confirm: bool) -> None:
-    d = get_document(db, user, document_id, own=True)
-    if not confirm:
-        raise ConfirmationRequiredError("Eliminare un documento dall'archivio richiede conferma (confirm=true).")
-    key = d.storage_path
-    title = d.title
-    index.fts_delete_document(db, d.id)
-    db.delete(d)
-    activity.record(db, user=user, actor="user", action="document.delete", entity_type="document", entity_id=document_id,
-                    summary=f"Eliminato il documento «{title}»")
-    db.commit()
-    index.semantic_index.invalidate(user.id)
-    from . import storage
+def delete_document(db: Session, user: User, settings: Settings, document_id: int, confirm: bool) -> dict:
+    """Eliminazione recuperabile e verificata sullo storage (vedi services/filesafety.py)."""
+    from . import filesafety
 
-    try:
-        storage.for_settings(settings).delete(key)
-    except NexusError:
-        pass  # il record è già eliminato; un file orfano non blocca l'operazione
+    return filesafety.delete_document(db, user, settings, document_id, confirm)
 
 
 def file_bytes(settings: Settings, d: Document) -> bytes:

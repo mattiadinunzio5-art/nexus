@@ -42,6 +42,32 @@ def import_gutenberg(data: GutenbergImportIn, db: DB, user: CurrentUser, setting
     return svc.import_gutenberg(db, user, settings, data.ebook_id, data.title, data.author, data.project_id)
 
 
+def _trash_out(t) -> dict:
+    return {"id": t.id, "document_id": t.document_id, "title": t.title, "filename": t.filename, "kind": t.kind, "size_bytes": t.size_bytes,
+            "deleted_at": t.created_at.isoformat(), "purge_after": t.purge_after.isoformat(), "recoverable": bool(t.trash_key)}
+
+
+@router.get("/trash", summary="Cestino: documenti eliminati ancora recuperabili")
+def list_trash(db: DB, user: CurrentUser) -> list[dict]:
+    from ...services import filesafety
+
+    return [_trash_out(t) for t in filesafety.list_trash(db, user)]
+
+
+@router.post("/trash/{trash_id}/restore", response_model=DocumentOut, summary="Ripristina un documento dal cestino (contenuto verificato con SHA-256)")
+def restore_from_trash(trash_id: int, db: DB, user: CurrentUser, settings: AppSettings):
+    from ...services import filesafety
+
+    return filesafety.restore(db, user, settings, trash_id)
+
+
+@router.delete("/trash/{trash_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Elimina definitivamente dal cestino (verificato)")
+def purge_from_trash(trash_id: int, db: DB, user: CurrentUser, settings: AppSettings, confirm: bool = False) -> None:
+    from ...services import filesafety
+
+    filesafety.purge_one(db, user, settings, trash_id, confirm)
+
+
 @router.get("/{document_id}", response_model=DocumentOut)
 def get_document(document_id: int, db: DB, user: CurrentUser):
     return svc.get_document(db, user, document_id)
@@ -70,9 +96,9 @@ def download(document_id: int, db: DB, user: CurrentUser, settings: AppSettings)
                     headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(d.filename)}"})
 
 
-@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_document(document_id: int, db: DB, user: CurrentUser, settings: AppSettings, confirm: bool = False) -> None:
-    svc.delete_document(db, user, settings, document_id, confirm)
+@router.delete("/{document_id}", summary="Elimina (recuperabile dal cestino): completata solo dopo la verifica sullo storage")
+def delete_document(document_id: int, db: DB, user: CurrentUser, settings: AppSettings, confirm: bool = False) -> dict:
+    return svc.delete_document(db, user, settings, document_id, confirm)
 
 
 @router.post("/{document_id}/extract", summary="Proposte AI di eventi, entità e relazioni, ciascuna con il passaggio che la sostiene")
