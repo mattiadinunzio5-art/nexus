@@ -1,0 +1,219 @@
+{
+  "canale_buffer_id": "6afa1343ece6dfde5fd7ea7a",
+  "servizio": "tiktok",
+  "account": "nexus.analytic",
+  "fuso_orario": "Europe/Rome",
+  "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/main/social/tiktok/media",
+  "voci": [
+    {
+      "id": "S1G1-tiktok",
+      "codice": "S1G1",
+      "data": "2026-11-16",
+      "ora": "19:00",
+      "media": "S1G1.mp4",
+      "titolo": "1929 wasn't the first crash",
+      "didascalia": "1929 wasn't the first crash. 📉🔊\n\nFive financial panics in 170 years, all before Wall Street. Every one of them is in NEXUS, with its source.\n\nFree demo, link in bio.\n\n#financialhistory #history #economichistory #historyfacts #finance #studygram #economics #historytok",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-730264172528956173.mp4"
+    },
+    {
+      "id": "S1G2-tiktok",
+      "codice": "S1G2",
+      "data": "2026-11-17",
+      "ora": "19:00",
+      "media": "S1G2.mp4",
+      "titolo": "2,000 years of Italian income in 30 seconds.",
+      "didascalia": "2,000 years of Italian income in 30 seconds. 📊🔊\n\nYear 1: about $1,400 a year. 1801: about $2,500. 2022: over $36,000 (2011 prices).\n\nExplore it in NEXUS. Link in bio.\n\n#economichistory #italy #gdp #dataviz #history #economics #studygram #growth",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-9021833938256210488.mp4"
+    },
+    {
+      "id": "S1G3-tiktok",
+      "codice": "S1G3",
+      "data": "2026-11-18",
+      "ora": "19:00",
+      "media": "S1G3.mp4",
+      "titolo": "1 in 4 Americans out of work.",
+      "didascalia": "1 in 4 Americans out of work. 🏭🔊\n\nIn May 1933 US unemployment hit 25.6%. NEXUS shows the method and the source next to every number.\n\nLink in bio.\n\n#greatdepression #unemployment #history #economics #usa #1933 #studygram #finance",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-13140286335224289837.mp4"
+    },
+    {
+      "id": "S1G4-tiktok",
+      "codice": "S1G4",
+      "data": "2026-11-19",
+      "ora": "19:00",
+      "media": "S1G4.mp4",
+      "titolo": "Prices up 23,773% in one year.",
+      "didascalia": "Prices up 23,773% in one year. 💸🔊\n\nIn Bolivia, prices in 1985 were on average 118 times those of 1984. All official data, all in NEXUS.\n\nLink in bio.\n\n#inflation #hyperinflation #economics #money #finance #worldbank #dataviz #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-15229250881003476035.mp4"
+    },
+    {
+      "id": "S1G5-tiktok",
+      "codice": "S1G5",
+      "data": "2026-11-20",
+      "ora": "19:00",
+      "media": "S1G5.mp4",
+      "titolo": "Which central bank is the oldest?",
+      "didascalia": "Which central bank is the oldest? 🏦🔊\n\nSweden's Riksbank, 1668. The Federal Reserve arrived only in 1913. Three centuries of money, each fact with its source, in NEXUS.\n\nLink in bio.\n\n#centralbank #bankofengland #bancaditalia #financialhistory #history #money #economics #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-12837135253022874572.mp4"
+    },
+    {
+      "id": "S1G6-tiktok",
+      "codice": "S1G6",
+      "data": "2026-11-21",
+      "ora": "19:00",
+      "media": "S1G6.mp4",
+      "titolo": "Four sentences that explain markets.",
+      "didascalia": "Four sentences that explain markets. 📚🔊\n\nRead the full classics, free and searchable, in NEXUS.\n\nLink in bio.\n\n#adamsmith #keynes #economics #quotes #classics #books #booksofinstagram #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5567880788199720027.mp4"
+    },
+    {
+      "id": "S1G7-tiktok",
+      "codice": "S1G7",
+      "data": "2026-11-22",
+      "ora": "19:00",
+      "media": "S1G7.mp4",
+      "titolo": "Who owes the most in Europe?",
+      "didascalia": "Who owes the most in Europe? 💶🔊\n\nOfficial Eurostat data for 2025, ready to compare in NEXUS.\n\nLink in bio.\n\n#publicdebt #europe #italy #greece #eurostat #economics #finance #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5643240239355620590.mp4"
+    },
+    {
+      "id": "S2G1-tiktok",
+      "codice": "S2G1",
+      "data": "2026-11-23",
+      "ora": "19:00",
+      "media": "S2G1.mp4",
+      "titolo": "How long did Italians live?",
+      "didascalia": "How long did Italians live? ⏳🔊 In 1913, life expectancy at birth was 48.5 years. In 2023: 83.7. Thirty-five more years of life in a century. Data from Our World in Data, inside NEXUS. Link in bio. #history #lifeexpectancy #italy #dataviz #economichistory #health #studygram #historyfacts #data #science",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-10849473731144308984.mp4"
+    },
+    {
+      "id": "S2G2-tiktok",
+      "codice": "S2G2",
+      "data": "2026-11-24",
+      "ora": "19:00",
+      "media": "S2G2.mp4",
+      "titolo": "India overtook China.",
+      "didascalia": "India overtook China. 🌏🔊 1950: China 544 million, India 346. 2022: level at about 1.425 billion. 2023: India ahead, 1.438 billion vs 1.423. Population data for every country, in NEXUS. Link in bio. #india #china #population #demographics #dataviz #geography #history #studygram #worldnews #data",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-7897636872361301623.mp4"
+    },
+    {
+      "id": "S2G3-tiktok",
+      "codice": "S2G3",
+      "data": "2026-11-25",
+      "ora": "19:00",
+      "media": "S2G3.mp4",
+      "titolo": "4.2 trillion marks for one dollar.",
+      "didascalia": "4.2 trillion marks for one dollar. 💸🔊 Germany, 1923: from about 18,000 marks in January to 4.2 trillion in November. Prices doubled every few days. Then came the Rentenmark: 1 for 1 trillion paper marks. The history of money, with sources, in NEXUS. Link in bio. #hyperinflation #weimar #germany #1923 #history #economics #money #inflation #economichistory #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-7072540478586764593.mp4"
+    },
+    {
+      "id": "S2G4-tiktok",
+      "codice": "S2G4",
+      "data": "2026-11-26",
+      "ora": "19:00",
+      "media": "S2G4.mp4",
+      "titolo": "When the dollar was gold.",
+      "didascalia": "When the dollar was gold. 🪙🔊 Bretton Woods, 1944: 44 countries, currencies tied to the dollar, the dollar tied to gold at $35 an ounce. On 15 August 1971, Nixon suspended convertibility. Events and data, each with its source, in NEXUS. Link in bio. #brettonwoods #gold #dollar #nixon #1971 #monetaryhistory #economics #history #finance #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-13112483388353300761.mp4"
+    },
+    {
+      "id": "S2G5-tiktok",
+      "codice": "S2G5",
+      "data": "2026-11-27",
+      "ora": "19:00",
+      "media": "S2G5.mp4",
+      "titolo": "Tulip mania: the first bubble?",
+      "didascalia": "Tulip mania: the first bubble? 🌷🔊 Holland, winter 1637: rare bulbs traded for huge sums. In February, the collapse. But archive research suggests the damage to the economy was limited. Fact or legend? In NEXUS every claim shows its source and reliability. Link in bio. #tulipmania #bubble #financialhistory #history #economics #netherlands #myths #studygram #finance #investing",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5151951789605795491.mp4"
+    },
+    {
+      "id": "S2G6-tiktok",
+      "codice": "S2G6",
+      "data": "2026-11-28",
+      "ora": "19:00",
+      "media": "S2G6.mp4",
+      "titolo": "How many lire for one euro?",
+      "didascalia": "How many lire for one euro? 🇮🇹🔊 1,936.27, fixed for ever on 1 January 1999. The euro was born on screens and in banks; coins and notes arrived on 1 January 2002. The euro from day one, in official ECB data inside NEXUS. Link in bio. #euro #lira #italy #money #ecb #history #economics #europe #studygram #finance",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-14222144072817872451.mp4"
+    },
+    {
+      "id": "S2G7-tiktok",
+      "codice": "S2G7",
+      "data": "2026-11-29",
+      "ora": "19:00",
+      "media": "S2G7.mp4",
+      "titolo": "The richest country in 1870?",
+      "didascalia": "The richest country in 1870? 🇬🇧🔊 The United Kingdom: about $5,800 per person (2011 prices). By 2022: the United States first, then Germany, the UK and Italy. China grew twenty times. Maddison data, in NEXUS. Link in bio. #economichistory #gdp #history #unitedkingdom #usa #china #italy #dataviz #studygram #economics",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-3163290953558180079.mp4"
+    },
+    {
+      "id": "S3G1-tiktok",
+      "codice": "S3G1",
+      "data": "2026-11-30",
+      "ora": "19:00",
+      "media": "S3G1.mp4",
+      "titolo": "×41 in seventy years.",
+      "didascalia": "×41 in seventy years. 🇰🇷🔊 South Korea, 1950: about $1,000 per person (2011 prices). 1980: 6,000. 2000: 23,000. 2022: 41,000. Long-run data for every country, in NEXUS. Link in bio. #southkorea #economichistory #growth #gdp #dataviz #history #economics #studygram #korea #development",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-9681651985881455015.mp4"
+    },
+    {
+      "id": "S3G2-tiktok",
+      "codice": "S3G2",
+      "data": "2026-12-01",
+      "ora": "19:00",
+      "media": "S3G2.mp4",
+      "titolo": "2022: inflation came back.",
+      "didascalia": "2022: inflation came back. 📈🔊 Greece 9.3%, Italy and Germany 8.7%, Spain 8.3%, France 5.9%. In 2025 Italy was back at 1.7%. Official Eurostat data, in NEXUS. Link in bio. #inflation #europe #italy #germany #eurostat #economics #prices #dataviz #studygram #ecb",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-17277492308426763007.mp4"
+    },
+    {
+      "id": "S3G3-tiktok",
+      "codice": "S3G3",
+      "data": "2026-12-02",
+      "ora": "19:00",
+      "media": "S3G3.mp4",
+      "titolo": "Where is unemployment highest in Europe?",
+      "didascalia": "Where is unemployment highest in Europe? 💼🔊 2025: Spain 10.5%, Greece 8.9% (down from 17.9% in 2019), France 7.7%, Italy 6.1%, Germany 3.8%. Eurostat data, country by country, in NEXUS. Link in bio. #unemployment #europe #spain #greece #italy #eurostat #jobs #economics #dataviz #studygram",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-4325128526221009696.mp4"
+    },
+    {
+      "id": "S3G4-tiktok",
+      "codice": "S3G4",
+      "data": "2026-12-03",
+      "ora": "19:00",
+      "media": "S3G4.mp4",
+      "titolo": "The euro vs the dollar.",
+      "didascalia": "The euro vs the dollar. 💶💵🔊 January 1999: $1.16. October 2000: $0.85. July 2008: a record $1.58. September 2022: below parity, $0.99 (monthly averages). Official ECB reference rates, in NEXUS. Link in bio. #euro #dollar #forex #exchangerate #ecb #finance #economics #dataviz #studygram #currency",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-4897888572022242742.mp4"
+    },
+    {
+      "id": "S3G5-tiktok",
+      "codice": "S3G5",
+      "data": "2026-12-04",
+      "ora": "19:00",
+      "media": "S3G5.mp4",
+      "titolo": "How deep was the 1929 crash?",
+      "didascalia": "How deep was the 1929 crash? 📉🔊 Dow Jones, 3 September 1929: 381.17. 8 July 1932: 41.22. Minus 89%. Back to the 1929 peak only in November 1954. Read the crash without hindsight, in NEXUS. Link in bio. #1929 #stockmarketcrash #greatdepression #dowjones #wallstreet #financialhistory #history #investing #studygram #economics",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-3855775410937702502.mp4"
+    },
+    {
+      "id": "S3G6-tiktok",
+      "codice": "S3G6",
+      "data": "2026-12-05",
+      "ora": "19:00",
+      "media": "S3G6.mp4",
+      "titolo": "34 years to recover.",
+      "didascalia": "34 years to recover. 🇯🇵🔊 Nikkei, 29 December 1989: almost 38,900. March 2009: about 7,000. February 2024: a new record, 39,099. Bubbles, crashes and recoveries, in NEXUS. Link in bio. #japan #nikkei #bubble #stockmarket #financialhistory #investing #economics #history #studygram #finance",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-16832260187724728456.mp4"
+    },
+    {
+      "id": "S3G7-tiktok",
+      "codice": "S3G7",
+      "data": "2026-12-06",
+      "ora": "19:00",
+      "media": "S3G7.mp4",
+      "titolo": "Where was the first share sold?",
+      "didascalia": "Where was the first share sold? 📜🔊 Amsterdam, 1602, with the Dutch East India Company. Anyone could buy a share and sell it on: the first modern stock market. Four centuries of finance, with sources, in NEXUS. Link in bio. #stockmarket #voc #amsterdam #financialhistory #history #investing #finance #economics #studygram #netherlands",
+      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-1626910832894316932.mp4"
+    }
+  ]
+}
