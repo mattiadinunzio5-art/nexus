@@ -53,7 +53,7 @@ def _fetch(db: Session, user: User, settings: Settings, data: SeriesImportIn, fo
         if data.connector == "world-bank":
             return connectors.fetch_world_bank(f, data.indicator.strip(), data.country.strip(), force)
         if data.connector == "fred":
-            key, _ = credentials.get_secret(db, user, settings, "fred")
+            key = credentials.fred_key(db, user, settings)
             return connectors.fetch_fred(f, data.series_id.strip(), key, force)
         if data.connector == "owid":
             return connectors.fetch_owid(f, data.slug.strip(), data.entity.strip(), force)

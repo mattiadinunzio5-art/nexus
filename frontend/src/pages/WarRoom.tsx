@@ -128,6 +128,7 @@ export function WarRoomPage() {
               <span className="min-w-0 flex-1 truncate text-sm text-paper">{r.question}</span>
               <Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge>
               <span className="text-[11px] text-steel-500">{r.mode === 'ai' ? r.provider : 'locale'} · {formatDateTime(r.created_at)}</span>
+              {r.status === 'failed' && r.error && <span className="basis-full text-xs text-bad">{r.error}</span>}
             </Link>
           </li>
         ))}
@@ -178,7 +179,12 @@ export function RunDetailPage() {
       <PageHeader eyebrow={<Link to="/war-room" className="hover:underline">Research War Room</Link>} title={r.question}
         actions={<Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge>} />
       {['queued', 'running'].includes(r.status) && <Loading label="Gli agenti stanno lavorando…" />}
-      {r.error && <div className="mb-4"><ErrorBox error={new Error(r.error)} /></div>}
+      {r.error && (
+        <div className="mb-4">
+          <ErrorBox error={new Error(r.error)} />
+          {r.status === 'failed' && <p className="mt-2 text-xs text-steel-400">Puoi avviare di nuovo la stessa domanda dalla <Link to="/war-room" className="text-gold-300 hover:underline">War Room</Link>.</p>}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
           {r.result.claims && (

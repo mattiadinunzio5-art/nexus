@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     # Motore di embedding: "lsa" (predefinito, scikit-learn) o "sentence-transformers".
     embeddings: Literal["lsa", "sentence-transformers"] = "lsa"
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    # Oltre questa memoria (MB) non si costruiscono nuovi indici semantici: protegge il server gratuito da 512 MB.
+    # Chiave FRED condivisa dalla piattaforma (facoltativa): usata se l'utente non ha la sua.
+    fred_api_key: str = ""
+    semantic_memory_limit_mb: int = 0  # 0 = nessun limite (in produzione su Render: 330)
     # Chiave per cifrare le credenziali salvate (generata in data_dir se assente).
     secret_key: str | None = None
     # Cache dei connettori (ore) prima di riscaricare una serie.

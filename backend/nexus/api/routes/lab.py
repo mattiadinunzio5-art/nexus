@@ -3,7 +3,8 @@ from fastapi import APIRouter, status
 from ...services import lab as svc
 from ..deps import DB, CurrentUser
 from ..schemas_lab import (
-    BacktestIn, BootstrapIn, DebtIn, GBMIn, InflationIn, RegressionIn, SensitivityIn, SimulationOut, SimulationSummary, TaylorIn,
+    BacktestIn, BootstrapIn, DebtIn, GBMIn, InflationIn, RegressionIn, ScenariosIn, SensitivityIn, SimulationOut, SimulationRename,
+    SimulationSummary, TaylorIn,
 )
 
 router = APIRouter(prefix="/lab", tags=["economic-lab"])
@@ -25,6 +26,7 @@ _route("inflation", InflationIn, "Scenari di inflazione")
 _route("monetary_policy", TaylorIn, "Confronto tra regole di politica monetaria")
 _route("regression", RegressionIn, "Regressione OLS tra serie")
 _route("backtest", BacktestIn, "Backtest senza look-ahead")
+_route("scenarios", ScenariosIn, "Proiezione di una serie sotto più scenari di crescita")
 
 
 @router.get("/simulations", response_model=list[SimulationSummary])
@@ -40,3 +42,8 @@ def get_simulation(sim_id: int, db: DB, user: CurrentUser):
 @router.delete("/simulations/{sim_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_simulation(sim_id: int, db: DB, user: CurrentUser, confirm: bool = False) -> None:
     svc.delete(db, user, sim_id, confirm)
+
+
+@router.patch("/simulations/{sim_id}", response_model=SimulationOut)
+def rename_simulation(sim_id: int, data: SimulationRename, db: DB, user: CurrentUser):
+    return svc.rename(db, user, sim_id, data.title)

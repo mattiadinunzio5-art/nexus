@@ -169,11 +169,19 @@ def verify(db: Session, user: User, settings: Settings, c: DiscoveryConnection |
     return checks
 
 
+DOCUMENTARY = ("Passaggi nei documenti", "Fonti indipendenti", "Knowledge Graph")
+
+
 def suggested_outcome(checks: list[dict]) -> str:
-    """Suggerimento (non decisione): inconcludente se mancano conferme, respinta se c'è una contraddizione."""
+    """Suggerimento (non decisione): inconcludente se mancano conferme, respinta se c'è una contraddizione.
+
+    «Confermata» richiede almeno una conferma documentaria (documenti, fonti o relazioni con fonte):
+    la sola stabilità statistica di una correlazione non dimostra un meccanismo.
+    """
     outs = [c["outcome"] for c in checks]
     if "contradicts" in outs:
         return "rejected"
-    if outs.count("supports") >= 2:
+    documentary = any(c["outcome"] == "supports" and c["check"] in DOCUMENTARY for c in checks)
+    if outs.count("supports") >= 2 and documentary:
         return "confirmed"
     return "inconclusive"

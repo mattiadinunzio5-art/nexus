@@ -1,12 +1,12 @@
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ScrollManager } from './components/ScrollManager';
 import { AuthProvider } from './lib/auth';
 import { Home } from './pages/Home';
-import { lazy, Suspense } from 'react';
-import { useI18n } from './lib/i18n';
+import { lazy, Suspense, useEffect, useRef } from 'react';
+import { counterpart, langFromPath, preferredLang, rememberLang, useI18n, type Lang } from './lib/i18n';
 
 // Le pagine secondarie si caricano solo quando servono.
 const ModulePage = lazy(() => import('./pages/ModulePage').then((m) => ({ default: m.ModulePage })));
@@ -44,11 +44,33 @@ function SkipLink() {
   return <a href="#main" className="sr-only z-[60] rounded bg-ivory px-3 py-2 text-void focus:not-sr-only focus:fixed focus:left-3 focus:top-3">{t.skip}</a>;
 }
 
+/** Alla prima pagina della visita: un browser in italiano senza scelta salvata va alla versione italiana. */
+function LangRedirect() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current) return;
+    done.current = true;
+    const params = new URLSearchParams(location.search);
+    if (params.get('lang') === 'it' || params.get('lang') === 'en') {
+      rememberLang(params.get('lang') as Lang);
+      if ((params.get('lang') === 'it') !== (langFromPath(location.pathname) === 'it')) navigate(counterpart(location.pathname, location.hash) + location.search, { replace: true });
+      return;
+    }
+    if (langFromPath(location.pathname) === 'en' && preferredLang() === 'it') {
+      navigate(counterpart(location.pathname, location.hash) + location.search, { replace: true });
+    }
+  }, [location, navigate]);
+  return null;
+}
+
 export function App() {
   const location = useLocation();
   return (
     <MotionConfig reducedMotion="user">
       <AuthProvider>
+        <LangRedirect />
         <SkipLink />
         <ScrollManager />
         <Navbar />

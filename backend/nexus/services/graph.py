@@ -37,13 +37,19 @@ def get_entity(db: Session, user: User, entity_id: int, own: bool = False) -> En
     return library.access(db, user, db.get(Entity, entity_id), own, "Entità non trovata.")
 
 
-def list_entities(db: Session, user: User, q: str | None = None, entity_type: str | None = None, limit: int = 500) -> list[Entity]:
+def list_entities(db: Session, user: User, q: str | None = None, entity_type: str | None = None, limit: int = 500,
+                  origin: str | None = None) -> list[Entity]:
     stmt = select(Entity).where(Entity.owner_id.in_(library.visible_owner_ids(db, user)))
+    if origin == "mine":
+        stmt = stmt.where(Entity.owner_id == user.id)
+    elif origin == "library":
+        stmt = stmt.where(Entity.owner_id != user.id)
     if q:
         stmt = stmt.where(Entity.name.ilike(f"%{q}%"))
     if entity_type:
         stmt = stmt.where(Entity.entity_type == entity_type)
-    return list(db.scalars(stmt.order_by(Entity.name).limit(limit)))
+    # Prima le entità dell'utente: nella Biblioteca ce ne sono decine di migliaia.
+    return list(db.scalars(stmt.order_by(Entity.owner_id != user.id, Entity.name).limit(limit)))
 
 
 def create_entity(db: Session, user: User, data: EntityIn, is_demo: bool = False) -> Entity:

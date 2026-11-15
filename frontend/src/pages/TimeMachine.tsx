@@ -36,14 +36,15 @@ export function TimeMachinePage() {
   useEffect(() => { setDraftCountry(country); }, [country]);
   const category = params.get('category') ?? '';
   const eventId = params.get('event') ?? '';
+  const mine = params.get('origin') === 'mine';
   const update = (patch: Record<string, string>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
     setParams(next, { replace: true });
   };
   const { data, error, loading, reload } = useAsync(
-    () => api.timeline({ as_of_year: toInt(year) ?? undefined, hindsight, country: country || undefined, category: category || undefined, event_id: eventId ? Number(eventId) : undefined }),
-    [year, hindsight, country, category, eventId],
+    () => api.timeline({ as_of_year: toInt(year) ?? undefined, hindsight, country: country || undefined, category: category || undefined, event_id: eventId ? Number(eventId) : undefined, origin: mine ? 'mine' : undefined }),
+    [year, hindsight, country, category, eventId, mine],
   );
 
   useContextPanel(
@@ -77,10 +78,16 @@ export function TimeMachinePage() {
               {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
           </Field>
-          <label className="col-span-2 flex items-end gap-2 pb-2 text-sm text-steel-300 md:col-span-2">
-            <input type="checkbox" checked={hindsight} onChange={(e) => update({ hindsight: e.target.checked ? '1' : '' })} />
-            Senno di poi (mostra conoscenze successive)
-          </label>
+          <div className="col-span-2 flex flex-col justify-end gap-1 pb-2 text-sm text-steel-300 md:col-span-2">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={hindsight} onChange={(e) => update({ hindsight: e.target.checked ? '1' : '' })} />
+              Senno di poi (mostra conoscenze successive)
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={mine} onChange={(e) => update({ origin: e.target.checked ? 'mine' : '' })} />
+              Solo i miei eventi (senza la Biblioteca)
+            </label>
+          </div>
         </div>
         {eventId && <p className="mt-2 text-xs text-steel-400">Filtrato su un solo evento. <button className="text-gold-300 hover:underline" onClick={() => update({ event: '' })}>Mostra tutti</button></p>}
       </Card>
@@ -96,12 +103,16 @@ export function TimeMachinePage() {
               <ul className="space-y-1 text-sm">
                 {data.indicators.map((i) => (
                   <li key={i.series_id} className="flex flex-wrap justify-between gap-2">
-                    <Link to={`/financial/series/${i.series_id}`} className="text-steel-300 hover:text-paper">{i.name}</Link>
+                    <span>
+                      <Link to={`/financial/series/${i.series_id}`} className="text-steel-300 hover:text-paper">{i.name}</Link>
+                      {i.retrospective && <span className="ml-2 rounded border border-warn/40 px-1 text-[10px] text-warn" title={i.caveat}>Ricostruzione a posteriori</span>}
+                    </span>
                     <span className="text-paper">{i.last_value.toLocaleString(locale())} {i.unit} <span className="text-[11px] text-steel-500">({i.last_date}, {i.source})</span></span>
+                    {i.retrospective && <span className="basis-full text-[11px] text-warn">{i.caveat}</span>}
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[11px] text-steel-500">{data.indicators[0].caveat}</p>
+              {!data.indicators[0].retrospective && <p className="mt-2 text-[11px] text-steel-500">{data.indicators[0].caveat}</p>}
             </Card>
           )}
           {data.events.length === 0 ? <EmptyState>Nessun evento noto alla data selezionata.</EmptyState> : (

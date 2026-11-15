@@ -27,7 +27,10 @@ def list_sources(db: Session, user: User, q: str | None = None, limit: int = 500
     elif origin == "library":
         stmt = stmt.where(Source.owner_id != user.id)
     if q:
-        stmt = stmt.where(Source.title.ilike(f"%{q}%"))
+        from sqlalchemy import String, cast, or_
+
+        like = f"%{q}%"
+        stmt = stmt.where(or_(Source.title.ilike(like), cast(Source.authors, String).ilike(like)))  # anche per autore
     # Prima le fonti dell'utente, poi quelle della Biblioteca.
     return list(db.scalars(stmt.order_by((Source.owner_id != user.id), Source.title, Source.id).offset(offset).limit(limit)))
 
@@ -90,6 +93,17 @@ def delete_source(db: Session, user: User, source_id: int, confirm: bool) -> Non
     db.commit()
 
 
+def _same_title(t: str) -> str:
+    """Titolo confrontabile: apostrofi e virgolette tipografiche, trattini, spazi, maiuscole e punteggiatura finale non contano."""
+    import html
+    import re
+    import unicodedata
+
+    t = unicodedata.normalize("NFKC", html.unescape(re.sub(r"<[^>]+>", "", t or "")))
+    t = t.translate(str.maketrans({"’": "'", "‘": "'", "`": "'", "´": "'", "“": '"', "”": '"', "«": '"', "»": '"', "–": "-", "—": "-", "‐": "-"}))
+    return re.sub(r"\s+", " ", t).strip().rstrip(".:;").casefold()
+
+
 def verify_source(db: Session, user: User, source_id: int, method: str, note: str) -> Source:
     s = get_source(db, user, source_id, own=True)
     if method == "user":
@@ -106,7 +120,7 @@ def verify_source(db: Session, user: User, source_id: int, method: str, note: st
         if result.status == "verified_registry":
             meta = result.metadata
             mismatches = []
-            if meta.get("title") and meta["title"].strip().lower() != s.title.strip().lower():
+            if meta.get("title") and _same_title(meta["title"]) != _same_title(s.title):
                 mismatches.append(f"titolo nel registro: «{meta['title']}»")
             if meta.get("year") and s.year and meta["year"] != s.year:
                 mismatches.append(f"anno nel registro: {meta['year']}")

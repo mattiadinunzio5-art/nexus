@@ -11,7 +11,13 @@ from .schemas import ORMModel, UTCDateTime
 Rate = Field(ge=-0.5, le=2.0)
 
 
-class GBMIn(BaseModel):
+class Titled(BaseModel):
+    """Ogni simulazione può avere un titolo scelto dall'utente (altrimenti quello predefinito del modello)."""
+
+    title: str | None = Field(default=None, max_length=300)
+
+
+class GBMIn(Titled):
     s0: float = Field(gt=0, le=1e12)
     mu: float = Field(ge=-1, le=1)
     sigma: float = Field(ge=0, le=3)
@@ -20,10 +26,9 @@ class GBMIn(BaseModel):
     n_paths: int = Field(default=2000, ge=100, le=20000)
     seed: int = Field(default=42, ge=0, le=2**31)
     threshold: float | None = None
-    title: str | None = None
 
 
-class BootstrapIn(BaseModel):
+class BootstrapIn(Titled):
     series_id: int
     years: float = Field(gt=0, le=30)
     n_paths: int = Field(default=2000, ge=100, le=10000)
@@ -46,7 +51,7 @@ class StochasticIn(BaseModel):
     corr: float = Field(default=0.0, ge=-1, le=1)
 
 
-class DebtIn(BaseModel):
+class DebtIn(Titled):
     d0: float = Field(ge=0, le=1000, description="Debito iniziale, % PIL")
     r_eff0: float = Rate
     r_market: float = Rate
@@ -60,15 +65,14 @@ class DebtIn(BaseModel):
     stochastic: StochasticIn | None = None
     seed: int = Field(default=42, ge=0, le=2**31)
     counterfactual: bool = False
-    title: str | None = None
 
 
-class SensitivityIn(BaseModel):
+class SensitivityIn(Titled):
     base: DebtIn
     ranges: dict[Literal["d0", "r_eff0", "r_market", "avg_maturity", "g", "pb"], tuple[float, float]] = Field(min_length=1)
 
 
-class InflationIn(BaseModel):
+class InflationIn(Titled):
     amount: float = Field(gt=0, le=1e12)
     nominal_rate: float = Rate
     years: int = Field(ge=1, le=100)
@@ -82,7 +86,7 @@ class TaylorRuleIn(BaseModel):
     floor: float | None = Field(default=None, ge=-0.1, le=0.2)
 
 
-class TaylorIn(BaseModel):
+class TaylorIn(Titled):
     labels: list[str] = Field(min_length=1, max_length=400)
     inflation: list[float] = Field(min_length=1, max_length=400)
     output_gap: list[float] = Field(min_length=1, max_length=400)
@@ -92,7 +96,7 @@ class TaylorIn(BaseModel):
     pi_target: float = Field(default=0.02, ge=-0.05, le=0.2)
 
 
-class RegressionIn(BaseModel):
+class RegressionIn(Titled):
     y_series_id: int
     x_series_ids: list[int] = Field(min_length=1, max_length=5)
     transform: Literal["levels", "diff", "pct"] = "diff"
@@ -101,7 +105,7 @@ class RegressionIn(BaseModel):
     method: Literal["last", "mean", "sum"] = "mean"
 
 
-class BacktestIn(BaseModel):
+class BacktestIn(Titled):
     series_id: int
     strategy: Literal["buy_hold", "ma_cross", "momentum"]
     fast: int = Field(default=10, ge=1, le=500)
@@ -109,6 +113,28 @@ class BacktestIn(BaseModel):
     lookback: int = Field(default=12, ge=1, le=500)
     cost_bps: float = Field(default=10, ge=0, le=500)
     rf: float = Field(default=0.0, ge=-0.05, le=0.3)
+
+
+class ScenarioIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    growth: float = Field(ge=-0.5, le=1.0, description="Crescita annua composta (0.03 = +3% l'anno)")
+
+
+class ScenariosIn(Titled):
+    """Proiezione di una serie (o di un valore di partenza) sotto più ipotesi di crescita."""
+
+    series_id: int | None = None
+    base_value: float | None = Field(default=None, gt=0, le=1e15)
+    base_year: int | None = Field(default=None, ge=1000, le=2200)
+    unit: str = Field(default="", max_length=60)
+    horizon: int = Field(default=25, ge=1, le=100)
+    scenarios: list[ScenarioIn] = Field(min_length=1, max_length=6)
+    uncertainty: float = Field(default=0.0, ge=0, le=0.5, description="Deviazione standard annua della crescita: banda al 90%")
+    history_years: int = Field(default=10, ge=2, le=100, description="Anni per la crescita storica di riferimento")
+
+
+class SimulationRename(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
 
 
 class SimulationOut(ORMModel):

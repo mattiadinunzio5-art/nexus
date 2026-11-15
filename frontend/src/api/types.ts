@@ -21,6 +21,11 @@ export interface Project {
   description: string;
   status: ProjectStatus;
   is_demo: boolean;
+  research_question?: string;
+  objectives?: string;
+  scope?: string;
+  period_start?: number | null;
+  period_end?: number | null;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
   owner_id?: number;
@@ -364,7 +369,7 @@ export interface Timeline {
   as_of_year: number | null;
   hindsight: boolean;
   events: TimelineEvent[];
-  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string }[];
+  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string; retrospective?: boolean }[];
   hidden_future_events: number;
   notes: string[];
 }
@@ -598,7 +603,7 @@ export interface ResearchRun {
   steps: AgentStep[];
 }
 
-export interface RunSummary { id: number; question: string; status: ResearchRun['status']; mode: string; provider: string; created_at: string }
+export interface RunSummary { id: number; question: string; status: ResearchRun['status']; mode: string; provider: string; created_at: string; error?: string | null }
 
 // --- Fase 6: Economic Laboratory ----------------------------------------------------------
 
@@ -792,3 +797,5 @@ export interface LicenseEntry {
   library_counts: Partial<Record<'series' | 'documents' | 'events' | 'entities' | 'relations', number>>;
 }
 export interface LicenseRegistry { version: string; updated: string; library_licenses: string[]; licenses: LicenseEntry[] }
+
+export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'scope' | 'period_start' | 'period_end'>>;

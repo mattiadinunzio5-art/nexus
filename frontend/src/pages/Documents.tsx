@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Field, Input, Select } from '../components/ui/Form';
+import { SearchPicker } from '../components/ui/SearchPicker';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
 import { formatDateTime } from '../lib/format';
@@ -29,6 +30,8 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle, clearTitle] = useDraft('documents.upload.title', '');
   const [author, setAuthor, clearAuthor] = useDraft('documents.upload.author', '');
   const [category, setCategory, clearCategory] = useDraft<keyof typeof CATEGORY_LABEL>('documents.upload.category', 'source_material');
+  const [projectId, setProjectId] = useStickyState('documents.upload.project', '');
+  const projects = useAsync(() => api.projects('active'), []);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   useFileDraft('documents.upload', fileRef);
@@ -42,6 +45,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     if (title.trim()) form.append('title', title.trim());
     form.append('author', author.trim());
     form.append('category', category);
+    if (projectId) form.append('project_id', projectId);
     setBusy(true);
     setMsg(undefined);
     try {
@@ -72,7 +76,13 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
       </Field>
-      <div className="flex items-end justify-end">
+      <Field label="Progetto (facoltativo)">
+        <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <option value="">Nessun progetto</option>
+          {(projects.data ?? []).filter((p) => !p.library && (p.my_role ?? 'owner') !== 'viewer').map((p) => <option key={p.id} value={String(p.id)}>{p.title}</option>)}
+        </Select>
+      </Field>
+      <div className="flex items-end justify-end sm:col-span-2">
         <Button type="submit" variant="primary" disabled={busy}><FileUp className="size-4" aria-hidden /> {busy ? 'Importazione…' : 'Importa'}</Button>
       </div>
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm sm:col-span-2 ${msg.ok ? 'text-ok' : 'text-bad'}`}>{msg.text}</p>}
@@ -193,7 +203,6 @@ export function DocumentsPage() {
 export function DocumentDetailPage() {
   const id = Number(useParams().documentId);
   const doc = useAsync(() => api.document(id), [id]);
-  const sources = useAsync(() => api.sources(), []);
   const [offset, setOffset] = useState(0);
   const chunks = useAsync(() => api.chunks(id, offset, 30), [id, offset]);
   const [saveError, setSaveError] = useState<Error>();
@@ -207,20 +216,19 @@ export function DocumentDetailPage() {
       <Card title="Collegamento bibliografico" className="mb-4">
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Scheda bibliografica" className="min-w-60 flex-1">
-            <Select
-              value={d.source_id ?? ''}
-              onChange={async (e) => {
+            <SearchPicker
+              kind="source" ariaLabel="Scheda bibliografica"
+              value={d.source_id ? String(d.source_id) : ''}
+              placeholder="Nessuna (le citazioni useranno solo titolo e autore): cerca una scheda…"
+              onChange={async (v) => {
                 setSaveError(undefined);
                 try {
-                  doc.setData(await api.updateDocument(d.id, { source_id: e.target.value ? Number(e.target.value) : null }));
+                  doc.setData(await api.updateDocument(d.id, { source_id: v ? Number(v) : null }));
                 } catch (err) {
                   setSaveError(err as Error);
                 }
               }}
-            >
-              <option value="">— nessuna (le citazioni useranno solo titolo e autore) —</option>
-              {sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 120)}</option>)}
-            </Select>
+            />
           </Field>
           <Link to="/bibliography" className="text-xs text-gold-300 hover:underline">Gestisci bibliografia</Link>
         </div>

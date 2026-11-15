@@ -81,18 +81,33 @@ ProjectStatus = Literal["active", "archived"]
 class ProjectCreate(BaseModel):
     title: Annotated[CleanStr, StringConstraints(min_length=1, max_length=200)]
     description: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
+    research_question: Annotated[CleanStr, StringConstraints(max_length=2000)] = ""
+    objectives: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
+    scope: Annotated[CleanStr, StringConstraints(max_length=2000)] = ""
+    period_start: Annotated[int, Field(ge=-3000, le=2200)] | None = None
+    period_end: Annotated[int, Field(ge=-3000, le=2200)] | None = None
 
 
 class ProjectUpdate(BaseModel):
     title: Annotated[CleanStr, StringConstraints(min_length=1, max_length=200)] | None = None
     description: Annotated[CleanStr, StringConstraints(max_length=5000)] | None = None
     status: ProjectStatus | None = None
+    research_question: Annotated[CleanStr, StringConstraints(max_length=2000)] | None = None
+    objectives: Annotated[CleanStr, StringConstraints(max_length=5000)] | None = None
+    scope: Annotated[CleanStr, StringConstraints(max_length=2000)] | None = None
+    period_start: Annotated[int, Field(ge=-3000, le=2200)] | None = None
+    period_end: Annotated[int, Field(ge=-3000, le=2200)] | None = None
 
 
 class ProjectOut(ORMModel):
     id: int
     title: str
     description: str
+    research_question: str = ""
+    objectives: str = ""
+    scope: str = ""
+    period_start: int | None = None
+    period_end: int | None = None
     status: ProjectStatus
     is_demo: bool
     owner_id: int

@@ -109,12 +109,23 @@ class _LSAModel:
     matrix: np.ndarray = field(repr=False)
 
 
+MAX_FEATURES = 15000  # termini del vocabolario
+N_COMPONENTS = 100  # dimensioni LSA
+MAX_CHUNKS = 5000  # segmenti più recenti indicizzati per utente
+MAX_MODELS = 3  # indici tenuti in memoria (i meno usati vengono scartati)
+
+
 class SemanticIndex:
-    """Indice semantico in memoria per utente, ricostruito quando l'archivio cambia."""
+    """Indice semantico in memoria per utente, ricostruito quando l'archivio cambia (al massimo MAX_MODELS in memoria)."""
 
     def __init__(self) -> None:
-        self._cache: dict[int, _LSAModel] = {}
+        from collections import OrderedDict
+
+        self._cache: OrderedDict[int, _LSAModel] = OrderedDict()
         self._lock = threading.Lock()
+
+    def has(self, owner_id: int) -> bool:
+        return owner_id in self._cache
 
     def invalidate(self, owner_id: int) -> None:
         with self._lock:
@@ -131,18 +142,21 @@ class SemanticIndex:
         from sklearn.feature_extraction.text import TfidfVectorizer
 
         rows = db.execute(
-            select(DocumentChunk.id, DocumentChunk.text).where(DocumentChunk.owner_id == owner_id).order_by(DocumentChunk.id)
+            select(DocumentChunk.id, DocumentChunk.text).where(DocumentChunk.owner_id == owner_id).order_by(DocumentChunk.id.desc()).limit(MAX_CHUNKS)
         ).all()
         if not rows:
             return None
         ids = np.array([r[0] for r in rows])
-        vec = TfidfVectorizer(analyzer=lambda s: terms(s), sublinear_tf=True, min_df=1)
+        # Vocabolario limitato e float32: sul server gratuito (512 MB) l'indice deve restare piccolo.
+        vec = TfidfVectorizer(analyzer=lambda s: terms(s), sublinear_tf=True, min_df=2 if len(rows) > 2000 else 1,
+                              max_features=MAX_FEATURES, dtype=np.float32)
         tfidf = vec.fit_transform([r[1] for r in rows])
+        del rows
         svd = None
-        n_comp = min(150, tfidf.shape[0] - 1, tfidf.shape[1] - 1)
-        if n_comp >= 2:
-            svd = TruncatedSVD(n_components=n_comp, random_state=0)
-            mat = svd.fit_transform(tfidf)
+        n_comp = min(N_COMPONENTS, tfidf.shape[0] - 1, tfidf.shape[1] - 1)
+        if n_comp >= 2 and tfidf.shape[0] >= 200:  # su archivi piccoli la TF-IDF piena è già leggera e più precisa
+            svd = TruncatedSVD(n_components=n_comp, algorithm="randomized", n_iter=4, random_state=0)
+            mat = svd.fit_transform(tfidf).astype(np.float32)
         else:
             mat = tfidf.toarray()
         norms = np.linalg.norm(mat, axis=1, keepdims=True)
@@ -154,11 +168,18 @@ class SemanticIndex:
         with self._lock:
             model = self._cache.get(owner_id)
             if model is None or model.version != version:
+                self._cache.pop(owner_id, None)
+                while len(self._cache) >= MAX_MODELS:
+                    self._cache.popitem(last=False)
+                import gc
+
+                gc.collect()
                 model = self._build(db, owner_id, version)
                 if model is None:
                     return []
                 self._cache[owner_id] = model
-        qv = model.vectorizer.transform([q])
+            self._cache.move_to_end(owner_id)
+        qv = model.vectorizer.transform([q]).astype(np.float32)
         if qv.nnz == 0:
             return []
         qv = model.svd.transform(qv) if model.svd is not None else qv.toarray()

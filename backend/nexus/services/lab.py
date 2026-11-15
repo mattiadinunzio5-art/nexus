@@ -35,8 +35,6 @@ def run(db: Session, user: User, kind: str, data) -> SimulationRun:
     params = data.model_dump()
     if kind == "monte_carlo":
         res = _guard(lambda: M.monte_carlo_gbm(data.s0, data.mu, data.sigma, data.years, data.steps_per_year, data.n_paths, data.seed, data.threshold))
-        if data.title:
-            res.title = data.title
     elif kind == "monte_carlo_bootstrap":
         s = finance.get_series(db, user, data.series_id)
         obs = [(o.date, o.value) for o in s.observations if o.value is not None]
@@ -44,8 +42,6 @@ def run(db: Session, user: User, kind: str, data) -> SimulationRun:
                                                      data.years, data.n_paths, data.block, data.seed))
     elif kind == "debt":
         res = _guard(lambda: M.debt_dynamics(**{k: v for k, v in params.items() if k != "title"}))
-        if data.title:
-            res.title = data.title
     elif kind == "sensitivity":
         b = data.base.model_dump()
         base = {k: b[k] for k in ("d0", "r_eff0", "r_market", "avg_maturity", "g", "pb", "years")}
@@ -67,9 +63,56 @@ def run(db: Session, user: User, kind: str, data) -> SimulationRun:
         res = _guard(lambda: M.backtest(s.name, [d for d, _ in obs], [v for _, v in obs], analytics.PERIODS_PER_YEAR[s.frequency],
                                         data.strategy, p, data.cost_bps, data.rf))
         res.data_used.append(f"Fonte: {s.source_label}")
+    elif kind == "scenarios":
+        res = _scenarios(db, user, data)
     else:
         raise NotFoundError("Tipo di simulazione sconosciuto.")
+    if getattr(data, "title", None) and data.title.strip():
+        res.title = data.title.strip()
     return _save(db, user, res, params)
+
+
+def _scenarios(db: Session, user: User, data: S.ScenariosIn) -> M.SimulationResult:
+    history, used = None, ["Crescite degli scenari scelte dall'utente"]
+    name, unit = "valore inserito", data.unit
+    if data.series_id is not None:
+        s = finance.get_series(db, user, data.series_id)
+        obs = [(o.date, o.value) for o in s.observations if o.value is not None and o.value > 0]
+        if len(obs) < 2:
+            raise ValidationFailedError("La serie non ha abbastanza valori positivi per una proiezione.")
+        obs.sort(key=lambda x: x[0])
+        last_d, last_v = obs[-1]
+        y_last = int(str(last_d)[:4])
+        name, unit = s.name, data.unit or s.unit
+        base_value = data.base_value or last_v
+        base_year = data.base_year or y_last
+        past = [(d, v) for d, v in obs if int(str(d)[:4]) <= y_last - data.history_years]
+        if past:
+            d0, v0 = past[-1]
+            span = y_last - int(str(d0)[:4])
+            if span > 0:
+                history = {"from": int(str(d0)[:4]), "to": y_last, "cagr": round((last_v / v0) ** (1 / span) - 1, 6),
+                           "years": [int(str(d)[:4]) for d, _ in obs if int(str(d)[:4]) >= y_last - 3 * data.history_years],
+                           "values": [round(v, 4) for d, v in obs if int(str(d)[:4]) >= y_last - 3 * data.history_years]}
+        used.insert(0, f"Serie «{s.name}» — {s.source_label} (ultimo dato {str(last_d)[:10]}: {last_v:.4g} {s.unit})")
+    else:
+        if data.base_value is None or data.base_year is None:
+            raise ValidationFailedError("Indica una serie oppure valore e anno di partenza.")
+        base_value, base_year = data.base_value, data.base_year
+        used.insert(0, "Valore di partenza inserito dall'utente")
+    return _guard(lambda: M.scenario_projection(name, unit, base_value, base_year, data.horizon, [x.model_dump() for x in data.scenarios],
+                                                data.uncertainty, history, used))
+
+
+def rename(db: Session, user: User, sim_id: int, title: str) -> SimulationRun:
+    r = get(db, user, sim_id)
+    r.title = title.strip()[:300]
+    res = dict(r.result or {})
+    res["title"] = r.title
+    r.result = res
+    db.commit()
+    db.refresh(r)
+    return r
 
 
 def _regression(db: Session, user: User, data: S.RegressionIn) -> M.SimulationResult:
