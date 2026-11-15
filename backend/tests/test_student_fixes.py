@@ -101,7 +101,7 @@ def test_interrupted_warroom_runs_are_marked_failed(client):
         db.commit()
         assert warroom.fail_interrupted_runs(db) >= 1
         db.refresh(run)
-        assert run.status == "failed" and run.error
+        assert run.status == "queued"  # torna in coda e riprende dall'ultima fase completata
     finally:
         db.close()
 

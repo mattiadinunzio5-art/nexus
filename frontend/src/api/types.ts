@@ -208,6 +208,7 @@ export interface DocumentInfo {
   chunk_count: number;
   status: string;
   error: string | null;
+
   flagged_chunks: number;
   project_id: number | null;
   source_id: number | null;
@@ -596,6 +597,10 @@ export interface ResearchRun {
   evidence: Evidence[];
   result: { abstract?: string; claims?: Claim[]; proposed_relations?: ProposedRelation[]; limitations?: string[]; method?: string };
   error: string | null;
+  attempts?: number;
+  heartbeat_at?: string | null;
+  started_at?: string | null;
+  checkpoint_phases?: string[];
   decision_note: string;
   decided_at: string | null;
   finished_at: string | null;

@@ -53,7 +53,8 @@ def create_run(db: Session, user: User, settings: Settings, data: RunCreate) -> 
     return run
 
 
-STALE_SECONDS = 15 * 60  # una ricerca locale dura secondi: oltre 15 minuti è rimasta orfana
+# Oltre il tempo massimo della coda più un margine, una ricerca ancora «in corso» non ha più un worker: va chiusa.
+STALE_SECONDS = 30 * 60
 
 
 def _aware(dt):
@@ -64,46 +65,21 @@ def _aware(dt):
 
 def _mark_interrupted(run: ResearchRun) -> None:
     run.status, run.finished_at = "failed", utcnow()
-    run.error = "Ricerca interrotta: il server si è riavviato mentre era in corso. Avviala di nuovo."
+    run.error = "Ricerca interrotta e non ripresa in tempo: avviala di nuovo. I passaggi completati restano visibili."
 
 
 def fail_interrupted_runs(db: Session) -> int:
-    """All'avvio nessuna ricerca può essere davvero in corso: quelle rimaste aperte erano state interrotte."""
-    runs = list(db.scalars(select(ResearchRun).where(ResearchRun.status.in_(("queued", "running")))))
-    for r in runs:
-        _mark_interrupted(r)
-    db.commit()
-    return len(runs)
+    """All'avvio le ricerche rimaste aperte tornano in coda e riprendono dall'ultima fase completata."""
+    from . import jobs
+
+    return jobs.requeue_interrupted(db)
 
 
 def execute_in_background(database: Database, settings: Settings, run_id: int) -> None:
-    """Eseguito fuori dalla richiesta HTTP, con una sessione propria."""
-    with database.session_factory() as db:
-        run = db.get(ResearchRun, run_id)
-        if run is None:
-            return
-        user = db.get(User, run.owner_id)
-        try:
-            client = ai.client_for(db, user, settings) if run.mode == "ai" else None
-        except llm.ProviderError as exc:
-            run.status, run.error, run.finished_at = "failed", str(exc), utcnow()
-            db.commit()
-            return
-        try:
-            workflow.execute(db, run, user, settings, client)
-        except Exception as exc:  # noqa: BLE001 — un errore imprevisto non deve lasciare la ricerca «in corso» per sempre
-            db.rollback()
-            run = db.get(ResearchRun, run_id)
-            run.status, run.error, run.finished_at = "failed", f"Errore durante la ricerca: {exc}"[:2000], utcnow()
-            db.commit()
-            return
-        activity.record(db, user=None, actor="ai" if run.mode == "ai" else "system", action="research.finish",
-                        entity_type="research_run", entity_id=run.id, summary=f"Ricerca #{run.id} terminata: {run.status}")
-        if run.status == "awaiting_approval":
-            notifications.create(db, user, f"Ricerca #{run.id} pronta per l'approvazione", run.question[:200])
-        else:
-            notifications.create(db, user, f"Ricerca #{run.id} non completata", run.error or "", level="error")
-        db.commit()
+    """Prova a eseguire subito la ricerca; se il worker l'ha già presa, non fa nulla (presa in carico atomica)."""
+    from . import jobs
+
+    jobs.process(database, settings, run_id)
 
 
 def _expire_stale(db: Session, runs: list[ResearchRun]) -> None:

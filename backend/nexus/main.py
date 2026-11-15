@@ -35,9 +35,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             bootstrap(db, create_local_user=settings.auth_mode == "local")
             from .services import warroom
 
-            warroom.fail_interrupted_runs(db)
+            n = warroom.fail_interrupted_runs(db)
+            if n:
+                logger.info("%s ricerche interrotte rimesse in coda per la ripresa", n)
+        worker = None
+        if settings.job_worker and settings.env != "test":
+            from .services.jobs import Worker
+
+            worker = Worker(app.state.database, settings)
+            worker.start()
         logger.info("NEXUS %s avviato (%s, db=%s)", __version__, settings.env, settings.database_label)
         yield
+        if worker:
+            worker.stop()
         app.state.database.engine.dispose()
 
     app = FastAPI(

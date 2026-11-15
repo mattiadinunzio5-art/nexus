@@ -19,6 +19,8 @@ import { useAppState, useContextPanel } from '../state/AppState';
 export const AGENT_LABEL: Record<AgentStep['agent'], string> = {
   planner: 'Planner', researcher: 'Ricerca', historian: 'Historian', economist: 'Economist', quant: 'Quant Analyst', skeptic: 'Skeptic', synthesizer: 'Synthesizer',
 };
+const PHASE: Record<string, string> = { plan: 'piano', research: 'ricerca delle evidenze', analysis: 'analisi', skeptic: 'controanalisi' };
+
 export const RUN_STATUS: Record<ResearchRun['status'], { label: string; tone: BadgeTone }> = {
   queued: { label: 'In coda', tone: 'neutral' }, running: { label: 'In esecuzione', tone: 'gold' },
   awaiting_approval: { label: 'In attesa di approvazione', tone: 'warn' }, approved: { label: 'Approvata', tone: 'ok' },
@@ -178,7 +180,12 @@ export function RunDetailPage() {
     <>
       <PageHeader eyebrow={<Link to="/war-room" className="hover:underline">Research War Room</Link>} title={r.question}
         actions={<Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge>} />
-      {['queued', 'running'].includes(r.status) && <Loading label="Gli agenti stanno lavorando…" />}
+      {['queued', 'running'].includes(r.status) && <Loading label={r.status === 'queued' ? 'In coda: la ricerca partirà a breve…' : 'Gli agenti stanno lavorando…'} />}
+      {(r.attempts ?? 0) > 1 && (
+        <p role="note" className="mb-3 rounded-md border border-ink-700 bg-ink-850 p-2 text-xs text-steel-300">
+          Tentativo {r.attempts} di 3{r.checkpoint_phases?.length ? ` · ripresa dalle fasi già completate (${r.checkpoint_phases.map((p) => PHASE[p] ?? p).join(', ')}): nessun lavoro perso` : ''}.
+        </p>
+      )}
       {r.error && (
         <div className="mb-4">
           <ErrorBox error={new Error(r.error)} />

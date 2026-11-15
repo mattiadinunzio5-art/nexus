@@ -33,6 +33,17 @@ class ResearchRun(TimestampMixin, Base):
     decision_note: Mapped[str] = mapped_column(Text, default="", nullable=False)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Coda persistente: tentativi, battito del worker, prossimo tentativo, fasi già completate (per riprendere).
+    attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    checkpoint: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    @property
+    def checkpoint_phases(self) -> list[str]:
+        """Fasi già completate e salvate (piano, ricerca, analisi, controanalisi)."""
+        return [k for k in ("plan", "research", "analysis", "skeptic") if k in (self.checkpoint or {})]
 
     steps: Mapped[list["AgentStep"]] = relationship(cascade="all, delete-orphan", passive_deletes=True, order_by="AgentStep.ordinal")
 

@@ -47,6 +47,10 @@ class RunOut(ORMModel):
     decision_note: str
     decided_at: UTCDateTime | None
     finished_at: UTCDateTime | None
+    attempts: int = 0
+    heartbeat_at: UTCDateTime | None = None
+    started_at: UTCDateTime | None = None
+    checkpoint_phases: list[str] = []
     created_at: UTCDateTime
     steps: list[StepOut]
 
