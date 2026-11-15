@@ -633,4 +633,18 @@ export const EN: Record<string, string> = {
   'AI condivisa disattivata.': 'Shared AI disabled.',
   'AI condivisa della piattaforma': 'Platform shared AI',
   'Se scegli un tuo provider qui sotto, userai quello.': 'If you choose your own provider below, that one will be used.',
+  // --- collegamento account AI ---
+  'Collega il tuo account AI': 'Connect your AI account',
+  'Usa il tuo account Gemini, ChatGPT, Grok o Claude per le funzioni AI di NEXUS. Serve una': 'Use your Gemini, ChatGPT, Grok or Claude account for NEXUS AI features. You need an',
+  'chiave API': 'API key',
+  'dalla console sviluppatori del servizio: gli abbonamenti delle app (ChatGPT Plus, Claude Pro, Gemini, SuperGrok) non si possono collegare ad altre applicazioni.': 'from the service\'s developer console: app subscriptions (ChatGPT Plus, Claude Pro, Gemini, SuperGrok) cannot be connected to other applications.',
+  'Servizio AI': 'AI service',
+  'Crea una chiave su': 'Create a key at',
+  '2. Incolla la chiave API': '2. Paste the API key',
+  'Verifica…': 'Checking…',
+  'Verifica la chiave': 'Check the key',
+  '3. Scegli il modello': '3. Choose the model',
+  'Collega e usa': 'Connect and use',
+  'La chiave funziona, ma non risultano modelli di testo disponibili per il tuo account.': 'The key works, but no text models are available for your account.',
+  'La chiave è cifrata sul server e non viene più mostrata. I costi d\'uso li addebita il servizio sul tuo account. Puoi scollegarla in «Credenziali».': 'The key is encrypted on the server and never shown again. Usage costs are charged by the service to your account. You can disconnect it under “Credentials”.',
 };

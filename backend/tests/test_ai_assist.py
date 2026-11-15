@@ -127,3 +127,28 @@ def test_ask_with_ai_adds_translation(client, monkeypatch):
     r = client.post("/api/research/ask", json={"question": "spazzatura negli oceani", "use_ai": True}).json()
     assert any("ocean plastic waste" in i for i in r["issues"])
     assert r["passages"] and "Plastic waste" in r["passages"][0]["text"]
+
+
+def test_ai_account_models_and_connect(client, monkeypatch):
+    import httpx
+
+    from nexus.services import ai_accounts
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.headers.get("authorization") != "Bearer good":
+            return httpx.Response(401, json={"error": "bad"})
+        return httpx.Response(200, json={"data": [{"id": "models/gemini-x-flash"}, {"id": "models/text-embedding-004"},
+                                                  {"id": "models/imagen-3"}, {"id": "models/gemini-x-pro"}]})
+
+    fake = httpx.Client(transport=httpx.MockTransport(handler))
+    assert ai_accounts.list_models("gemini", "good", fake) == ["gemini-x-pro", "gemini-x-flash"]
+    with pytest.raises(Exception, match="rifiutato la chiave"):
+        ai_accounts.list_models("gemini", "bad", fake)
+
+    services = {s["id"] for s in client.get("/api/credentials/ai-accounts").json()}
+    assert services == {"gemini", "openai", "xai", "anthropic"}
+    r = client.post("/api/credentials/ai-accounts/connect", json={"service": "xai", "key": "xai-123", "model": "grok-x"})
+    assert r.status_code == 200, r.text
+    creds = {c["provider"]: c for c in client.get("/api/credentials").json()}
+    assert creds["openai-compatible"]["config"] == {"base_url": "https://api.x.ai/v1", "model": "grok-x", "service": "xai"}
+    assert client.get("/api/ai/provider").json()["provider"] == "openai-compatible"

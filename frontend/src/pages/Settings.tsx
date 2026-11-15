@@ -1,5 +1,6 @@
 import { api } from '../api/client';
 import { CredentialsPanel } from '../components/Credentials';
+import { AIAccountCard } from '../components/AIAccount';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -62,6 +63,7 @@ export function SettingsPage() {
               ))}
             </ul>
           </Card>
+          <AIAccountCard onChange={() => { status.reload(); ai.reload(); }} />
           {user?.role === 'admin' && <PlatformAI onChange={() => { status.reload(); ai.reload(); }} />}
           <Card title="Credenziali dei servizi esterni" className="lg:col-span-2">
             <CredentialsPanel />
