@@ -1,9 +1,10 @@
 {
+  "organizzazione_buffer_id": "6afa122864a4f6318f8f3b03",
   "canale_buffer_id": "6afa1343ece6dfde5fd7ea7a",
   "servizio": "tiktok",
   "account": "nexus.analytic",
   "fuso_orario": "Europe/Rome",
-  "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/main/social/tiktok/media",
+  "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/275004987507224afd0f1e68e8885ce2899040f8/social/tiktok/media",
   "voci": [
     {
       "id": "S1G1-tiktok",

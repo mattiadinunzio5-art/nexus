@@ -1,0 +1,52 @@
+{
+  "programmati": [
+    {
+      "id": "S1G1-tiktok",
+      "buffer_post_id": "6afa290adaa378ad689538ef",
+      "dueAt": "2026-11-16T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G2-tiktok",
+      "buffer_post_id": "6afa2912ff465c57dab4198a",
+      "dueAt": "2026-11-17T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G3-tiktok",
+      "buffer_post_id": "6afa291360a910801c4d50fa",
+      "dueAt": "2026-11-18T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G4-tiktok",
+      "buffer_post_id": "6afa29148e87c256a3932cd4",
+      "dueAt": "2026-11-19T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G5-tiktok",
+      "buffer_post_id": "6afa291406e1675856a99e5c",
+      "dueAt": "2026-11-20T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G6-tiktok",
+      "buffer_post_id": "6afa291506e1675856a99e93",
+      "dueAt": "2026-11-21T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S1G7-tiktok",
+      "buffer_post_id": "6afa29158e87c256a3932d56",
+      "dueAt": "2026-11-22T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "S2G1-tiktok",
+      "buffer_post_id": "6afa29168e87c256a3932d88",
+      "dueAt": "2026-11-23T18:00:00.000Z",
+      "stato": "scheduled"
+    }
+  ]
+}
