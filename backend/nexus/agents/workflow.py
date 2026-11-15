@@ -79,6 +79,7 @@ class Runner:
             duration_ms=res.duration_ms if res else int((time.perf_counter() - (t0 or time.perf_counter())) * 1000),
             input_tokens=res.input_tokens if res else None, output_tokens=res.output_tokens if res else None,
         ))
+        self.run.heartbeat_at = utcnow()  # il worker è vivo: la ricerca non va considerata interrotta
         self.db.commit()
 
     def ai(self, role: str, user_prompt: str, max_tokens: int = 4000) -> tuple[dict, llm.LLMResult]:
@@ -359,24 +360,72 @@ class Runner:
         return out, issues
 
 
+class RetryableError(Exception):
+    """Errore temporaneo (servizio AI o database non raggiungibili): la ricerca va ritentata, non chiusa."""
+
+
 def execute(db: Session, run: ResearchRun, user: User, settings: Settings, client: llm.LLMClient | None) -> ResearchRun:
+    """Esegue la ricerca a fasi. Ogni fase completata è salvata nel checkpoint: dopo un riavvio si riprende da lì.
+
+    Gli errori di logica chiudono la ricerca come «failed»; quelli temporanei sono rilanciati come RetryableError
+    perché la coda la ritenti.
+    """
+    from sqlalchemy.exc import OperationalError
+
     r = Runner(db, run, user, settings, client)
+    r.ordinal = len(run.steps)  # ripresa: i passi già registrati restano
+    cp = dict(run.checkpoint or {})
     run.status = "running"
+
+    def save(phase: str, value=True) -> None:
+        cp[phase] = value
+        run.checkpoint = dict(cp)
+        run.heartbeat_at = utcnow()
+        db.commit()
+
     db.commit()
     try:
-        plan = r.plan()
-        run.plan = plan
-        evidence, _ = r.research(plan)
-        run.evidence = evidence
-        db.commit()
-        analyses = r.analysis(evidence)
-        skeptic_claims, checks = r.skeptic(evidence, analyses)
+        if "plan" in cp:
+            plan = run.plan
+        else:
+            plan = r.plan()
+            run.plan = plan
+            save("plan")
+        if "research" in cp:
+            evidence = run.evidence
+        else:
+            evidence, _ = r.research(plan)
+            run.evidence = evidence
+            save("research")
+        if "analysis" in cp:
+            analyses = cp["analysis"]
+        else:
+            analyses = r.analysis(evidence)
+            save("analysis", analyses)
+        if "skeptic" in cp:
+            skeptic_claims, checks = cp["skeptic"]["claims"], cp["skeptic"]["checks"]
+        else:
+            skeptic_claims, checks = r.skeptic(evidence, analyses)
+            save("skeptic", {"claims": skeptic_claims, "checks": checks})
         run.result = r.synthesize(evidence, analyses, skeptic_claims, checks)
         run.status = "awaiting_approval"
+        run.error = None
     except StepLimitExceeded as exc:
         run.status, run.error = "failed", str(exc)
+    except RetryableError:
+        db.rollback()
+        raise
+    except OperationalError as exc:
+        db.rollback()
+        raise RetryableError(f"database non raggiungibile ({type(exc).__name__})") from exc
+    except llm.ProviderError as exc:
+        if getattr(exc, "retryable", False):
+            db.rollback()
+            raise RetryableError(str(exc)) from exc
+        run.status, run.error = "failed", f"Servizio AI: {exc}"
     except Exception as exc:  # noqa: BLE001 - ogni errore resta visibile nel run
         run.status, run.error = "failed", f"{type(exc).__name__}: {exc}"
     run.finished_at = utcnow()
+    run.heartbeat_at = utcnow()
     db.commit()
     return run

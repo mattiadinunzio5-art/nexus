@@ -11,8 +11,9 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.get("", response_model=list[DocumentOut])
 def list_documents(db: DB, user: CurrentUser, project_id: int | None = None,
-                   category: Literal["source_material", "user_work", "dataset"] | None = None):
-    return svc.list_documents(db, user, project_id, category)
+                   category: Literal["source_material", "user_work", "dataset"] | None = None,
+                   origin: Literal["mine", "library"] | None = None):
+    return svc.list_documents(db, user, project_id, category, origin)
 
 
 @router.post("", response_model=DocumentOut, status_code=status.HTTP_201_CREATED,

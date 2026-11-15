@@ -153,7 +153,15 @@ class RetrievalHit(BaseModel):
     locator: str
     text: str
     score: float
+    # Tre indicatori distinti: rilevanza (posizione nella classifica), copertura (concetti presenti nel passaggio),
+    # supporto (concetti riuniti nella stessa frase: la frase migliore è `best_sentence`).
+    relevance: float = 0.0
+    coverage: float = 0.0
     support: Literal["strong", "partial", "weak", "none"]
+    matched_terms: list[str] = Field(default_factory=list)
+    missing_terms: list[str] = Field(default_factory=list)
+    best_sentence: str = ""
+    citation: str = ""
     injection_flag: bool
     source_label: str
 
@@ -178,6 +186,7 @@ class Claim(BaseModel):
     support: Literal["strong", "partial", "weak", "none"]
     coverage: float = 0.0
     evidence: list[int]
+    citations: list[str] = Field(default_factory=list)
     note: str = ""
 
 
@@ -190,3 +199,5 @@ class AskOut(BaseModel):
     disclaimer: str
     issues: list[str] = Field(default_factory=list)
     model: str = ""
+    # supported: almeno un'affermazione con supporto forte; partial; unsupported: le fonti non rispondono.
+    answer_status: Literal["supported", "partial", "unsupported"] = "unsupported"

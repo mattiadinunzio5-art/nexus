@@ -138,24 +138,68 @@ export function qs(params: Record<string, string | number | boolean | undefined 
   return s ? `?${s}` : '';
 }
 
+/** Richieste che si possono ripetere senza effetti doppi (letture e ricerche). */
+const RETRYABLE_POST = ['/research/ask', '/research/search', '/credentials/ai-accounts/models'];
+const RETRY_DELAYS = import.meta.env.MODE === 'test' ? [0, 0] : [3000, 8000, 15000];
+const TIMEOUT_MS = 120_000;
+
+export const NETWORK_MESSAGES = {
+  offline: 'Sei offline: controlla la connessione a Internet e riprova.',
+  waking: 'Il server NEXUS non risponde: sul piano gratuito può impiegare fino a un minuto per riavviarsi dopo un periodo di inattività. Riprova tra poco.',
+  timeout: "La richiesta ha impiegato troppo tempo (oltre 2 minuti): riprova, oppure restringi la ricerca a meno documenti.",
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Avvisa l'interfaccia mentre si riprova (banner «riconnessione in corso»). */
+function announce(state: 'retrying' | 'ok') {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('nexus:connection', { detail: state }));
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(BASE + path, {
-      ...init,
-      credentials: 'same-origin',
-      headers: {
-        // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
-        'X-Nexus-Client': 'web',
-        'X-Nexus-Lang': lang(),
-        ...(await authHeaders()),
-        ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
-        ...(init.headers as Record<string, string> | undefined),
-      },
-    });
-  } catch {
-    throw new ApiError(0, 'network_error', 'Backend non raggiungibile. Verifica che il server NEXUS sia avviato.');
+  const method = (init.method ?? 'GET').toUpperCase();
+  const canRetry = method === 'GET' || RETRYABLE_POST.some((p) => path.startsWith(p));
+  let res: Response | undefined;
+  for (let attempt = 0; ; attempt++) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : undefined;
+    let failure: 'network' | 'timeout' | 'unavailable' | undefined;
+    try {
+      res = await fetch(BASE + path, {
+        ...init,
+        signal: ctrl?.signal,
+        credentials: 'same-origin',
+        headers: {
+          // Intestazione richiesta dal backend per le modifiche autenticate via cookie (protezione CSRF).
+          'X-Nexus-Client': 'web',
+          'X-Nexus-Lang': lang(),
+          ...(await authHeaders()),
+          ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
+          ...(init.headers as Record<string, string> | undefined),
+        },
+      });
+      // 502/503/504: il server si sta riavviando o il proxy non lo raggiunge.
+      if ([502, 503, 504].includes(res.status)) failure = 'unavailable';
+    } catch (e) {
+      failure = (e as { name?: string })?.name === 'AbortError' ? 'timeout' : 'network';
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if (!failure) {
+      if (attempt > 0) announce('ok');
+      break;
+    }
+    if (canRetry && failure !== 'timeout' && attempt < RETRY_DELAYS.length) {
+      announce('retrying');
+      await sleep(RETRY_DELAYS[attempt]);
+      continue;
+    }
+    announce('ok');
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new ApiError(0, 'offline', NETWORK_MESSAGES.offline);
+    if (failure === 'timeout') throw new ApiError(0, 'timeout', NETWORK_MESSAGES.timeout);
+    throw new ApiError(res?.status ?? 0, 'network_error', NETWORK_MESSAGES.waking);
   }
+  if (!res) throw new ApiError(0, 'network_error', NETWORK_MESSAGES.waking);
   if (res.status === 204) return undefined as T;
   let body: unknown = null;
   try {
@@ -176,7 +220,20 @@ const json = (method: string, data?: unknown): RequestInit => ({
   body: data === undefined ? undefined : JSON.stringify(data),
 });
 
+export type ScopeParams = { origin?: 'mine' | 'library'; project_id?: number };
+export type ProjectItemType = 'document' | 'source' | 'event' | 'entity' | 'series' | 'relation';
+export interface ProjectOverview {
+  project_id: number; role: string; counts: Record<ProjectItemType, number>; from_library: number; verified_sources: number;
+  reports: { id: number; title: string; status: string }[]; research_runs: number;
+  checks: { key: string; label: string; ok: boolean; detail?: string }[]; progress: number;
+}
+
 export const api = {
+  projectOverview: (id: number) => request<ProjectOverview>(`/projects/${id}/overview`),
+  projectItems: (id: number, item_type: ProjectItemType) => request<{ id: number; label: string; library: boolean }[]>(`/projects/${id}/items${qs({ item_type })}`),
+  addProjectItem: (id: number, item_type: ProjectItemType, item_id: number) => request<{ linked: boolean }>(`/projects/${id}/items`, json('POST', { item_type, item_id })),
+  removeProjectItem: (id: number, item_type: ProjectItemType, item_id: number) => request<void>(`/projects/${id}/items/${item_type}/${item_id}`, { method: 'DELETE' }),
+  linkedProjects: (item_type: ProjectItemType, item_id: number) => request<number[]>(`/projects/linked/${item_type}/${item_id}`),
   health: () => request<{ status: 'ok'; version: string }>('/health'),
   systemStatus: () => request<SystemStatus>('/system/status'),
 
@@ -204,7 +261,7 @@ export const api = {
   search: (q: string) => request<SearchResult>(`/search?q=${encodeURIComponent(q)}`),
 
   // Fase 2
-  documents: (params: { project_id?: number; category?: string } = {}) => request<DocumentInfo[]>(`/documents${qs(params)}`),
+  documents: (params: { project_id?: number; category?: string; origin?: 'mine' | 'library' } = {}) => request<DocumentInfo[]>(`/documents${qs(params)}`),
   document: (id: number) => request<DocumentInfo>(`/documents/${id}`),
   uploadDocument: (form: FormData) => request<DocumentInfo>('/documents', { method: 'POST', body: form }),
   importGutenberg: (data: { ebook_id: number; title: string; author: string }) =>
@@ -214,8 +271,8 @@ export const api = {
   chunks: (id: number, offset = 0, limit = 50) => request<Chunk[]>(`/documents/${id}/chunks?offset=${offset}&limit=${limit}`),
   documentFilePath: (id: number) => `/documents/${id}/file`,
 
-  sources: (q?: string) => request<Source[]>(`/sources${qs({ q })}`),
-  findSources: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number }) => request<Source[]>(`/sources${qs(params)}`),
+  sources: (q?: string, scope: ScopeParams & { limit?: number; offset?: number } = {}) => request<Source[]>(`/sources${qs({ q, ...scope })}`),
+  findSources: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number; project_id?: number }) => request<Source[]>(`/sources${qs(params)}`),
   source: (id: number) => request<Source>(`/sources/${id}`),
   createSource: (data: Partial<SourceInput>) => request<Source>('/sources', json('POST', data)),
   updateSource: (id: number, data: Partial<SourceInput>) => request<Source>(`/sources/${id}`, json('PUT', data)),
@@ -242,8 +299,9 @@ export const api = {
   linkEvents: (id: number, data: Record<string, unknown>) => request<Relation>(`/history/events/${id}/links`, json('POST', data)),
   timeline: (params: Record<string, string | number | boolean | undefined>) => request<Timeline>(`/history/timeline${qs(params)}`),
 
-  graph: (params: { focus?: number; depth?: number; relation_types?: string[]; provenance?: string[]; entity_types?: string[] }) => {
+  graph: (params: { focus?: number; depth?: number; relation_types?: string[]; provenance?: string[]; entity_types?: string[]; project_id?: number }) => {
     const p = new URLSearchParams();
+    if (params.project_id) p.set('project_id', String(params.project_id));
     if (params.focus) p.set('focus', String(params.focus));
     if (params.depth) p.set('depth', String(params.depth));
     for (const k of ['relation_types', 'provenance', 'entity_types'] as const) for (const v of params[k] ?? []) p.append(k, v);
@@ -252,7 +310,7 @@ export const api = {
   },
   graphPath: (source: number, target: number) => request<{ found: boolean; entity_ids: number[]; relations: Relation[] }>(`/graph/path?source=${source}&target=${target}`),
   entities: (q?: string, entity_type?: EntityType) => request<Entity[]>(`/graph/entities${qs({ q, entity_type })}`),
-  findEntities: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number }) => request<Entity[]>(`/graph/entities${qs(params)}`),
+  findEntities: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number; project_id?: number }) => request<Entity[]>(`/graph/entities${qs(params)}`),
   entity: (id: number) => request<Entity>(`/graph/entities/${id}`),
   createEntity: (data: Partial<Entity>) => request<Entity>('/graph/entities', json('POST', data)),
   deleteEntity: (id: number) => request<void>(`/graph/entities/${id}?confirm=true`, { method: 'DELETE' }),
@@ -262,7 +320,7 @@ export const api = {
 
   // Fase 4
   presets: () => request<Preset[]>('/finance/presets'),
-  seriesList: (category?: string, q?: string, origin?: 'mine' | 'library') => request<SeriesInfo[]>(`/finance/series${qs({ category, q, origin })}`),
+  seriesList: (category?: string, q?: string, origin?: 'mine' | 'library', project_id?: number, offset?: number) => request<SeriesInfo[]>(`/finance/series${qs({ category, q, origin, project_id, offset })}`),
   series: (id: number) => request<SeriesDetail>(`/finance/series/${id}`),
   importSeries: (data: Record<string, unknown>) => request<SeriesDetail>('/finance/series/import', json('POST', data)),
   uploadSeries: (form: FormData) => request<SeriesDetail>('/finance/series/upload', { method: 'POST', body: form }),

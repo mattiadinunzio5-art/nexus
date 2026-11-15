@@ -1,3 +1,5 @@
+import { useScope } from '../state/Scope';
+import { ProjectWorkspace } from '../components/ProjectWorkspace';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Archive, ArchiveRestore, MessageSquare, Pencil, Plus, Share2, Trash2 } from 'lucide-react';
@@ -38,12 +40,13 @@ export function ProjectForm({
   const [description, setDescription, clearDescription] = useDraft(`${draftKey}.description`, initial?.description ?? '');
   const [question, setQuestion, clearQuestion] = useDraft(`${draftKey}.question`, initial?.research_question ?? '');
   const [objectives, setObjectives, clearObjectives] = useDraft(`${draftKey}.objectives`, initial?.objectives ?? '');
+  const [hypotheses, setHypotheses, clearHypotheses] = useDraft(`${draftKey}.hypotheses`, initial?.hypotheses ?? '');
   const [scope, setScope, clearScope] = useDraft(`${draftKey}.scope`, initial?.scope ?? '');
   const [from, setFrom, clearFrom] = useDraft(`${draftKey}.from`, initial?.period_start != null ? String(initial.period_start) : '');
   const [to, setTo, clearTo] = useDraft(`${draftKey}.to`, initial?.period_end != null ? String(initial.period_end) : '');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const clearAll = () => [clearTitle, clearDescription, clearQuestion, clearObjectives, clearScope, clearFrom, clearTo].forEach((f) => f());
+  const clearAll = () => [clearTitle, clearDescription, clearQuestion, clearObjectives, clearHypotheses, clearScope, clearFrom, clearTo].forEach((f) => f());
 
   /** Solo i campi del disegno di ricerca cambiati (alla creazione: quelli compilati). */
   function design(): ProjectInput | string {
@@ -53,7 +56,7 @@ export function ProjectForm({
     if ((ys !== null && !Number.isInteger(ys)) || (ye !== null && !Number.isInteger(ye))) return 'Gli anni del periodo devono essere numeri interi.';
     if (ys !== null && ye !== null && ye < ys) return "L'anno finale del periodo precede quello iniziale.";
     const text: [keyof ProjectInput, string, string | undefined][] = [
-      ['research_question', question.trim(), initial?.research_question], ['objectives', objectives.trim(), initial?.objectives], ['scope', scope.trim(), initial?.scope],
+      ['research_question', question.trim(), initial?.research_question], ['objectives', objectives.trim(), initial?.objectives], ['hypotheses', hypotheses.trim(), initial?.hypotheses], ['scope', scope.trim(), initial?.scope],
     ];
     for (const [k, v, old] of text) if (v !== (old ?? '')) (out as Record<string, unknown>)[k] = v;
     if (ys !== (initial?.period_start ?? null)) out.period_start = ys;
@@ -102,6 +105,11 @@ export function ProjectForm({
           <span className="mb-1 block text-xs text-steel-400">Obiettivi (uno per riga)</span>
           <textarea className={`${inputCls} min-h-16`} value={objectives} onChange={(e) => setObjectives(e.target.value)} maxLength={5000} />
         </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-steel-400">Ipotesi di lavoro (una per riga)</span>
+          <textarea className={`${inputCls} min-h-16`} value={hypotheses} onChange={(e) => setHypotheses(e.target.value)} maxLength={5000}
+            placeholder="Es. La crescita della produzione ha preceduto di decenni le politiche sui rifiuti." />
+        </label>
         <div className="grid gap-3 sm:grid-cols-[8rem_8rem_1fr]">
           <label className="block">
             <span className="mb-1 block text-xs text-steel-400">Periodo: dal</span>
@@ -128,13 +136,17 @@ export function ProjectForm({
 
 function ProjectDesign({ p }: { p: Project }) {
   const period = p.period_start != null || p.period_end != null ? `${p.period_start ?? '…'}–${p.period_end ?? '…'}` : '';
-  if (!p.research_question && !p.objectives && !p.scope && !period) return null;
+  if (!p.research_question && !p.objectives && !p.hypotheses && !p.scope && !period) return null;
   return (
     <dl className="mt-2 grid gap-x-3 gap-y-1 rounded-md border border-ink-800 bg-ink-950/60 p-3 text-sm sm:grid-cols-[9rem_1fr]">
       {p.research_question && <><dt className="text-xs text-steel-500">Domanda di ricerca</dt><dd className="text-paper">{p.research_question}</dd></>}
       {p.objectives && (
         <><dt className="text-xs text-steel-500">Obiettivi</dt>
           <dd><ul className="list-disc pl-4 text-steel-300">{p.objectives.split('\n').filter((x) => x.trim()).map((o, i) => <li key={i}>{o.replace(/^[-•*]\s*/, '')}</li>)}</ul></dd></>
+      )}
+      {p.hypotheses && (
+        <><dt className="text-xs text-steel-500">Ipotesi</dt>
+          <dd><ul className="list-disc pl-4 text-steel-300">{p.hypotheses.split('\n').filter((x) => x.trim()).map((o, i) => <li key={i}>{o.replace(/^[-•*]\s*/, '')}</li>)}</ul></dd></>
       )}
       {period && <><dt className="text-xs text-steel-500">Periodo</dt><dd className="text-steel-300">{period}</dd></>}
       {p.scope && <><dt className="text-xs text-steel-500">Perimetro</dt><dd className="text-steel-300">{p.scope}</dd></>}
@@ -243,6 +255,8 @@ export function ProjectsPage() {
   const { mode } = useAuth();
   const [sharing, setSharing] = useState<number>();
   const [discussing, setDiscussing] = useState<number>();
+  const [opened, setOpened] = useState<number>();
+  const scope = useScope();
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<ProjectStatus>('active');
   const [creatingSticky, setCreating] = useStickyState('projects.creating', false);
@@ -363,6 +377,13 @@ export function ProjectsPage() {
                     {mode !== 'local' && (p.my_role ?? 'owner') === 'owner' && (
                       <Button variant="ghost" className="px-2" onClick={() => setSharing(sharing === p.id ? undefined : p.id)} aria-label={`Condividi ${p.title}`}><Share2 className="size-4" /></Button>
                     )}
+                    <Button variant={scope.projectId === p.id ? 'primary' : 'ghost'} className="text-xs" aria-pressed={scope.projectId === p.id}
+                      onClick={() => scope.setProject(scope.projectId === p.id ? null : p.id, p.title)}>
+                      {scope.projectId === p.id ? 'Progetto attivo' : 'Lavora su questo progetto'}
+                    </Button>
+                    <Button variant="ghost" className="text-xs" aria-expanded={opened === p.id} onClick={() => setOpened(opened === p.id ? undefined : p.id)}>
+                      {opened === p.id ? 'Chiudi panoramica' : 'Panoramica'}
+                    </Button>
                     <Button variant="ghost" className="px-2" onClick={() => setDiscussing(discussing === p.id ? undefined : p.id)} aria-label={`Commenti e cronologia di ${p.title}`} aria-expanded={discussing === p.id}>
                       <MessageSquare className="size-4" />
                     </Button>
@@ -384,6 +405,7 @@ export function ProjectsPage() {
                   </div>
                   {sharing === p.id && <div className="basis-full"><SharePanel projectId={p.id} /></div>}
                   {discussing === p.id && <div className="basis-full"><CollabPanel projectId={p.id} /></div>}
+                  {opened === p.id && <div className="basis-full"><ProjectWorkspace projectId={p.id} canEdit={(p.my_role ?? 'owner') !== 'viewer'} /></div>}
                 </div>
               )}
             </li>

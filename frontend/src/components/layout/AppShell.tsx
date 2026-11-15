@@ -5,6 +5,8 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ContextPanel } from './ContextPanel';
 import { DemoBanner } from './DemoBanner';
+import { ConnectionBanner } from './ConnectionBanner';
+import { ScopeBar } from './ScopeBar';
 
 const PANEL_KEY = 'nexus.panelOpen';
 
@@ -43,7 +45,9 @@ export function AppShell() {
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <DemoBanner />
+        <ConnectionBanner />
         <TopBar onMenu={() => setMenuOpen(true)} onTogglePanel={togglePanel} panelOpen={panelOpen} />
+        <ScopeBar />
         <div className="flex min-h-0 flex-1">
           <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">

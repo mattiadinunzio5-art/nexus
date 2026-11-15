@@ -168,12 +168,18 @@ def import_gutenberg(db: Session, user: User, settings: Settings, ebook_id: int,
     )
 
 
-def list_documents(db: Session, user: User, project_id: int | None = None, category: str | None = None) -> list[Document]:
+def list_documents(db: Session, user: User, project_id: int | None = None, category: str | None = None,
+                   origin: str | None = None) -> list[Document]:
     from ..core import library
+    from . import project_scope
 
     stmt = select(Document).where(Document.owner_id.in_(library.visible_owner_ids(db, user)))
+    if origin == "mine":
+        stmt = stmt.where(Document.owner_id == user.id)
+    elif origin == "library":
+        stmt = stmt.where(Document.owner_id != user.id)
     if project_id is not None:
-        stmt = stmt.where(Document.project_id == project_id)
+        stmt = stmt.where(project_scope.scope_filter(db, user, Document, "document", project_id))
     if category:
         stmt = stmt.where(Document.category == category)
     return list(db.scalars(stmt.order_by(Document.created_at.desc())))

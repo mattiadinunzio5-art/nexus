@@ -51,7 +51,7 @@ def create_project(db: Session, user: User, data: ProjectCreate, is_demo: bool =
     plans.enforce(db, user, "projects")
     project = Project(
         owner_id=user.id, title=data.title, description=data.description, is_demo=is_demo,
-        research_question=data.research_question, objectives=data.objectives, scope=data.scope,
+        research_question=data.research_question, objectives=data.objectives, hypotheses=data.hypotheses, scope=data.scope,
         period_start=data.period_start, period_end=data.period_end,
     )
     _check_period(project)

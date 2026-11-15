@@ -13,6 +13,7 @@ from .history import EventSource, HistoricalEvent, KnowledgeItem
 from .notification import Notification
 from .preference import UserPreference
 from .project import Project
+from .project_item import ProjectItem
 from .search import SearchQuery
 from .source import Source
 from .studio import Briefing, Note, Report, ReportSection
@@ -25,6 +26,7 @@ __all__ = [
     "DiscoveryHypothesis",
     "DiscoverySession",
     "ProjectComment",
+    "ProjectItem",
     "SeriesAlert",
     "ActivityLog",
     "AuthSession",

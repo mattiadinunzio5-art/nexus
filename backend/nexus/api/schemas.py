@@ -83,6 +83,7 @@ class ProjectCreate(BaseModel):
     description: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
     research_question: Annotated[CleanStr, StringConstraints(max_length=2000)] = ""
     objectives: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
+    hypotheses: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
     scope: Annotated[CleanStr, StringConstraints(max_length=2000)] = ""
     period_start: Annotated[int, Field(ge=-3000, le=2200)] | None = None
     period_end: Annotated[int, Field(ge=-3000, le=2200)] | None = None
@@ -94,6 +95,7 @@ class ProjectUpdate(BaseModel):
     status: ProjectStatus | None = None
     research_question: Annotated[CleanStr, StringConstraints(max_length=2000)] | None = None
     objectives: Annotated[CleanStr, StringConstraints(max_length=5000)] | None = None
+    hypotheses: Annotated[CleanStr, StringConstraints(max_length=5000)] | None = None
     scope: Annotated[CleanStr, StringConstraints(max_length=2000)] | None = None
     period_start: Annotated[int, Field(ge=-3000, le=2200)] | None = None
     period_end: Annotated[int, Field(ge=-3000, le=2200)] | None = None
@@ -105,6 +107,7 @@ class ProjectOut(ORMModel):
     description: str
     research_question: str = ""
     objectives: str = ""
+    hypotheses: str = ""
     scope: str = ""
     period_start: int | None = None
     period_end: int | None = None

@@ -25,6 +25,7 @@ class Project(TimestampMixin, Base):
     # Disegno della ricerca: domanda, obiettivi, periodo e perimetro (paesi, settori, fonti).
     research_question: Mapped[str] = mapped_column(Text, default="", nullable=False)
     objectives: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    hypotheses: Mapped[str] = mapped_column(Text, default="", nullable=False)
     scope: Mapped[str] = mapped_column(Text, default="", nullable=False)
     period_start: Mapped[int | None] = mapped_column(Integer, nullable=True)
     period_end: Mapped[int | None] = mapped_column(Integer, nullable=True)

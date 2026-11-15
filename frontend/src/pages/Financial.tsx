@@ -1,3 +1,6 @@
+import { useScope, scopeKey } from '../state/Scope';
+import { ProjectLinkButton, linkToActiveProject } from '../components/ProjectLink';
+import { ScopeNote } from '../components/ScopeNote';
 import { LicenseBox } from '../components/License';
 import { recalledFile, rememberFile, useDraft, useFileDraft, useStickyState } from '../lib/useStickyState';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
@@ -33,12 +36,14 @@ function ImportPanel({ onDone }: { onDone: (id: number) => void }) {
   useFileDraft('financial.import.csv', fileRef);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
+  const { projectId: activeProject } = useScope();
 
   async function run(fn: () => Promise<SeriesDetail>) {
     setBusy(true);
     setMsg(undefined);
     try {
       const s = await fn();
+      await linkToActiveProject(activeProject, 'series', s.id);
       setMsg({ ok: true, text: `Importata «${s.name}»: ${s.observation_count} osservazioni${s.from_cache ? ' (dalla cache: fonte non raggiungibile)' : ''}.${s.import_warnings?.length ? ` Avvisi: ${s.import_warnings.join('; ')}` : ''}` });
       onDone(s.id);
     } catch (e) {
@@ -124,8 +129,9 @@ export function FinancialPage() {
     const t = setTimeout(() => setQuery(q.trim()), 350);
     return () => clearTimeout(t);
   }, [q]);
-  const [origin, setOrigin] = useStickyState<'' | 'mine' | 'library'>('financial.origin', '');
-  const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined, origin || undefined), [category, query, origin]);
+  const scope = useScope();
+  const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined, scope.params.origin, scope.params.project_id),
+    [category, query, scopeKey(scope.params)]);
   const [showImport, setShowImport] = useStickyState('financial.import.open', false);
   useContextPanel(
     <div className="space-y-2 text-steel-300">
@@ -147,11 +153,11 @@ export function FinancialPage() {
           {Object.entries(SERIES_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
         <Input aria-label="Cerca serie" placeholder="Cerca per nome o paese…" className="max-w-72" value={q} onChange={(e) => setQ(e.target.value)} />
-        <OriginTabs value={origin} onChange={setOrigin} />
+        <ScopeNote />
       </div>
       {list.loading && !list.data && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
-      {list.data?.length === 0 && <EmptyState>{origin === 'mine' ? 'Non hai ancora importato serie: usa «Importa serie».' : 'Nessuna serie trovata.'}</EmptyState>}
+      {list.data?.length === 0 && <EmptyState>{scope.mode === 'mine' ? 'Non hai ancora importato serie: usa «Importa serie».' : scope.mode === 'project' ? 'Nessuna serie collegata al progetto: aprine una e usa «Aggiungi al progetto».' : 'Nessuna serie trovata.'}</EmptyState>}
       {list.data && list.data.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-ink-700">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -173,19 +179,6 @@ export function FinancialPage() {
         </div>
       )}
     </>
-  );
-}
-
-/** Le tue serie, quelle della Biblioteca o tutte (le tue sempre per prime). */
-export function OriginTabs({ value, onChange }: { value: '' | 'mine' | 'library'; onChange: (v: '' | 'mine' | 'library') => void }) {
-  const tabs = [['mine', 'Le mie'], ['library', 'Biblioteca'], ['', 'Tutte']] as const;
-  return (
-    <div className="flex gap-1" role="tablist" aria-label="Origine delle serie">
-      {tabs.map(([k, l]) => (
-        <button key={k || 'all'} type="button" role="tab" aria-selected={value === k} onClick={() => onChange(k)}
-          className={`rounded-md px-3 py-1.5 text-sm ${value === k ? 'bg-ink-800 text-paper' : 'text-steel-400 hover:text-paper'}`}>{l}</button>
-      ))}
-    </div>
   );
 }
 
@@ -239,6 +232,7 @@ export function SeriesDetailPage() {
       <PageHeader eyebrow={<Link to="/financial" className="hover:underline">Financial Intelligence</Link>} title={d.name}
         description={`${d.unit || 'unità non indicata'} · ${FREQUENCY_LABEL[d.frequency]} · ultimo dato ${d.last_date ?? '—'}`}
         actions={<>
+          <ProjectLinkButton type="series" id={id} />
           {d.connector !== 'upload' && <Button disabled={busy} onClick={async () => { setBusy(true); setErr(undefined); try { s.setData(await api.refreshSeries(id)); await a.reload(); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); } }}><RefreshCw className={`size-4 ${busy ? 'animate-spin' : ''}`} aria-hidden /> Aggiorna dalla fonte</Button>}
           <Button onClick={() => setDeleting(true)} aria-label="Elimina serie"><Trash2 className="size-4" /></Button>
         </>} />
@@ -377,11 +371,11 @@ function AlertsCard({ seriesId, unit }: { seriesId: number; unit: string }) {
 }
 
 export function ComparePage() {
-  const [origin, setOrigin] = useStickyState<'' | 'mine' | 'library'>('compare.origin', '');
+  const scope = useScope();
   const [cq, setCq] = useState('');
   const [cquery, setCquery] = useState('');
   useEffect(() => { const t = setTimeout(() => setCquery(cq.trim()), 300); return () => clearTimeout(t); }, [cq]);
-  const list = useAsync(() => api.seriesList(undefined, cquery.length >= 2 ? cquery : undefined, origin || undefined), [cquery, origin]);
+  const list = useAsync(() => api.seriesList(undefined, cquery.length >= 2 ? cquery : undefined, scope.params.origin, scope.params.project_id), [cquery, scopeKey(scope.params)]);
   const [selected, setSelected] = useState<number[]>([]);
   const [names, setNames] = useState<Record<number, string>>({});
   const [freq, setFreq] = useState('');
@@ -414,7 +408,7 @@ export function ComparePage() {
           <legend className="mb-1 text-xs text-steel-400">Serie (da 2 a 8)</legend>
           <div className="mb-2 flex flex-wrap gap-2">
             <Input aria-label="Cerca serie da confrontare" placeholder="Cerca per nome o paese…" className="max-w-72" value={cq} onChange={(e) => setCq(e.target.value)} />
-            <OriginTabs value={origin} onChange={setOrigin} />
+            <ScopeNote />
           </div>
           {selected.length > 0 && (
             <p className="mb-2 flex flex-wrap gap-1 text-xs text-steel-300">Selezionate:

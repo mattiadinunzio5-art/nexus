@@ -26,11 +26,11 @@ def list_events(
     db: DB, user: CurrentUser, q: str | None = Query(None, max_length=200), category: Category | None = None,
     country: str | None = Query(None, max_length=120), from_year: int | None = None, to_year: int | None = None,
     reliability: Reliability | None = None, limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
-    origin: Literal["mine", "library"] | None = None,
+    origin: Literal["mine", "library"] | None = None, project_id: int | None = None,
 ):
     return svc.to_out_many(db, svc.list_events(db, user, q=q, category=category, country=country,
                                                from_year=from_year, to_year=to_year, reliability=reliability,
-                                               limit=limit, offset=offset, origin=origin))
+                                               limit=limit, offset=offset, origin=origin, project_id=project_id))
 
 
 @router.post("/events", response_model=EventOut, status_code=status.HTTP_201_CREATED)
@@ -90,6 +90,8 @@ def timeline(
     to_year: int | None = None,
     event_id: int | None = None,
     origin: Literal["mine", "library"] | None = None,
+    project_id: int | None = None,
 ):
     return timemachine.timeline(db, user, as_of_year=as_of_year, hindsight=hindsight, country=country,
-                                category=category, from_year=from_year, to_year=to_year, event_id=event_id, origin=origin)
+                                category=category, from_year=from_year, to_year=to_year, event_id=event_id, origin=origin,
+                                project_id=project_id)

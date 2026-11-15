@@ -1,0 +1,24 @@
+# Tiene sveglio il backend su Render (piano gratuito: si spegne dopo 15 minuti senza richieste e il riavvio
+# richiede fino a un minuto, che gli utenti vedono come «server non raggiungibile»).
+# Un solo servizio sempre attivo rientra nelle 750 ore gratuite al mese.
+name: Sveglia backend
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Controllo dello stato (database, ricerca, coda)
+        run: |
+          for i in 1 2 3; do
+            if out=$(curl -fsS -m 75 https://nexus-api-7w2q.onrender.com/api/health/deep); then
+              echo "$out"; exit 0
+            fi
+            sleep 20
+          done
+          echo "Backend non raggiungibile dopo 3 tentativi"; exit 1

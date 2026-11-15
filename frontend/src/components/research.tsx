@@ -32,16 +32,37 @@ export function InjectionWarning() {
   );
 }
 
+const pct = (v: number | undefined) => `${Math.round((v ?? 0) * 100)}%`;
+
+/** I tre indicatori, separati: rilevanza ≠ copertura ≠ supporto. */
+export function Indicators({ hit }: { hit: RetrievalHit }) {
+  return (
+    <dl className="mt-2 grid grid-cols-1 gap-2 text-[11px] sm:grid-cols-3" data-testid="indicators">
+      <div title="Posizione del passaggio nella classifica della ricerca, rispetto al primo risultato. Non dice se il passaggio risponde.">
+        <dt className="text-steel-500">Rilevanza</dt><dd className="text-paper">{pct(hit.relevance)}</dd>
+      </div>
+      <div title="Quota dei concetti della domanda (anche tradotti) presenti nel passaggio.">
+        <dt className="text-steel-500">Copertura della domanda</dt>
+        <dd className="text-paper">{pct(hit.coverage)}{hit.missing_terms && hit.missing_terms.length > 0 && <span className="text-steel-500"> · mancano: {hit.missing_terms.join(', ')}</span>}</dd>
+      </div>
+      <div title="I concetti devono comparire insieme nella stessa frase. Stima lessicale: il significato va verificato leggendo la frase.">
+        <dt className="text-steel-500">Supporto (stessa frase)</dt>
+        <dd><Badge tone={SUPPORT[hit.support].tone}>{SUPPORT[hit.support].label}</Badge></dd>
+      </div>
+    </dl>
+  );
+}
+
 export function PassageCard({ hit, index }: { hit: RetrievalHit; index?: number }) {
   return (
     <article className="rounded-lg border border-ink-700 bg-ink-900 p-3" data-testid="passage">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {index !== undefined && <span className="font-mono text-steel-500">[{index}]</span>}
-        <span className="font-medium text-paper">{hit.document_title}</span>
-        {hit.locator && <span className="text-steel-400">{hit.locator}</span>}
-        <Badge tone={SUPPORT[hit.support].tone}>{SUPPORT[hit.support].label}</Badge>
+        <span className="font-medium text-paper">{hit.citation || hit.document_title}</span>
+        {!hit.citation && hit.locator && <span className="text-steel-400">{hit.locator}</span>}
         {hit.injection_flag && <InjectionWarning />}
       </div>
+      <Indicators hit={hit} />
       <p className="mt-2 whitespace-pre-line text-sm text-steel-300">{hit.text}</p>
       <p className="mt-2 text-[11px] text-steel-500">Fonte: {hit.source_label}</p>
     </article>

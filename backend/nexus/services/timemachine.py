@@ -25,6 +25,7 @@ from . import history
 def timeline(
     db: Session, user: User, *, as_of_year: int | None, hindsight: bool, country: str | None, category: str | None,
     from_year: int | None, to_year: int | None, event_id: int | None = None, origin: str | None = None,
+    project_id: int | None = None,
 ) -> TimelineOut:
     from ..core import library
 
@@ -32,12 +33,12 @@ def timeline(
     if as_of_year is not None and not hindsight:
         upper = min(as_of_year, to_year) if to_year is not None else as_of_year
     windowed = False
-    if as_of_year is not None and from_year is None and origin != "mine" and library.library_user_id(db) is not None:
+    if as_of_year is not None and from_year is None and origin != "mine" and project_id is None and library.library_user_id(db) is not None:
         # Con la Biblioteca l'archivio è molto grande: senza «dall'anno» si mostra una finestra
         # di WINDOW_YEARS anni prima della data scelta (modificabile con i filtri).
         from_year, windowed = as_of_year - WINDOW_YEARS, True
     all_events = history.list_events(db, user, category=category, country=country, from_year=from_year, to_year=to_year,
-                                     limit=MAX_EVENTS, origin=origin)
+                                     limit=MAX_EVENTS, origin=origin, project_id=project_id)
     events = [e for e in all_events if upper is None or e.start_year <= upper]
     if event_id is not None:
         events = [e for e in events if e.id == event_id]

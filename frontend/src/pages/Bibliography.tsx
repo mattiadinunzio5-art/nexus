@@ -1,4 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useScope, scopeKey } from '../state/Scope';
+import { ProjectLinkButton, linkToActiveProject } from '../components/ProjectLink';
+import { ScopeNote } from '../components/ScopeNote';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useDraft, useStickyState } from '../lib/useStickyState';
 import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
@@ -67,8 +70,19 @@ export function SourceForm({ initial, onSubmit, onCancel, draftKey = 'source.new
   );
 }
 
+const PAGE = 100;
+
 export function BibliographyPage() {
-  const { data, error, loading, reload } = useAsync(() => api.sources(), []);
+  const scope = useScope();
+  const [q, setQ] = useStickyState('bibliography.q', '');
+  const [query, setQuery] = useState(q.trim());
+  useEffect(() => { const t = setTimeout(() => setQuery(q.trim()), 350); return () => clearTimeout(t); }, [q]);
+  const [pages, setPages] = useState(1);
+  useEffect(() => setPages(1), [query, scopeKey(scope.params)]);
+  const { data, error, loading, reload } = useAsync(
+    () => api.sources(query.length >= 2 ? query : undefined, { ...scope.params, limit: PAGE * pages }),
+    [query, scopeKey(scope.params), pages],
+  );
   const [editingKey, setEditingKey] = useStickyState<number | 'new' | undefined>('bibliography.editing', undefined);
   const editing: Source | 'new' | undefined = editingKey === 'new' ? 'new' : data?.find((s) => s.id === editingKey);
   const setEditing = (v: Source | 'new' | undefined) => setEditingKey(v === undefined ? undefined : v === 'new' ? 'new' : v.id);
@@ -126,8 +140,10 @@ export function BibliographyPage() {
             draftKey={editing === 'new' ? 'source.new' : `source.${editing.id}`}
             onCancel={() => setEditing(undefined)}
             onSubmit={async (d) => {
-              if (editing === 'new') await api.createSource(d);
-              else await api.updateSource(editing.id, d);
+              if (editing === 'new') {
+                const created = await api.createSource(d);
+                await linkToActiveProject(scope.projectId, 'source', created.id);
+              } else await api.updateSource(editing.id, d);
               setEditing(undefined);
               await reload();
             }}
@@ -137,7 +153,11 @@ export function BibliographyPage() {
       {actionError && <div className="mb-4"><ErrorBox error={actionError} /></div>}
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
-      {data?.length === 0 && <EmptyState>Nessuna fonte registrata.</EmptyState>}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Input aria-label="Cerca fonti" placeholder="Cerca per titolo o autore (anche in inglese)…" className="max-w-md" value={q} onChange={(e) => setQ(e.target.value)} />
+        <ScopeNote />
+      </div>
+      {data?.length === 0 && <EmptyState>{scope.mode === 'project' ? 'Nessuna fonte collegata al progetto: aggiungila con «Aggiungi al progetto» o creane una nuova.' : 'Nessuna fonte trovata.'}</EmptyState>}
       <ul className="space-y-2">
         {data?.map((s) => (
           <li key={s.id} className="rounded-lg border border-ink-700 bg-ink-900 p-3">
@@ -150,12 +170,16 @@ export function BibliographyPage() {
             <div className="mt-2 flex flex-wrap gap-1">
               <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'user'))}><BadgeCheck className="size-3.5" aria-hidden /> Ho verificato l'originale</Button>
               {s.doi && <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'registry'))}>Verifica DOI su Crossref</Button>}
-              <Button variant="ghost" className="px-2" onClick={() => setEditing(s)} aria-label={`Modifica ${s.title}`}><Pencil className="size-4" /></Button>
-              <Button variant="ghost" className="px-2 hover:text-bad" onClick={() => setToDelete(s)} aria-label={`Elimina ${s.title}`}><Trash2 className="size-4" /></Button>
+              <ProjectLinkButton type="source" id={s.id} onChange={reload} />
+              {!s.library && <Button variant="ghost" className="px-2" onClick={() => setEditing(s)} aria-label={`Modifica ${s.title}`}><Pencil className="size-4" /></Button>}
+              {!s.library && <Button variant="ghost" className="px-2 hover:text-bad" onClick={() => setToDelete(s)} aria-label={`Elimina ${s.title}`}><Trash2 className="size-4" /></Button>}
             </div>
           </li>
         ))}
       </ul>
+      {data && data.length >= PAGE * pages && (
+        <div className="mt-3 flex justify-center"><Button onClick={() => setPages((n) => n + 1)} disabled={loading}>{loading ? 'Caricamento…' : 'Carica altre fonti'}</Button></div>
+      )}
       <ConfirmDialog
         open={!!toDelete}
         title="Eliminare la fonte?"

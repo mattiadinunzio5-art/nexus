@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, status
 
 from ...services import projects as svc
 from ..deps import DB, CurrentUser
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..schemas import ProjectCreate, ProjectOut, ProjectUpdate
 
@@ -106,3 +106,47 @@ def project_history(project_id: int, db: DB, user: CurrentUser) -> list[dict]:
     from ...services import collab
 
     return collab.history(db, user, project_id)
+
+
+ItemType = Literal["document", "source", "event", "entity", "series", "relation"]
+
+
+class ProjectItemIn(BaseModel):
+    item_type: ItemType
+    item_id: int
+    note: str = Field(default="", max_length=1000)
+
+
+@router.get("/{project_id}/overview", summary="Stato della ricerca: elementi collegati e cosa manca")
+def project_overview(project_id: int, db: DB, user: CurrentUser) -> dict:
+    from ...services import project_scope
+
+    return project_scope.overview(db, user, project_id)
+
+
+@router.get("/{project_id}/items", summary="Elementi collegati al progetto (propri o della Biblioteca)")
+def project_items(project_id: int, item_type: ItemType, db: DB, user: CurrentUser) -> list[dict]:
+    from ...services import project_scope
+
+    return project_scope.list_items(db, user, project_id, item_type)
+
+
+@router.post("/{project_id}/items", status_code=status.HTTP_201_CREATED, summary="Collega un elemento al progetto (non lo copia)")
+def add_project_item(project_id: int, data: ProjectItemIn, db: DB, user: CurrentUser) -> dict:
+    from ...services import project_scope
+
+    return project_scope.add(db, user, project_id, data.item_type, data.item_id, data.note)
+
+
+@router.delete("/{project_id}/items/{item_type}/{item_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Scollega un elemento")
+def remove_project_item(project_id: int, item_type: ItemType, item_id: int, db: DB, user: CurrentUser) -> None:
+    from ...services import project_scope
+
+    project_scope.remove(db, user, project_id, item_type, item_id)
+
+
+@router.get("/linked/{item_type}/{item_id}", summary="Progetti a cui un elemento è collegato")
+def item_projects(item_type: ItemType, item_id: int, db: DB, user: CurrentUser) -> list[int]:
+    from ...services import project_scope
+
+    return project_scope.projects_of(db, user, item_type, item_id)

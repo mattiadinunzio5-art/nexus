@@ -32,7 +32,7 @@ describe('dashboard', () => {
   it('shows an error with retry when the backend is offline', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     renderApp('/');
-    expect(await screen.findByText(/Backend non raggiungibile/)).toBeInTheDocument();
+    expect(await screen.findByText(/Il server NEXUS non risponde/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Riprova' })).toBeInTheDocument();
     expect(await screen.findByText('Backend offline')).toBeInTheDocument();
   });

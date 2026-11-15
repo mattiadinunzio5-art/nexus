@@ -2,14 +2,30 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { api } from '../../api/client';
 import { inputCls } from './Form';
+import { useScope } from '../../state/Scope';
 
 export type PickerKind = 'entity' | 'event' | 'source';
-interface Item { id: number; label: string; detail?: string; mine: boolean }
+interface Item { id: number; label: string; detail?: string; mine: boolean; project?: boolean }
 
 const MIN_LIBRARY_QUERY = 2;
 
 /** Cerca prima tra le voci dell'utente, poi (con almeno 2 caratteri) nella Biblioteca: decine di migliaia di voci. */
-async function find(kind: PickerKind, q: string): Promise<Item[]> {
+async function find(kind: PickerKind, q: string, projectId: number | null): Promise<Item[]> {
+  const base = await findBase(kind, q);
+  if (!projectId) return base;
+  // Con un progetto attivo, prima le voci del progetto (proprie o della Biblioteca).
+  const term = q.trim() || undefined;
+  let inProject: Item[] = [];
+  try {
+    if (kind === 'entity') inProject = (await api.findEntities({ q: term, project_id: projectId, limit: 30 })).map((e) => ({ id: e.id, label: e.name, detail: e.entity_type, mine: true, project: true }));
+    else if (kind === 'event') inProject = (await api.events({ q: term, project_id: projectId, limit: 30 })).map((e) => ({ id: e.id, label: e.title, detail: e.date_label, mine: true, project: true }));
+    else inProject = (await api.findSources({ q: term, project_id: projectId, limit: 30 })).map((x) => ({ id: x.id, label: x.citation, mine: true, project: true }));
+  } catch { /* se il progetto non è leggibile, si mostrano le altre voci */ }
+  const seen = new Set(inProject.map((i) => i.id));
+  return [...inProject, ...base.filter((i) => !seen.has(i.id))];
+}
+
+async function findBase(kind: PickerKind, q: string): Promise<Item[]> {
   const term = q.trim() || undefined;
   const lib = (term?.length ?? 0) >= MIN_LIBRARY_QUERY;
   if (kind === 'entity') {
@@ -69,6 +85,7 @@ export function SearchPicker({
   const [active, setActive] = useState(0);
   const listId = useId();
   const seq = useRef(0);
+  const { projectId } = useScope();
 
   // Etichetta della voce scelta (anche quando il valore arriva da una bozza salvata).
   useEffect(() => {
@@ -83,14 +100,14 @@ export function SearchPicker({
     const n = ++seq.current;
     setBusy(true);
     const t = setTimeout(() => {
-      find(kind, q)
+      find(kind, q, projectId)
         .then((r) => { if (n === seq.current) { setItems(r.filter((x) => !exclude.includes(x.id))); setActive(0); setErr(undefined); } })
         .catch(() => n === seq.current && setErr('Ricerca non riuscita: riprova.'))
         .finally(() => n === seq.current && setBusy(false));
     }, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, q, open, exclude.join(',')]);
+  }, [kind, q, open, exclude.join(','), projectId]);
 
   function pick(it: Item) {
     setLabel(it.label);
@@ -100,7 +117,8 @@ export function SearchPicker({
   }
 
   const libHint = q.trim().length < MIN_LIBRARY_QUERY;
-  const mine = items.filter((i) => i.mine);
+  const proj = items.filter((i) => i.project);
+  const mine = items.filter((i) => i.mine && !i.project);
   const other = items.filter((i) => !i.mine);
   const option = (it: Item, idx: number) => (
     <li key={`${it.mine ? 'm' : 'l'}${it.id}`} id={`${listId}-${idx}`} role="option" aria-selected={idx === active}
@@ -140,10 +158,12 @@ export function SearchPicker({
           className="absolute z-30 mt-1 max-h-72 w-full min-w-[18rem] overflow-auto rounded-md border border-ink-700 bg-ink-900 py-1 shadow-lg">
           {err && <li className="px-3 py-1.5 text-sm text-bad">{err}</li>}
           {!err && busy && items.length === 0 && <li className="px-3 py-1.5 text-sm text-steel-500">Ricerca…</li>}
+          {proj.length > 0 && <li role="presentation" className="px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold-300">Nel progetto</li>}
+          {proj.map((it, i) => option(it, i))}
           {mine.length > 0 && <li role="presentation" className="px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-steel-500">Le tue voci</li>}
-          {mine.map((it, i) => option(it, i))}
+          {mine.map((it, i) => option(it, proj.length + i))}
           {other.length > 0 && <li role="presentation" className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-steel-500">Biblioteca NEXUS</li>}
-          {other.map((it, i) => option(it, mine.length + i))}
+          {other.map((it, i) => option(it, proj.length + mine.length + i))}
           {!busy && !err && items.length === 0 && <li className="px-3 py-1.5 text-sm text-steel-500">Nessun risultato{libHint ? ' tra le tue voci' : ''}.</li>}
           {libHint && <li role="presentation" className="px-3 py-1.5 text-[11px] text-steel-500">Scrivi almeno {MIN_LIBRARY_QUERY} caratteri per cercare anche nella Biblioteca.</li>}
         </ul>

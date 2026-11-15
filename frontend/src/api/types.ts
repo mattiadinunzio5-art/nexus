@@ -23,6 +23,7 @@ export interface Project {
   is_demo: boolean;
   research_question?: string;
   objectives?: string;
+  hypotheses?: string;
   scope?: string;
   period_start?: number | null;
   period_end?: number | null;
@@ -208,6 +209,7 @@ export interface DocumentInfo {
   chunk_count: number;
   status: string;
   error: string | null;
+
   flagged_chunks: number;
   project_id: number | null;
   source_id: number | null;
@@ -236,7 +238,16 @@ export interface RetrievalHit {
   locator: string;
   text: string;
   score: number;
+  /** Posizione nella classifica (1 = il più pertinente trovato). */
+  relevance?: number;
+  /** Quota dei concetti della domanda presenti nel passaggio. */
+  coverage?: number;
+  /** Concetti riuniti nella stessa frase (la migliore è best_sentence). */
   support: Support;
+  matched_terms?: string[];
+  missing_terms?: string[];
+  best_sentence?: string;
+  citation?: string;
   injection_flag: boolean;
   source_label: string;
 }
@@ -256,6 +267,7 @@ export interface Claim {
   support: Support;
   coverage: number;
   evidence: number[];
+  citations?: string[];
   note: string;
 }
 
@@ -268,6 +280,7 @@ export interface AskResult {
   disclaimer: string;
   issues?: string[];
   model?: string;
+  answer_status?: 'supported' | 'partial' | 'unsupported';
 }
 
 // --- Fase 3: Historical Intelligence / Time Machine / Knowledge Graph -------------
@@ -596,6 +609,10 @@ export interface ResearchRun {
   evidence: Evidence[];
   result: { abstract?: string; claims?: Claim[]; proposed_relations?: ProposedRelation[]; limitations?: string[]; method?: string };
   error: string | null;
+  attempts?: number;
+  heartbeat_at?: string | null;
+  started_at?: string | null;
+  checkpoint_phases?: string[];
   decision_note: string;
   decided_at: string | null;
   finished_at: string | null;
@@ -798,7 +815,7 @@ export interface LicenseEntry {
 }
 export interface LicenseRegistry { version: string; updated: string; library_licenses: string[]; licenses: LicenseEntry[] }
 
-export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'scope' | 'period_start' | 'period_end'>>;
+export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'hypotheses' | 'scope' | 'period_start' | 'period_end'>>;
 
 export interface ReviewIssue { kind: 'uncited' | 'overclaim' | 'inconsistency' | 'clarity'; quote: string; comment: string }
 export interface SectionReview { mode: 'ai' | 'local'; provider: string; model?: string; issues: ReviewIssue[]; note: string }

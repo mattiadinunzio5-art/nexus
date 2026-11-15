@@ -38,12 +38,16 @@ def get_entity(db: Session, user: User, entity_id: int, own: bool = False) -> En
 
 
 def list_entities(db: Session, user: User, q: str | None = None, entity_type: str | None = None, limit: int = 500,
-                  origin: str | None = None) -> list[Entity]:
+                  origin: str | None = None, project_id: int | None = None, offset: int = 0) -> list[Entity]:
     stmt = select(Entity).where(Entity.owner_id.in_(library.visible_owner_ids(db, user)))
     if origin == "mine":
         stmt = stmt.where(Entity.owner_id == user.id)
     elif origin == "library":
         stmt = stmt.where(Entity.owner_id != user.id)
+    if project_id is not None:
+        from . import project_scope
+
+        stmt = stmt.where(project_scope.scope_filter(db, user, Entity, "entity", project_id))
     if q:
         from ..research.crosslang import match_any
 
@@ -51,7 +55,7 @@ def list_entities(db: Session, user: User, q: str | None = None, entity_type: st
     if entity_type:
         stmt = stmt.where(Entity.entity_type == entity_type)
     # Prima le entità dell'utente: nella Biblioteca ce ne sono decine di migliaia.
-    return list(db.scalars(stmt.order_by(Entity.owner_id != user.id, Entity.name).limit(limit)))
+    return list(db.scalars(stmt.order_by(Entity.owner_id != user.id, Entity.name).offset(offset).limit(limit)))
 
 
 def create_entity(db: Session, user: User, data: EntityIn, is_demo: bool = False) -> Entity:
@@ -224,11 +228,18 @@ def _graph(db: Session, user: User, relation_types: list[str] | None, provenance
 
 def explore(
     db: Session, user: User, *, focus: int | None, depth: int, relation_types: list[str] | None,
-    provenance: list[str] | None, entity_types: list[str] | None, max_nodes: int = 300,
+    provenance: list[str] | None, entity_types: list[str] | None, max_nodes: int = 300, project_id: int | None = None,
 ) -> GraphOut:
     conds = _rel_filter(db, user, relation_types, provenance)
     owners = library.visible_owner_ids(db, user)
-    if focus is not None:
+    if project_id is not None and focus is None:
+        # Solo le entità del progetto (e quelle degli eventi collegati), con le relazioni tra loro.
+        from . import project_scope
+
+        keep = set(db.scalars(select(Entity.id).where(Entity.owner_id.in_(owners), or_(
+            Entity.id.in_(project_scope.item_ids(db, user, project_id, "entity")),
+            Entity.event_id.in_(project_scope.item_ids(db, user, project_id, "event")))).limit(max_nodes)))
+    elif focus is not None:
         get_entity(db, user, focus)
         keep = _neighbourhood(db, user, focus, depth, conds, max_nodes)
     else:
