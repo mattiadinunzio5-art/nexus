@@ -45,7 +45,9 @@ def list_entities(db: Session, user: User, q: str | None = None, entity_type: st
     elif origin == "library":
         stmt = stmt.where(Entity.owner_id != user.id)
     if q:
-        stmt = stmt.where(Entity.name.ilike(f"%{q}%"))
+        from ..research.crosslang import match_any
+
+        stmt = stmt.where(match_any([Entity.name, Entity.description], q))
     if entity_type:
         stmt = stmt.where(Entity.entity_type == entity_type)
     # Prima le entità dell'utente: nella Biblioteca ce ne sono decine di migliaia.

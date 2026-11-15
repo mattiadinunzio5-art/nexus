@@ -111,3 +111,33 @@ def test_search_matches_word_starts(client):
 
     ok = _word_match("oil")
     assert ok("Oil crisis") and ok("vegetable oils") and not ok("turmoil") and not ok("soil erosion")
+
+
+def test_italian_query_finds_english_content(client):
+    from nexus.research.crosslang import text_matcher, variants
+
+    assert "oil crisis 1973" in variants("crisi petrolifera 1973")
+    assert "piano marshall" in variants("Marshall Plan")
+    ok = text_matcher("produzione di plastica")
+    assert ok("Global plastic production, 1950–2015") and not ok("Steel production")
+
+    csv = "anno,v\n" + "\n".join(f"{y},{y - 1949}" for y in range(1950, 1965))
+    client.post("/api/finance/series/upload", files={"file": ("p.csv", csv.encode())},
+                data={"name": "Global plastic production", "source_label": "Test", "unit": "Mt"})
+    names = [s["name"] for s in client.get("/api/finance/series", params={"q": "produzione di plastica"}).json()]
+    assert "Global plastic production" in names
+    src = client.post("/api/sources", json={"source_type": "article", "title": "Production, use, and fate of all plastics ever made",
+                                              "authors": ["Geyer, Roland"], "year": 2017})
+    assert src.status_code in (200, 201), src.text
+    found = [s["title"] for s in client.get("/api/sources", params={"q": "plastiche"}).json()]
+    assert any("plastics ever made" in t for t in found)
+    hits = client.get("/api/search", params={"q": "produzione di plastica"}).json()["hits"]
+    assert any(h["type"] == "series" and h["title"] == "Global plastic production" for h in hits)
+
+
+def test_archive_text_search_is_bilingual(client):
+    up = client.post("/api/documents", files={"file": ("plastics.txt", b"Plastic waste reached the oceans in large quantities after 1980.\n" * 3)},
+                     data={"title": "Ocean plastics", "category": "source_material"})
+    assert up.status_code == 201, up.text
+    r = client.get("/api/research/search", params={"q": "rifiuti di plastica", "mode": "text"}).json()
+    assert r["hits"] and "Plastic waste" in r["hits"][0]["text"]

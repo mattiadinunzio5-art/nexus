@@ -27,10 +27,12 @@ def list_sources(db: Session, user: User, q: str | None = None, limit: int = 500
     elif origin == "library":
         stmt = stmt.where(Source.owner_id != user.id)
     if q:
-        from sqlalchemy import String, cast, or_
+        from sqlalchemy import String, cast
 
-        like = f"%{q}%"
-        stmt = stmt.where(or_(Source.title.ilike(like), cast(Source.authors, String).ilike(like)))  # anche per autore
+        from ..research.crosslang import match_any
+
+        # Per titolo o autore, in italiano e in inglese.
+        stmt = stmt.where(match_any([Source.title, cast(Source.authors, String)], q))
     # Prima le fonti dell'utente, poi quelle della Biblioteca.
     return list(db.scalars(stmt.order_by((Source.owner_id != user.id), Source.title, Source.id).offset(offset).limit(limit)))
 

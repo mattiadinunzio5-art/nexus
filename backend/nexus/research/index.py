@@ -52,8 +52,10 @@ def fts_delete_document(db: Session, document_id: int) -> None:
 
 def _fts_query(q: str) -> str:
     # Ogni termine tra virgolette: nessuna sintassi FTS controllabile dall'utente.
-    toks = terms(q)
-    return " OR ".join(f'"{t}"*' for t in toks[:20])
+    from .crosslang import expand_terms
+
+    toks = expand_terms(terms(q)[:10])  # anche i termini equivalenti nell'altra lingua
+    return " OR ".join(f'"{t}"*' for t in toks[:24])
 
 
 def text_search(db: Session, owner_id: int, q: str, limit: int, document_ids: list[int] | None = None) -> list[tuple[int, float]]:
@@ -69,10 +71,13 @@ def text_search(db: Session, owner_id: int, q: str, limit: int, document_ids: li
         sql += " ORDER BY s LIMIT :l"
         params["l"] = limit
         return [(int(r[0]), float(-r[1])) for r in db.execute(text(sql), params)]
-    toks = terms(q)[:8]
+    from .crosslang import expand_terms
+
+    toks = expand_terms(terms(q)[:8])[:16]  # italiano ↔ inglese: «plastica» trova anche «plastic»
     if db.get_bind().dialect.name == "postgresql" and toks:
         # PostgreSQL: ricerca full-text nel database (indice GIN, migrazione 0013), senza caricare i testi in memoria.
-        tsq = " | ".join(re.sub(r"[^\w]", "", t) for t in toks if re.sub(r"[^\w]", "", t))
+        # Prefisso (:*): «plastic» trova anche «plastics».
+        tsq = " | ".join(re.sub(r"[^\w]", "", t) + ":*" for t in toks if re.sub(r"[^\w]", "", t))
         if not tsq:
             return []
         sql = ("SELECT id, ts_rank(to_tsvector('simple', text), to_tsquery('simple', :q)) AS s FROM document_chunks "
@@ -164,6 +169,9 @@ class SemanticIndex:
         return _LSAModel(version, ids, vec, svd, mat)
 
     def search_lsa(self, db: Session, owner_id: int, q: str, limit: int) -> list[tuple[int, float]]:
+        from .crosslang import translations
+
+        q = " ".join([q, *translations(q)])  # il modello LSA è monolingue: si aggiungono gli equivalenti
         version = self._version(db, owner_id)
         with self._lock:
             model = self._cache.get(owner_id)
