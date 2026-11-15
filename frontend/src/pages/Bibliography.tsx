@@ -6,7 +6,7 @@ import { useDraft, useStickyState } from '../lib/useStickyState';
 import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
-import type { Source, SourceInput } from '../api/types';
+import type { FieldCheck, Source, SourceInput, VerificationDetails } from '../api/types';
 import { VERIFICATION } from '../components/research';
 import { Badge, DemoBadge, LibraryBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -20,7 +20,39 @@ import { useContextPanel } from '../state/AppState';
 
 const TYPES = { book: 'Libro', article: 'Articolo', chapter: 'Capitolo', web: 'Pagina web', dataset: 'Dataset', archive: 'Documento d\'archivio', document: 'Documento', other: 'Altro' };
 
-const empty: Partial<SourceInput> = { source_type: 'book', title: '', authors: [], year: null, publisher: '', container: '', pages: '', doi: '', isbn: '', url: '', accessed_at: '', notes: '' };
+const empty: Partial<SourceInput> = { source_type: 'book', title: '', authors: [], year: null, publisher: '', container: '', pages: '', doi: '', isbn: '', url: '', accessed_at: '', notes: '', license: '', provenance: '', evidence_class: '' };
+
+const CLASS = { '': 'Non indicato', primary: 'Primaria (documento o dato originale)', secondary: 'Secondaria (studio, sintesi)' };
+const FIELD_STATUS: Record<FieldCheck['status'], { label: string; cls: string }> = {
+  match: { label: 'corrisponde', cls: 'text-ok' },
+  mismatch: { label: 'discordante', cls: 'text-bad' },
+  missing_local: { label: 'manca nella scheda', cls: 'text-warn' },
+  missing_registry: { label: 'assente nel registro', cls: 'text-steel-500' },
+};
+const show = (v: unknown) => (Array.isArray(v) && v.length ? v.join('; ') : v === null || v === undefined || v === '' || Array.isArray(v) ? '—' : String(v));
+
+/** Confronto campo per campo con il registro: DOI esistente ≠ riferimento corrispondente. */
+export function VerificationDetailsView({ d }: { d: VerificationDetails }) {
+  return (
+    <details className="mt-1 text-xs" data-testid="verification-details">
+      <summary className="cursor-pointer text-steel-300">
+        {d.doi_exists ? 'DOI esistente' : 'DOI non trovato'} · confronto con {d.registry} del {d.checked_at.slice(0, 10)}
+      </summary>
+      {d.doi_exists && (
+        <table className="mt-1 w-full text-left">
+          <thead><tr className="text-steel-500"><th className="pr-2">Campo</th><th className="pr-2">Scheda</th><th className="pr-2">Registro</th><th>Esito</th></tr></thead>
+          <tbody>
+            {Object.entries(d.fields).map(([k, f]) => (
+              <tr key={k}><td className="pr-2 text-steel-300">{f.label}</td><td className="pr-2 text-paper">{show(f.local)}</td>
+                <td className="pr-2 text-paper">{show(f.registry)}</td><td className={FIELD_STATUS[f.status].cls}>{FIELD_STATUS[f.status].label}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="mt-1 text-steel-500">Interrogato: <span className="break-all">{d.registry_url}</span>{d.registry_metadata?.licenses?.length ? ` · licenza nel registro: ${d.registry_metadata.licenses.join(', ')}` : ''}</p>
+    </details>
+  );
+}
 
 export function SourceForm({ initial, onSubmit, onCancel, draftKey = 'source.new' }: { initial?: Partial<SourceInput>; onSubmit: (d: Partial<SourceInput>) => Promise<void>; onCancel: () => void; draftKey?: string }) {
   const [f, setF, clearF] = useDraft<Partial<SourceInput>>(`${draftKey}.fields`, { ...empty, ...initial });
@@ -60,6 +92,9 @@ export function SourceForm({ initial, onSubmit, onCancel, draftKey = 'source.new
       <Field label="ISBN"><Input value={f.isbn} onChange={set('isbn')} /></Field>
       <Field label="URL"><Input value={f.url} onChange={set('url')} placeholder="https://…" /></Field>
       <Field label="Data di consultazione"><Input type="date" value={f.accessed_at} onChange={set('accessed_at')} /></Field>
+      <Field label="Fonte primaria o secondaria"><Select value={f.evidence_class ?? ''} onChange={set('evidence_class')}>{Object.entries(CLASS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
+      <Field label="Licenza" hint="Es. CC BY 4.0, pubblico dominio, tutti i diritti riservati"><Input value={f.license ?? ''} onChange={set('license')} maxLength={300} /></Field>
+      <Field label="Provenienza dei dati" className="sm:col-span-2" hint="Da dove vengono questi metadati (catalogo, archivio, import)"><Input value={f.provenance ?? ''} onChange={set('provenance')} maxLength={300} /></Field>
       <Field label="Note" className="sm:col-span-2"><Textarea value={f.notes} onChange={set('notes')} /></Field>
       {error && <p role="alert" className="text-sm text-bad sm:col-span-2">{error}</p>}
       <div className="flex justify-end gap-2 sm:col-span-2">
@@ -94,7 +129,7 @@ export function BibliographyPage() {
     <div className="space-y-2 text-steel-300">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Citazioni verificabili</h3>
       <p>NEXUS non crea fonti in automatico: ogni scheda è inserita da te. Ogni modifica azzera la verifica.</p>
-      <p><strong className="text-paper">Verifica su registro</strong>: controlla il DOI su Crossref e segnala discrepanze di titolo o anno.</p>
+      <p><strong className="text-paper">Verifica su registro</strong>: controlla che il DOI esista su Crossref e confronta campo per campo titolo, autori, anno e rivista. Un DOI esistente con metadati discordanti non è mai una fonte verificata.</p>
       <p><strong className="text-paper">Verifica manuale</strong>: dichiari di aver controllato la fonte originale.</p>
       <p><strong className="text-paper">BibTeX</strong>: importa da Zotero, Mendeley o JabRef (le fonti entrano come non verificate) ed esporta per LaTeX.</p>
     </div>,
@@ -166,7 +201,15 @@ export function BibliographyPage() {
               <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge>
               {s.is_demo && <DemoBadge />}{s.library && <LibraryBadge />}
             </div>
-            {s.verification_note && <p className="mt-1 text-xs text-steel-500">{s.verification_note}</p>}
+            {s.verification_note && <p className={`mt-1 text-xs ${s.verification_status === 'registry_mismatch' ? 'text-bad' : 'text-steel-500'}`}>{s.verification_note}</p>}
+            {s.verification_details && <VerificationDetailsView d={s.verification_details} />}
+            {(s.evidence_class || s.license || s.provenance) && (
+              <p className="mt-1 text-[11px] text-steel-500">
+                {s.evidence_class && <span className="mr-2">{s.evidence_class === 'primary' ? 'Fonte primaria' : 'Fonte secondaria'}</span>}
+                {s.license && <span className="mr-2">Licenza: {s.license}</span>}
+                {s.provenance && <span>Provenienza: {s.provenance}</span>}
+              </p>
+            )}
             <div className="mt-2 flex flex-wrap gap-1">
               <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'user'))}><BadgeCheck className="size-3.5" aria-hidden /> Ho verificato l'originale</Button>
               {s.doi && <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'registry'))}>Verifica DOI su Crossref</Button>}

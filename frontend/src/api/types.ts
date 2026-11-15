@@ -162,7 +162,17 @@ export interface Dashboard {
 
 // --- Fase 2: Research Core ---------------------------------------------------
 
-export type VerificationStatus = 'unverified' | 'verified_user' | 'verified_registry' | 'not_found';
+export type VerificationStatus = 'unverified' | 'verified_user' | 'verified_registry' | 'registry_mismatch' | 'registry_incomplete' | 'not_found';
+
+export type FieldCheck = { status: 'match' | 'mismatch' | 'missing_local' | 'missing_registry'; local: unknown; registry: unknown; label: string };
+export interface VerificationDetails {
+  registry: string;
+  registry_url: string;
+  checked_at: string;
+  doi_exists: boolean;
+  fields: Record<string, FieldCheck>;
+  registry_metadata?: { title?: string; authors?: string[]; year?: number | null; container?: string; url?: string; licenses?: string[] };
+}
 
 export interface Source {
   id: number;
@@ -178,9 +188,14 @@ export interface Source {
   url: string;
   accessed_at: string;
   notes: string;
+  license?: string;
+  provenance?: string;
+  /** Fonte primaria (documento d'epoca, dato originale) o secondaria; '' = non indicato. */
+  evidence_class?: '' | 'primary' | 'secondary';
   verification_status: VerificationStatus;
   verification_note: string;
   verified_at: string | null;
+  verification_details?: VerificationDetails | null;
   is_demo: boolean;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
@@ -188,7 +203,7 @@ export interface Source {
   created_at: string;
 }
 
-export type SourceInput = Omit<Source, 'id' | 'verification_status' | 'verification_note' | 'verified_at' | 'is_demo' | 'citation' | 'created_at'>;
+export type SourceInput = Omit<Source, 'id' | 'verification_status' | 'verification_note' | 'verified_at' | 'verification_details' | 'is_demo' | 'citation' | 'created_at'>;
 
 export interface DocumentInfo {
   id: number;

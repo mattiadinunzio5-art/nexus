@@ -11,7 +11,7 @@ from ..research.citations import normalize_doi, valid_doi, valid_isbn, valid_url
 from .schemas import CleanStr, ORMModel, UTCDateTime
 
 SourceType = Literal["book", "article", "chapter", "web", "dataset", "archive", "document", "other"]
-VerificationStatus = Literal["unverified", "verified_user", "verified_registry", "not_found"]
+VerificationStatus = Literal["unverified", "verified_user", "verified_registry", "registry_mismatch", "registry_incomplete", "not_found"]
 
 
 class SourceIn(BaseModel):
@@ -27,6 +27,9 @@ class SourceIn(BaseModel):
     url: Annotated[CleanStr, StringConstraints(max_length=1000)] = ""
     accessed_at: Annotated[CleanStr, StringConstraints(max_length=10, pattern=r"^(\d{4}-\d{2}-\d{2})?$")] = ""
     notes: Annotated[CleanStr, StringConstraints(max_length=5000)] = ""
+    license: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
+    provenance: Annotated[CleanStr, StringConstraints(max_length=300)] = ""
+    evidence_class: Literal["", "primary", "secondary"] = ""
     # Fonte primaria ripresa da questa fonte (es. un articolo che riporta un rapporto ufficiale).
     primary_source_id: int | None = None
 
@@ -68,9 +71,13 @@ class SourceOut(ORMModel):
     url: str
     accessed_at: str
     notes: str
+    license: str = ""
+    provenance: str = ""
+    evidence_class: str = ""
     verification_status: VerificationStatus
     verification_note: str
     verified_at: UTCDateTime | None
+    verification_details: dict | None = None
     primary_source_id: int | None = None
     is_demo: bool
     citation: str = ""

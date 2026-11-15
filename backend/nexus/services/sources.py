@@ -64,6 +64,8 @@ def _check_primary(db: Session, user: User, primary_id: int | None, self_id: int
 def create_source(db: Session, user: User, data: SourceIn, is_demo: bool = False) -> Source:
     _check_primary(db, user, data.primary_source_id)
     s = Source(owner_id=user.id, is_demo=is_demo, **data.model_dump())
+    if not s.provenance:
+        s.provenance = "Inserita manualmente dall'utente"
     db.add(s)
     db.flush()
     activity.record(db, user=user, actor="user", action="source.create", entity_type="source", entity_id=s.id,
@@ -82,6 +84,7 @@ def update_source(db: Session, user: User, source_id: int, data: SourceIn) -> So
     s.verification_status = "unverified"
     s.verification_note = "Modificata dopo l'ultima verifica."
     s.verified_at = None
+    s.verification_details = None
     activity.record(db, user=user, actor="user", action="source.update", entity_type="source", entity_id=s.id,
                     summary=f"Modificata la fonte «{s.title[:80]}»")
     db.commit()
@@ -99,20 +102,15 @@ def delete_source(db: Session, user: User, source_id: int, confirm: bool) -> Non
     db.commit()
 
 
-def _same_title(t: str) -> str:
-    """Titolo confrontabile: apostrofi e virgolette tipografiche, trattini, spazi, maiuscole e punteggiatura finale non contano."""
-    import html
-    import re
-    import unicodedata
-
-    t = unicodedata.normalize("NFKC", html.unescape(re.sub(r"<[^>]+>", "", t or "")))
-    t = t.translate(str.maketrans({"’": "'", "‘": "'", "`": "'", "´": "'", "“": '"', "”": '"', "«": '"', "»": '"', "–": "-", "—": "-", "‐": "-"}))
-    return re.sub(r"\s+", " ", t).strip().rstrip(".:;").casefold()
-
-
 def verify_source(db: Session, user: User, source_id: int, method: str, note: str) -> Source:
+    from ..research.citations import compare_metadata, registry_verdict
+
     s = get_source(db, user, source_id, own=True)
     if method == "user":
+        # La dichiarazione dell'utente non può coprire un'incoerenza segnalata dal registro sulla stessa scheda.
+        if s.verification_status == "registry_mismatch":
+            raise ValidationFailedError("Il registro segnala metadati discordanti per questo DOI: correggi i campi indicati "
+                                        "(o il DOI) prima di dichiarare la fonte verificata.")
         s.verification_status = "verified_user"
         s.verification_note = note or "Controllata dall'utente sull'originale."
     else:
@@ -121,18 +119,29 @@ def verify_source(db: Session, user: User, source_id: int, method: str, note: st
         result = crossref_lookup(s.doi)
         if result.status == "unavailable":
             raise ValidationFailedError(result.note)
-        s.verification_status = result.status
-        notes = [result.note]
-        if result.status == "verified_registry":
+        checked = utcnow().isoformat()
+        if result.status == "not_found":
+            s.verification_status = "not_found"
+            s.verification_note = result.note
+            s.verification_details = {"registry": "Crossref", "registry_url": result.metadata.get("registry_url", ""),
+                                      "checked_at": checked, "doi_exists": False, "fields": {}}
+        else:
             meta = result.metadata
-            mismatches = []
-            if meta.get("title") and _same_title(meta["title"]) != _same_title(s.title):
-                mismatches.append(f"titolo nel registro: «{meta['title']}»")
-            if meta.get("year") and s.year and meta["year"] != s.year:
-                mismatches.append(f"anno nel registro: {meta['year']}")
-            if mismatches:
-                notes.append("Discrepanze da controllare: " + "; ".join(mismatches))
-        s.verification_note = " ".join(notes)
+            fields = compare_metadata(s, meta)
+            s.verification_status, s.verification_note = registry_verdict(fields)
+            s.verification_details = {
+                "registry": meta.get("registry", "Crossref"), "registry_url": meta.get("registry_url", ""),
+                "checked_at": checked, "doi_exists": True, "fields": fields,
+                "registry_metadata": {k: meta.get(k) for k in ("title", "subtitle", "authors", "year", "container",
+                                                               "publisher", "pages", "type", "url", "licenses")},
+            }
+            # Conserva URL e licenza dichiarati dal registro solo se la scheda non li ha già.
+            if not s.url and meta.get("url"):
+                s.url = meta["url"][:1000]
+            if not s.license and meta.get("licenses"):
+                s.license = meta["licenses"][0][:300]
+            if not s.provenance:
+                s.provenance = "Scheda dell'utente, confrontata con Crossref"
     s.verified_at = utcnow()
     activity.record(db, user=user, actor="user", action="source.verify", entity_type="source", entity_id=s.id,
                     summary=f"Verifica fonte «{s.title[:60]}»: {s.verification_status}")
@@ -179,6 +188,7 @@ def import_bibtex(db: Session, user: User, text: str) -> dict:
             skipped.append({"key": label, "reason": exc.errors()[0]["msg"][:200]})
             continue
         src = Source(owner_id=user.id, **data.model_dump())
+        src.provenance = src.provenance or f"Import BibTeX ({e.get('key') or 'voce senza chiave'})"
         db.add(src)
         db.flush()
         created.append(src.id)

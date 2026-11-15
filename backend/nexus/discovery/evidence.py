@@ -74,6 +74,9 @@ def assess_source(s: Source, event_year: int | None = None) -> dict:
     if s.verification_status == "not_found":
         authority = "low"
         reasons.append("Identificativo non trovato nel registro")
+    elif s.verification_status == "registry_mismatch":
+        authority = "low"
+        reasons.append("DOI trovato ma metadati discordanti con il registro")
     elif s.verification_status == "verified_registry" or (official and s.source_type in PRIMARY_TYPES | {"book", "article"}):
         authority = "high"
         reasons.append("Verificata su registro" if s.verification_status == "verified_registry" else "Editore o ente istituzionale")
