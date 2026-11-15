@@ -64,11 +64,43 @@ class EventSourceOut(BaseModel):
     license_ids: list[str] = []
 
 
+DateStr = Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^(-?\d{1,4}(-\d{2}(-\d{2})?)?)?$")]
+
+
+def year_of(d: str) -> int | None:
+    if not d:
+        return None
+    neg = d.startswith("-")
+    y = int(d.lstrip("-").split("-")[0])
+    return -y if neg else y
+
+
 class KnowledgeIn(BaseModel):
     content: Annotated[CleanStr, StringConstraints(min_length=1, max_length=5000)]
-    known_since_year: int = Field(ge=-10000, le=2200)
+    # Anno da cui l'informazione era disponibile ai contemporanei (si ricava da available_on se indicata).
+    known_since_year: int | None = Field(default=None, ge=-10000, le=2200)
     kind: KnowledgeKind = "contemporary"
     source_id: int | None = None
+    refers_to: DateStr = ""
+    published_on: DateStr = ""
+    available_on: DateStr = ""
+
+    @model_validator(mode="after")
+    def _dates(self):
+        avail = year_of(self.available_on) if self.available_on else None
+        if self.known_since_year is None:
+            self.known_since_year = avail if avail is not None else year_of(self.published_on)
+        if self.known_since_year is None:
+            raise ValueError("Indica quando l'informazione è diventata disponibile (anno o data).")
+        if avail is not None and avail != self.known_since_year:
+            raise ValueError("L'anno di disponibilità non coincide con la data di disponibilità indicata.")
+        pub = year_of(self.published_on)
+        if pub is not None and pub > self.known_since_year:
+            raise ValueError("Un'informazione non può essere disponibile prima della sua pubblicazione.")
+        ref = year_of(self.refers_to)
+        if ref is not None and pub is not None and self.kind == "contemporary" and pub < ref:
+            raise ValueError("Una fonte contemporanea non può essere pubblicata prima del fatto a cui si riferisce.")
+        return self
 
 
 class KnowledgeOut(ORMModel):
@@ -77,6 +109,12 @@ class KnowledgeOut(ORMModel):
     known_since_year: int
     kind: KnowledgeKind
     source_id: int | None
+    refers_to: str = ""
+    published_on: str = ""
+    available_on: str = ""
+    source_citation: str = ""
+    # then = disponibile alla data scelta; later = acquisita dopo
+    availability: Literal["then", "later", "not_applicable"] = "not_applicable"
 
 
 class EventOut(ORMModel):
@@ -149,6 +187,9 @@ class TimelineEvent(BaseModel):
     hidden_later_count: int
     library: bool = False
     is_demo: bool
+    # Fonti dell'evento con anno di pubblicazione: published_after = pubblicata dopo la data scelta.
+    sources: list[dict] = []
+    date_precision: Literal["day", "month", "year"] = "year"
 
 
 class TimelineIndicator(BaseModel):
@@ -160,6 +201,10 @@ class TimelineIndicator(BaseModel):
     last_value: float
     caveat: str
     retrospective: bool = False
+    # Data dell'osservazione (= last_date), anno di pubblicazione della versione, data del download in NEXUS.
+    published: int | None = None
+    retrieved_at: str | None = None
+    availability: Literal["available", "retrospective", "unknown"] = "unknown"
 
 
 class TimelineOut(BaseModel):
@@ -170,6 +215,7 @@ class TimelineOut(BaseModel):
     indicators: list[TimelineIndicator]
     hidden_future_events: int
     notes: list[str]
+    completeness: dict | None = None
 
 
 # --- Knowledge Graph -------------------------------------------------------------

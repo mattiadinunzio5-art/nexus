@@ -297,7 +297,7 @@ export const api = {
   deleteEvent: (id: number) => request<void>(`/history/events/${id}?confirm=true`, { method: 'DELETE' }),
   linkEventSource: (id: number, source_id: number, pages = '') => request<HistoricalEvent>(`/history/events/${id}/sources`, json('POST', { source_id, pages })),
   unlinkEventSource: (id: number, source_id: number) => request<HistoricalEvent>(`/history/events/${id}/sources/${source_id}`, { method: 'DELETE' }),
-  addKnowledge: (id: number, data: Omit<KnowledgeItem, 'id'>) => request<HistoricalEvent>(`/history/events/${id}/knowledge`, json('POST', data)),
+  addKnowledge: (id: number, data: Omit<KnowledgeItem, 'id' | 'known_since_year'> & { known_since_year: number | null }) => request<HistoricalEvent>(`/history/events/${id}/knowledge`, json('POST', data)),
   deleteKnowledge: (id: number, itemId: number) => request<HistoricalEvent>(`/history/events/${id}/knowledge/${itemId}`, { method: 'DELETE' }),
   linkEvents: (id: number, data: Record<string, unknown>) => request<Relation>(`/history/events/${id}/links`, json('POST', data)),
   timeline: (params: Record<string, string | number | boolean | undefined>) => request<Timeline>(`/history/timeline${qs(params)}`),

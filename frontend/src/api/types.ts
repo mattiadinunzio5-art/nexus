@@ -334,6 +334,12 @@ export interface KnowledgeItem {
   known_since_year: number;
   kind: keyof typeof KNOWLEDGE_KINDS;
   source_id: number | null;
+  /** Data del fatto, della pubblicazione e della disponibilità (AAAA, AAAA-MM o AAAA-MM-GG). */
+  refers_to?: string;
+  published_on?: string;
+  available_on?: string;
+  source_citation?: string;
+  availability?: 'then' | 'later' | 'not_applicable';
 }
 
 export interface EventInput {
@@ -391,15 +397,24 @@ export interface TimelineEvent {
   is_demo: boolean;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
+  sources?: { source_id: number; citation: string; year: number | null; pages: string; evidence_class: string; published_after: boolean }[];
+  date_precision?: 'day' | 'month' | 'year';
+}
+
+export interface Completeness {
+  score: number; level: 'high' | 'medium' | 'low'; method: string; gaps: string[];
+  components: { key: string; label: string; ok: number; total: number; ratio: number | null }[];
 }
 
 export interface Timeline {
   as_of_year: number | null;
   hindsight: boolean;
   events: TimelineEvent[];
-  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string; retrospective?: boolean }[];
+  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string; retrospective?: boolean;
+    published?: number | null; retrieved_at?: string | null; availability?: 'available' | 'retrospective' | 'unknown' }[];
   hidden_future_events: number;
   notes: string[];
+  completeness?: Completeness | null;
 }
 
 export const ENTITY_TYPES = {

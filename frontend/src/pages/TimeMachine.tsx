@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EyeOff, History } from 'lucide-react';
 import { api } from '../api/client';
-import { CATEGORIES, KNOWLEDGE_KINDS, RELIABILITY } from '../api/types';
+import { CATEGORIES, KNOWLEDGE_KINDS, RELIABILITY, type Completeness, type KnowledgeItem } from '../api/types';
 import { Badge, DemoBadge, LibraryBadge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Field, Input, Select } from '../components/ui/Form';
@@ -18,6 +18,27 @@ import { useContextPanel } from '../state/AppState';
 import { RELIABILITY_TONE } from './History';
 
 const TM_KEY = 'nexus.sticky.timemachine.params';
+
+/** Le tre date di un'informazione: fatto, pubblicazione, disponibilità. */
+function dateTrio(k: KnowledgeItem): string {
+  return [k.refers_to && `fatto: ${k.refers_to}`, k.published_on && `pubblicata: ${k.published_on}`, `disponibile dal ${k.available_on || k.known_since_year}`].filter(Boolean).join(' · ');
+}
+
+function CompletenessCard({ c, year }: { c: Completeness; year: string }) {
+  const tone = c.level === 'high' ? 'ok' : c.level === 'medium' ? 'gold' : 'warn';
+  return (
+    <Card title={`Completezza della ricostruzione al ${year}`} className="mb-4">
+      <div data-testid="completeness">
+        <p className="flex items-center gap-2 text-sm text-paper"><Badge tone={tone}>{Math.round(c.score * 100)}%</Badge>{c.level === 'high' ? 'Ricostruzione ampia' : c.level === 'medium' ? 'Ricostruzione parziale' : 'Ricostruzione lacunosa'}</p>
+        <ul className="mt-2 grid grid-cols-1 gap-1 text-xs text-steel-300 sm:grid-cols-2">
+          {c.components.map((x) => <li key={x.key}>{x.label}: <span className="text-paper">{x.total ? `${x.ok}/${x.total}` : 'nessun elemento'}</span></li>)}
+        </ul>
+        {c.gaps.length > 0 && <><p className="mt-2 text-xs font-semibold text-steel-400">Lacune</p><ul className="list-disc pl-5 text-xs text-warn">{c.gaps.map((g) => <li key={g}>{g}</li>)}</ul></>}
+        <p className="mt-2 text-[11px] text-steel-500">{c.method}</p>
+      </div>
+    </Card>
+  );
+}
 
 export function TimeMachinePage() {
   const [params, setParams] = useSearchParams();
@@ -97,6 +118,7 @@ export function TimeMachinePage() {
           {loading && <p className="mb-2 text-xs text-gold-300">Aggiornamento in corso…</p>}
           {data.notes.map((n) => <p key={n} className="mb-2 flex items-start gap-2 text-xs text-steel-400"><History className="mt-0.5 size-3.5 shrink-0 text-gold-400" aria-hidden />{n}</p>)}
           {data.hidden_future_events > 0 && <p className="mb-4 text-xs text-steel-500">{data.hidden_future_events} eventi successivi alla data sono nascosti.</p>}
+          {data.completeness && <CompletenessCard c={data.completeness} year={year} />}
           {data.indicators.length > 0 && (
             <Card title={`Indicatori disponibili al ${year}`} className="mb-4">
               <ul className="space-y-1 text-sm">
@@ -106,7 +128,7 @@ export function TimeMachinePage() {
                       <Link to={`/financial/series/${i.series_id}`} className="text-steel-300 hover:text-paper">{i.name}</Link>
                       {i.retrospective && <span className="ml-2 rounded border border-warn/40 px-1 text-[10px] text-warn" title={i.caveat}>Ricostruzione a posteriori</span>}
                     </span>
-                    <span className="text-paper">{i.last_value.toLocaleString(locale())} {i.unit} <span className="text-[11px] text-steel-500">({i.last_date}, {i.source})</span></span>
+                    <span className="text-paper">{i.last_value.toLocaleString(locale())} {i.unit} <span className="text-[11px] text-steel-500">(dato del {i.last_date}{i.published ? `, pubblicato nel ${i.published}` : ', data di pubblicazione sconosciuta'}{i.retrieved_at ? `, scaricato il ${i.retrieved_at.slice(0, 10)}` : ''}, {i.source})</span></span>
                     {i.retrospective && <span className="basis-full text-[11px] text-warn">{i.caveat}</span>}
                   </li>
                 ))}
@@ -129,13 +151,19 @@ export function TimeMachinePage() {
                   {e.description && <p className="mt-1 text-sm text-steel-300">{e.description}</p>}
                   {e.known_then.length > 0 && (
                     <ul className="mt-2 space-y-1">
-                      {e.known_then.map((k) => <li key={k.id} className="text-sm text-steel-300"><span className="text-[11px] text-steel-500">[{KNOWLEDGE_KINDS[k.kind]}, {k.known_since_year}]</span> {k.content}</li>)}
+                      {e.known_then.map((k) => <li key={k.id} className="text-sm text-steel-300"><span className="text-[11px] text-ok">[Disponibile all'epoca · {KNOWLEDGE_KINDS[k.kind]} · {dateTrio(k)}]</span> {k.content}{k.source_citation && <span className="block text-[11px] text-steel-500">Fonte: {k.source_citation}</span>}</li>)}
                     </ul>
                   )}
+                  {e.sources && e.sources.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-steel-500" data-testid="event-sources">
+                      {e.sources.map((s) => <li key={s.source_id}>{s.published_after ? <span className="text-warn">Fonte successiva ({s.year}): </span> : 'Fonte: '}{s.citation.replace(/\.$/, '')}{s.pages ? `, p. ${s.pages}` : ''}</li>)}
+                    </ul>
+                  )}
+                  {e.date_precision === 'year' && year && <p className="mt-1 text-[11px] text-steel-500">Datato solo all'anno.</p>}
                   {e.consequences && <p className="mt-2 text-sm text-steel-400"><span className="text-[11px] uppercase tracking-wider text-warn">Conseguenze (senno di poi)</span> {e.consequences}</p>}
                   {e.known_later.length > 0 && (
                     <ul className="mt-2 space-y-1 rounded-md border border-warn/30 bg-warn/5 p-2">
-                      {e.known_later.map((k) => <li key={k.id} className="text-sm text-steel-300"><span className="text-[11px] text-warn">[Emersa nel {k.known_since_year} · {KNOWLEDGE_KINDS[k.kind]}]</span> {k.content}</li>)}
+                      {e.known_later.map((k) => <li key={k.id} className="text-sm text-steel-300"><span className="text-[11px] text-warn">[Acquisita dopo · {KNOWLEDGE_KINDS[k.kind]} · {dateTrio(k)}]</span> {k.content}{k.source_citation && <span className="block text-[11px] text-steel-500">Fonte: {k.source_citation}</span>}</li>)}
                     </ul>
                   )}
                   {(e.consequences_hidden || e.hidden_later_count > 0) && (
