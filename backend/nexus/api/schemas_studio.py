@@ -74,6 +74,7 @@ class ReportUpdate(BaseModel):
     author: Annotated[CleanStr, StringConstraints(max_length=200)] | None = None
     project_id: int | None = None
     source_ids: list[int] | None = Field(default=None, max_length=500)
+    consulted_ids: list[int] | None = Field(default=None, max_length=500)
     citation_style: CitationStyle | None = None
     template: Template | None = None
 
@@ -106,6 +107,7 @@ class ReportOut(ORMModel):
     status: Literal["draft", "approved"]
     project_id: int | None
     source_ids: list[int]
+    consulted_ids: list[int] = []
     origin: str
     contains_ai_text: bool
     citation_style: str = "numeric"

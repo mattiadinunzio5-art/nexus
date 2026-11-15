@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api } from '../api/client';
-import type { CitationStyle, Embed, Report, ReportCheck, ReportSection, ReportTemplate, ReviewIssue, SectionReview } from '../api/types';
+import type { CitationStyle, ClaimStatus, Embed, Report, ReportCheck, ReportSection, ReportTemplate, ReportTrace, ReviewIssue, SectionReview, SectionVersion } from '../api/types';
 import { VERIFICATION } from '../components/research';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -252,6 +252,7 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
   const caret = useRef<number | null>(null);
   const [review, setReview] = useState<SectionReview>();
   const [reviewing, setReviewing] = useState(false);
+  const [history, setHistory] = useState(false);
   const dirty = body !== section.body || title !== section.title || JSON.stringify(embeds) !== JSON.stringify(section.embeds);
   const chapter = section.key === 'chapter';
   const words = body.trim() ? body.trim().split(/\s+/).length : 0;
@@ -286,6 +287,7 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
             try { setReview(await api.reviewSection(report.id, section.id)); } catch (e) { onError(errorText(e)); } finally { setReviewing(false); }
           }}>{reviewing ? 'Revisione in corso…' : 'Revisione'}</button>
         )}
+        <button className="text-xs text-gold-300 hover:underline" onClick={() => setHistory((v) => !v)}>{history ? 'Chiudi cronologia' : 'Cronologia'}</button>
         <span className="flex-1" />
         {dirty && <Button variant="primary" className="text-xs" onClick={async () => {
           try { const r = await api.updateSection(report.id, section.id, { body, embeds, ...(chapter ? { title } : {}) }); clearDraft(); onSaved(r); } catch (e) { onError(errorText(e)); }
@@ -293,11 +295,106 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
       </div>
       {cite && <div className="mt-2"><CiteInserter onInsert={insert} /></div>}
       {review && <ReviewPanel review={review} dirty={dirty} onClose={() => setReview(undefined)} />}
+      {history && <VersionHistory report={report} section={section} onRestored={(r) => { clearDraft(); onSaved(r); }} onError={onError} />}
       {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} projectId={report.project_id} draftKey={key} />}
       {dirty && !conflict && <p className="mt-1 text-[11px] text-warn">Modifiche non salvate: restano qui anche se cambi sezione, finché non premi «Salva sezione».</p>}
       {conflict && <p className="mt-1 text-[11px] text-warn">Questa sezione è stata modificata altrove (per esempio con «Cita nel rapporto») mentre avevi modifiche non salvate: qui vedi la tua bozza. Salvandola sostituisci la versione salvata.{' '}
         <button className="text-gold-300 underline" onClick={clearDraft}>Usa la versione salvata</button></p>}
     </section>
+  );
+}
+
+const REASON: Record<SectionVersion['reason'], string> = { edit: 'modifica', quote: 'citazione aggiunta', restore: 'prima di un ripristino' };
+
+/** Cronologia della sezione: ogni salvataggio conserva la versione precedente, ripristinabile. */
+function VersionHistory({ report, section, onRestored, onError }: { report: Report; section: ReportSection; onRestored: (r: Report) => void; onError: (e: string) => void }) {
+  const list = useAsync(() => api.sectionVersions(report.id, section.id), [report.id, section.id, report.updated_at]);
+  const [open, setOpen] = useState<number>();
+  if (list.loading && !list.data) return <Loading />;
+  if (!list.data?.length) return <p className="mt-2 text-xs text-steel-500" data-testid="versions">Nessuna versione precedente: la cronologia parte dal primo salvataggio.</p>;
+  return (
+    <ul className="mt-2 space-y-1 rounded-md border border-ink-700 p-2 text-xs" data-testid="versions">
+      {list.data.map((v) => (
+        <li key={v.id}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-paper">{formatDateTime(v.created_at)}</span>
+            <span className="text-steel-500">{REASON[v.reason]} · {v.words} parole{v.author ? ` · ${v.author}` : ''}</span>
+            <span className="flex-1" />
+            <button className="text-gold-300 hover:underline" onClick={() => setOpen(open === v.id ? undefined : v.id)}>{open === v.id ? 'Nascondi' : 'Mostra'}</button>
+            <button className="text-gold-300 hover:underline" onClick={async () => { try { onRestored(await api.restoreVersion(report.id, section.id, v.id)); } catch (e) { onError(errorText(e)); } }}>Ripristina</button>
+          </div>
+          {open === v.id && <p className="mt-1 whitespace-pre-line border-l border-ink-600 pl-2 text-steel-300">{v.body || '(vuota)'}</p>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const CLAIM_STATUS: Record<ClaimStatus, { label: string; tone: 'ok' | 'gold' | 'warn' | 'bad' | 'neutral' }> = {
+  supported: { label: 'Fonte nella frase', tone: 'ok' },
+  paragraph: { label: 'Fonte nel paragrafo', tone: 'gold' },
+  unsupported: { label: 'Senza supporto', tone: 'bad' },
+  invalid_citation: { label: 'Citazione non valida', tone: 'bad' },
+  exempt: { label: 'Descrive il lavoro', tone: 'neutral' },
+};
+
+/** Tracciabilità: affermazioni rilevanti ↔ fonti e pagine, uso della bibliografia, coerenza tra grafici e testo. */
+function TracePanel({ r, onSaved }: { r: Report; onSaved: (r: Report) => void }) {
+  const t = useAsync(() => api.traceReport(r.id), [r.id, r.updated_at]);
+  const [all, setAll] = useStickyState(`report.${r.id}.traceAll`, false);
+  if (!t.data) return t.error ? <ErrorBox error={t.error} onRetry={t.reload} /> : <Loading />;
+  const d: ReportTrace = t.data;
+  if (!d.summary) return null;
+  const sm = d.summary;
+  const consulted = r.consulted_ids ?? [];
+  const toggle = async (id: number) => onSaved(await api.updateReport(r.id, { consulted_ids: consulted.includes(id) ? consulted.filter((x) => x !== id) : [...consulted, id] }));
+  return (
+    <Card title="Tracciabilità delle affermazioni" className="mb-4">
+      <p className="text-sm text-steel-300" data-testid="trace-summary">
+        {sm.claims} affermazioni rilevanti: {sm.supported} con fonte nella frase, {sm.paragraph} con fonte nel paragrafo,{' '}
+        <span className={sm.unsupported ? 'text-bad' : ''}>{sm.unsupported} senza supporto</span>. Citazioni con pagina: {sm.with_page}/{sm.citations}.
+        Fonti citate: {sm.primary_cited} primarie, {sm.secondary_cited} secondarie{sm.unclassified_cited ? `, ${sm.unclassified_cited} da classificare` : ''}.
+      </p>
+      <label className="mt-2 flex items-center gap-1.5 text-xs text-steel-400"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />Mostra anche le affermazioni supportate</label>
+      <div className="mt-2 space-y-3" data-testid="trace-claims">
+        {d.sections.filter((x) => x.claims.some((c) => all || c.status === 'unsupported' || c.status === 'invalid_citation')).map((x) => (
+          <div key={x.section_id}>
+            <h4 className="text-xs font-semibold text-steel-400">{x.title}</h4>
+            <ul className="mt-1 space-y-1 text-xs">
+              {x.claims.filter((c) => all || c.status === 'unsupported' || c.status === 'invalid_citation').map((c, i) => (
+                <li key={i} className="flex flex-wrap items-start gap-2">
+                  <Badge tone={CLAIM_STATUS[c.status].tone}>{CLAIM_STATUS[c.status].label}</Badge>
+                  <span className="min-w-0 flex-1 text-steel-300">{c.text}</span>
+                  {c.citations.map((ref, j) => (
+                    <span key={j} className={`font-mono ${ref.valid ? 'text-gold-300' : 'text-bad'}`}>@{ref.source_id}{ref.locator ? `, ${ref.locator}` : ' (senza pagina)'}{ref.evidence_class ? ` · ${ref.evidence_class === 'primary' ? 'primaria' : 'secondaria'}` : ''}</span>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      {d.coherence.length > 0 && (
+        <div className="mt-3" data-testid="trace-coherence">
+          <h4 className="text-xs font-semibold text-steel-400">Coerenza tra grafici, tabelle, testo e fonti</h4>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-warn">{d.coherence.map((c, i) => <li key={i}>{c.section ? `«${c.section}»: ` : ''}{c.detail}</li>)}</ul>
+        </div>
+      )}
+      {d.bibliography.length > 0 && (
+        <div className="mt-3" data-testid="trace-bibliography">
+          <h4 className="text-xs font-semibold text-steel-400">Bibliografia: citata, consultata o inutilizzata</h4>
+          <ul className="mt-1 space-y-1 text-xs">
+            {d.bibliography.map((b) => (
+              <li key={b.source_id} className="flex flex-wrap items-start gap-2">
+                <Badge tone={b.status === 'cited' ? 'ok' : b.status === 'consulted' ? 'gold' : 'warn'}>{b.status === 'cited' ? 'Citata' : b.status === 'consulted' ? 'Consultata' : 'Né citata né consultata'}</Badge>
+                <span className="min-w-0 flex-1 text-steel-300">{b.citation}{b.locators.length > 0 && <span className="text-steel-500"> · {b.locators.join('; ')}</span>}</span>
+                {b.status !== 'cited' && <label className="flex items-center gap-1 text-steel-400"><input type="checkbox" checked={b.status === 'consulted'} onChange={() => toggle(b.source_id)} />consultata</label>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -421,6 +518,7 @@ function ReportEditor({ id }: { id: number }) {
         </>} />
       <LayoutSettings r={r} onSaved={saved} />
       <Checklist check={check.data} />
+      <TracePanel r={r} onSaved={saved} />
       {r.contains_ai_text && <p className="mb-3 text-sm text-warn">Contiene testo generato o estratto automaticamente: rivedilo prima di approvare.</p>}
       {err && <div className="mb-3"><ErrorBox error={new Error(err)} /></div>}
       <div className="space-y-3">

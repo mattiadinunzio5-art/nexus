@@ -672,13 +672,26 @@ export interface DocTable { caption: string; columns: string[]; rows: string[][]
 export interface ReportSection { id: number; ordinal: number; key: string; title: string; body: string; embeds: Embed[] }
 export interface Report {
   id: number; title: string; subtitle: string; author: string; status: 'draft' | 'approved'; project_id: number | null; source_ids: number[];
-  origin: string; contains_ai_text: boolean; citation_style: CitationStyle; template: ReportTemplate; created_at: string; updated_at: string; sections: ReportSection[];
+  consulted_ids?: number[]; origin: string; contains_ai_text: boolean; citation_style: CitationStyle; template: ReportTemplate; created_at: string; updated_at: string; sections: ReportSection[];
 }
 export interface ReportSummary { id: number; title: string; status: 'draft' | 'approved'; project_id: number | null; origin: string; updated_at: string }
 export interface ReportCheck {
   ready: boolean; checklist: CheckItem[]; empty_sections: string[]; invalid_citations: number[]; unverified_sources: { id: number; citation: string; status: string }[];
   cited_sources: number; bibliography_size: number; embed_problems: string[]; warnings: string[];
 }
+export type ClaimStatus = 'supported' | 'paragraph' | 'unsupported' | 'invalid_citation' | 'exempt';
+export interface TraceRef { source_id: number; locator: string; has_page: boolean; valid: boolean; evidence_class: '' | 'primary' | 'secondary' }
+export interface TraceClaim { paragraph: number; text: string; status: ClaimStatus; citations: TraceRef[] }
+export interface ReportTrace {
+  report_id: number;
+  summary: { claims: number; supported: number; paragraph: number; unsupported: number; invalid: number; exempt: number; with_page: number; citations: number;
+    primary_cited: number; secondary_cited: number; unclassified_cited: number; unused: number };
+  sections: { section_id: number; key: string; title: string; claims: TraceClaim[] }[];
+  bibliography: { source_id: number; number: number | null; citation: string; status: 'cited' | 'consulted' | 'unused'; evidence_class: string; verification_status: VerificationStatus; verified: boolean; locators: string[] }[];
+  invalid_citations: number[];
+  coherence: { section: string; kind: string; detail: string; sentence?: string }[];
+}
+export interface SectionVersion { id: number; created_at: string; reason: 'edit' | 'quote' | 'restore'; title: string; body: string; embeds: Embed[]; words: number; author: string }
 export interface NoteItem { id: number; title: string; body: string; project_id: number | null; source_id: number | null; document_id: number | null; created_at: string; updated_at: string }
 
 export interface BriefingItem { title: string; date?: string | null; source?: string; value?: number | null; unit?: string; flags?: string[]; url?: string; detail?: string; kind?: string; reason?: string; reliability?: string; previous?: { value: number; date: string } }

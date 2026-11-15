@@ -16,7 +16,7 @@ from .project import Project
 from .project_item import ProjectItem
 from .search import SearchQuery
 from .source import Source
-from .studio import Briefing, Note, Report, ReportSection
+from .studio import Briefing, Note, Report, ReportSection, ReportSectionVersion
 from .user import AuthSession, ProjectMember, User
 
 __all__ = [
@@ -35,6 +35,7 @@ __all__ = [
     "Note",
     "Report",
     "ReportSection",
+    "ReportSectionVersion",
     "AgentStep",
     "ResearchRun",
     "ConnectorState",
