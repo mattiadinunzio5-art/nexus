@@ -89,6 +89,7 @@ def timeline(
     from_year: int | None = None,
     to_year: int | None = None,
     event_id: int | None = None,
+    origin: Literal["mine", "library"] | None = None,
 ):
     return timemachine.timeline(db, user, as_of_year=as_of_year, hindsight=hindsight, country=country,
-                                category=category, from_year=from_year, to_year=to_year, event_id=event_id)
+                                category=category, from_year=from_year, to_year=to_year, event_id=event_id, origin=origin)

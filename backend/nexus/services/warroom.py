@@ -35,6 +35,10 @@ def create_run(db: Session, user: User, settings: Settings, data: RunCreate) -> 
     if mode == "ai":
         quotas.check(db, user, "ai_runs")
     running = db.scalar(select(ResearchRun).where(ResearchRun.owner_id == user.id, ResearchRun.status.in_(("queued", "running"))))
+    if running and running.created_at and (utcnow() - _aware(running.created_at)).total_seconds() > STALE_SECONDS:
+        _mark_interrupted(running)
+        db.commit()
+        running = None
     if running:
         raise InvalidStateError("C'è già una ricerca in corso: attendi che termini (limite alle operazioni automatiche).")
     run = ResearchRun(owner_id=user.id, project_id=data.project_id, question=data.question, mode=mode,
@@ -47,6 +51,29 @@ def create_run(db: Session, user: User, settings: Settings, data: RunCreate) -> 
     db.commit()
     db.refresh(run)
     return run
+
+
+STALE_SECONDS = 15 * 60  # una ricerca locale dura secondi: oltre 15 minuti è rimasta orfana
+
+
+def _aware(dt):
+    from datetime import timezone
+
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _mark_interrupted(run: ResearchRun) -> None:
+    run.status, run.finished_at = "failed", utcnow()
+    run.error = "Ricerca interrotta: il server si è riavviato mentre era in corso. Avviala di nuovo."
+
+
+def fail_interrupted_runs(db: Session) -> int:
+    """All'avvio nessuna ricerca può essere davvero in corso: quelle rimaste aperte erano state interrotte."""
+    runs = list(db.scalars(select(ResearchRun).where(ResearchRun.status.in_(("queued", "running")))))
+    for r in runs:
+        _mark_interrupted(r)
+    db.commit()
+    return len(runs)
 
 
 def execute_in_background(database: Database, settings: Settings, run_id: int) -> None:
@@ -62,7 +89,14 @@ def execute_in_background(database: Database, settings: Settings, run_id: int) -
             run.status, run.error, run.finished_at = "failed", str(exc), utcnow()
             db.commit()
             return
-        workflow.execute(db, run, user, settings, client)
+        try:
+            workflow.execute(db, run, user, settings, client)
+        except Exception as exc:  # noqa: BLE001 — un errore imprevisto non deve lasciare la ricerca «in corso» per sempre
+            db.rollback()
+            run = db.get(ResearchRun, run_id)
+            run.status, run.error, run.finished_at = "failed", f"Errore durante la ricerca: {exc}"[:2000], utcnow()
+            db.commit()
+            return
         activity.record(db, user=None, actor="ai" if run.mode == "ai" else "system", action="research.finish",
                         entity_type="research_run", entity_id=run.id, summary=f"Ricerca #{run.id} terminata: {run.status}")
         if run.status == "awaiting_approval":
@@ -72,14 +106,27 @@ def execute_in_background(database: Database, settings: Settings, run_id: int) -
         db.commit()
 
 
+def _expire_stale(db: Session, runs: list[ResearchRun]) -> None:
+    """Una ricerca «in corso» da oltre 15 minuti è rimasta orfana (riavvio del server): la si segna come interrotta."""
+    stale = [r for r in runs if r.status in ("queued", "running") and r.created_at
+             and (utcnow() - _aware(r.created_at)).total_seconds() > STALE_SECONDS]
+    for r in stale:
+        _mark_interrupted(r)
+    if stale:
+        db.commit()
+
+
 def list_runs(db: Session, user: User, limit: int = 50) -> list[ResearchRun]:
-    return list(db.scalars(select(ResearchRun).where(ResearchRun.owner_id == user.id).order_by(ResearchRun.id.desc()).limit(limit)))
+    runs = list(db.scalars(select(ResearchRun).where(ResearchRun.owner_id == user.id).order_by(ResearchRun.id.desc()).limit(limit)))
+    _expire_stale(db, runs)
+    return runs
 
 
 def get_run(db: Session, user: User, run_id: int) -> ResearchRun:
     r = db.get(ResearchRun, run_id)
     if r is None or r.owner_id != user.id:
         raise NotFoundError("Ricerca non trovata.")
+    _expire_stale(db, [r])
     return r
 
 

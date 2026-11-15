@@ -392,3 +392,49 @@ def backtest(name: str, dates: list[str], prices: list[float], ppy: int, strateg
         limitations=["Un backtest descrive il passato, non garantisce risultati futuri", "Non considera slippage, tasse, vincoli di liquidità"],
         warnings=warnings,
     )
+
+
+# --- Proiezione a scenari ----------------------------------------------------------------
+
+
+def scenario_projection(name: str, unit: str, base_value: float, base_year: int, horizon: int, scenarios: list[dict],
+                        uncertainty: float, history: dict | None, data_used: list[str]) -> SimulationResult:
+    """Valore_t = V0 · (1+g)^t per ogni scenario; con incertezza σ sulla crescita, banda al 90% log-normale."""
+    if base_value <= 0:
+        raise SimulationError("Il valore di partenza deve essere positivo.")
+    names = [s["name"] for s in scenarios]
+    if len(set(names)) != len(names):
+        raise SimulationError("Ogni scenario deve avere un nome diverso.")
+    years = [base_year + t for t in range(horizon + 1)]
+    paths, rows = {}, []
+    z = 1.6449  # quantile 95%: banda centrale al 90%
+    for sc in scenarios:
+        g = sc["growth"]
+        if g <= -1:
+            raise SimulationError("Crescita ≤ −100% non ammessa.")
+        mid = [base_value * (1 + g) ** t for t in range(horizon + 1)]
+        p = {"value": [_r(x, 4) for x in mid]}
+        if uncertainty > 0:
+            p["low"] = [_r(m * math.exp(-z * uncertainty * math.sqrt(t)), 4) for t, m in enumerate(mid)]
+            p["high"] = [_r(m * math.exp(z * uncertainty * math.sqrt(t)), 4) for t, m in enumerate(mid)]
+        paths[sc["name"]] = p
+        rows.append({"scenario": sc["name"], "growth": g, "end_value": _r(mid[-1], 4), "multiple": _r(mid[-1] / base_value, 3),
+                     "doubling_years": _r(math.log(2) / math.log(1 + g), 1) if g > 0 else None,
+                     **({"end_low": p["low"][-1], "end_high": p["high"][-1]} if uncertainty > 0 else {})})
+    hyp = ["Crescita annua costante in ciascuno scenario per tutto l'orizzonte",
+           f"Valore di partenza: {base_value:.4g} {unit} nel {base_year}".strip()]
+    if uncertainty > 0:
+        hyp.append(f"Incertezza: deviazione standard annua della crescita {uncertainty * 100:.1f} punti (banda centrale al 90%)")
+    lim = ["È una proiezione condizionata alle ipotesi, non una previsione: non stima la probabilità dei singoli scenari",
+           "Non modella rotture strutturali, politiche, saturazione del mercato o shock",
+           "Le crescite degli scenari sono scelte dall'utente: vanno motivate con fonti nel testo"]
+    if history:
+        hyp.append(f"Riferimento storico: crescita media annua {history['cagr'] * 100:+.2f}% tra {history['from']} e {history['to']} (dati della serie)")
+    return SimulationResult(
+        kind="scenarios", title=f"Scenari di proiezione: {name}",
+        hypotheses=hyp, variables={"V0": "valore di partenza", "g": "crescita annua composta dello scenario", "t": "anni dal punto di partenza"},
+        parameters={"base_value": base_value, "base_year": base_year, "horizon": horizon, "scenarios": scenarios, "uncertainty": uncertainty, "unit": unit},
+        method="V(t) = V0 · (1+g)^t" + ("; banda: V(t) · exp(±1,645 · σ · √t)" if uncertainty > 0 else ""),
+        data_used=data_used, results={"years": years, "paths": paths, "summary": rows, "history": history, "unit": unit},
+        limitations=lim,
+    )

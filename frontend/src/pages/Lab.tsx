@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, FlaskConical, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, FlaskConical, Pencil, Trash2, X } from 'lucide-react';
 import { api } from '../api/client';
 import type { SimulationEnvelope } from '../api/types';
 import { formatNumber, TimeChart } from '../components/charts';
@@ -26,6 +26,7 @@ const KINDS = {
   monetary_policy: 'Politiche monetarie',
   regression: 'Regressione',
   backtest: 'Backtesting',
+  scenarios: 'Proiezione a scenari',
 } as const;
 type Kind = keyof typeof KINDS;
 
@@ -44,7 +45,16 @@ const DEFAULTS: Record<Kind, FormState> = {
   monetary_policy: { labels: '2021 2022 2023', inflation: '0.026 0.084 0.054', output_gap: '-0.01 0.005 0.0', actual_rate: '', r_star: '0.005', pi_target: '0.02' },
   regression: { y_series_id: '', x_series_ids: '', transform: 'diff', lags: '0', target_frequency: '', method: 'mean' },
   backtest: { series_id: '', strategy: 'ma_cross', fast: '10', slow: '50', lookback: '12', cost_bps: '10', rf: '0' },
+  scenarios: { series_id: '', base_value: '', base_year: '', unit: '', horizon: '25', scenarios: 'Base: 0.03\nRiduzione: -0.01\nAccelerazione: 0.05', uncertainty: '0', history_years: '10' },
 };
+
+/** «Nome: crescita» una riga per scenario (crescita decimale, 0.03 = +3% l'anno). */
+function parseScenarios(text: string) {
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.lastIndexOf(':');
+    return { name: (i > 0 ? l.slice(0, i) : l).trim(), growth: num(i > 0 ? l.slice(i + 1) : '') };
+  });
+}
 
 function payload(kind: Kind, f: FormState): Record<string, unknown> {
   switch (kind) {
@@ -71,6 +81,9 @@ function payload(kind: Kind, f: FormState): Record<string, unknown> {
     case 'regression':
       return { y_series_id: num(f.y_series_id), x_series_ids: f.x_series_ids.split(',').filter(Boolean).map(Number), transform: f.transform, lags: num(f.lags),
                target_frequency: f.target_frequency || null, method: f.method };
+    case 'scenarios':
+      return { series_id: num(f.series_id) ?? null, base_value: num(f.base_value) ?? null, base_year: num(f.base_year) ?? null, unit: f.unit.trim(),
+               horizon: num(f.horizon), scenarios: parseScenarios(f.scenarios), uncertainty: num(f.uncertainty) ?? 0, history_years: num(f.history_years) ?? 10 };
     case 'backtest':
       return { series_id: num(f.series_id), strategy: f.strategy, fast: num(f.fast), slow: num(f.slow), lookback: num(f.lookback), cost_bps: num(f.cost_bps), rf: num(f.rf) };
   }
@@ -78,6 +91,7 @@ function payload(kind: Kind, f: FormState): Record<string, unknown> {
 
 function SimForm({ kind, onDone }: { kind: Kind; onDone: (id: number) => void }) {
   const [f, setF] = useDraft<FormState>(`lab.${kind}`, DEFAULTS[kind]);
+  const [title, setTitle, clearTitle] = useDraft(`lab.${kind}.title`, '');
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
   const series = useAsync(() => api.seriesList(), []);
@@ -130,15 +144,30 @@ function SimForm({ kind, onDone }: { kind: Kind; onDone: (id: number) => void })
       {f.strategy === 'ma_cross' && <><Field label="Media veloce"><Input {...b('fast')} /></Field><Field label="Media lenta"><Input {...b('slow')} /></Field></>}
       {f.strategy === 'momentum' && <Field label="Lookback (periodi)"><Input {...b('lookback')} /></Field>}
       <Field label="Costi (punti base per operazione)"><Input {...b('cost_bps')} /></Field><Field label="Tasso privo di rischio annuo"><Input {...b('rf')} /></Field></>,
+    scenarios: () => <>
+      {seriesSelect('series_id', 'Serie di partenza (facoltativa)')}
+      <Field label="Valore di partenza" hint="Vuoto = ultimo dato della serie"><Input {...b('base_value')} /></Field>
+      <Field label="Anno di partenza" hint="Vuoto = anno dell'ultimo dato"><Input inputMode="numeric" {...b('base_year')} /></Field>
+      <Field label="Unità (facoltativa)"><Input {...b('unit')} /></Field>
+      <Field label="Scenari: «nome: crescita annua» uno per riga" hint="0.03 = +3% l'anno; massimo 6 scenari" className="sm:col-span-2">
+        <Textarea {...b('scenarios')} className="min-h-24 font-mono text-xs" /></Field>
+      <Field label="Orizzonte (anni)"><Input inputMode="numeric" {...b('horizon')} /></Field>
+      <Field label="Incertezza: σ annua della crescita" hint="0 = nessuna banda; 0.02 = ±2 punti"><Input {...b('uncertainty')} /></Field>
+      <Field label="Anni per la crescita storica di riferimento"><Input inputMode="numeric" {...b('history_years')} /></Field></>,
   };
   return (
     <div>
+      <Field label="Titolo della simulazione (facoltativo)" className="mb-3 max-w-xl"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} placeholder="Es. Produzione di plastica al 2050: tre scenari" /></Field>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">{fields[kind]()}</div>
       {err && <p role="alert" className="mt-3 text-sm text-bad">{err}</p>}
       <div className="mt-3 flex justify-end">
         <Button variant="primary" disabled={busy} onClick={async () => {
           setBusy(true); setErr(undefined);
-          try { onDone((await api.runSimulation(kind, payload(kind, f))).id); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+          try {
+            const done = await api.runSimulation(kind, { ...payload(kind, f), ...(title.trim() ? { title: title.trim() } : {}) });
+            clearTitle();
+            onDone(done.id);
+          } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
         }}><FlaskConical className="size-4" aria-hidden /> Esegui</Button>
       </div>
     </div>
@@ -235,6 +264,20 @@ function ResultsView({ r }: { r: SimulationEnvelope }) {
           <tbody>{[['Strategia', res.strategy], ['Buy & hold', res.benchmark_buy_hold]].map(([n, m]) => <tr key={n as string} className="border-t border-ink-700"><td className="text-paper">{n as string}</td><td>{pct(m.total_return)}</td><td>{pct(m.cagr)}</td><td>{pct(m.volatility)}</td><td>{formatNumber(m.sharpe, 3)}</td><td>{pct(m.max_drawdown)}</td></tr>)}</tbody></table>
         <p className="mt-2 text-xs text-steel-500">Operazioni: {res.trades} · Esposizione media: {pct(res.exposure)}</p>
       </>;
+    case 'scenarios': {
+      const keys = Object.keys(res.paths);
+      const band = keys.some((k) => res.paths[k].low);
+      const rows = (res.years as number[]).map((y, i) => Object.fromEntries([['date', String(y)], ...keys.flatMap((k, j) => [[`s${j}`, res.paths[k].value[i]], ...(band ? [[`l${j}`, res.paths[k].low[i]], [`h${j}`, res.paths[k].high[i]]] : [])])]));
+      const series = keys.flatMap((k, j) => [{ key: `s${j}`, label: k }, ...(band ? [{ key: `l${j}`, label: `${k} — 5°`, dashed: true }, { key: `h${j}`, label: `${k} — 95°`, dashed: true }] : [])]);
+      const h = res.history;
+      return <>
+        <TimeChart data={rows} series={series} unit={res.unit} ariaLabel="Proiezione per scenario" />
+        {h && <p className="mt-2 text-sm text-steel-300">Crescita storica di riferimento: <span className="text-paper">{pct(h.cagr)} l'anno</span> ({h.from}–{h.to}, dati della serie).</p>}
+        <table className="mt-3 w-full text-left text-sm"><thead className="text-[11px] text-steel-500"><tr><th>Scenario</th><th>Crescita annua</th><th>Valore finale</th>{band && <th>Banda 90%</th>}<th>Multiplo</th><th>Raddoppio</th></tr></thead>
+          <tbody>{res.summary.map((x: Row) => <tr key={String(x.scenario)} className="border-t border-ink-700"><td className="text-paper">{x.scenario}</td><td>{pct(x.growth)}</td><td>{formatNumber(x.end_value as number)} {res.unit}</td>
+            {band && <td>{formatNumber(x.end_low as number)} – {formatNumber(x.end_high as number)}</td>}<td>×{formatNumber(x.multiple as number, 3)}</td><td>{x.doubling_years ? `${x.doubling_years} anni` : '—'}</td></tr>)}</tbody></table>
+      </>;
+    }
     default:
       return <pre className="overflow-auto text-xs text-steel-300">{JSON.stringify(res, null, 2)}</pre>;
   }
@@ -244,6 +287,9 @@ export function SimulationPage() {
   const id = Number(useParams().simId);
   const sim = useAsync(() => api.simulation(id), [id]);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [renameErr, setRenameErr] = useState<string>();
   const navigate = useNavigate();
   if (sim.loading && !sim.data) return <Loading />;
   if (sim.error) return <ErrorBox error={sim.error} onRetry={sim.reload} />;
@@ -252,8 +298,23 @@ export function SimulationPage() {
   const Section = ({ title, items }: { title: string; items: string[] }) => items.length ? <div><h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">{title}</h3><ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-steel-300">{items.map((i) => <li key={i}>{i}</li>)}</ul></div> : null;
   return (
     <>
-      <PageHeader eyebrow={<Link to="/lab" className="hover:underline">Economic Laboratory</Link>} title={r.title} description={formatDateTime(s.created_at)}
-        actions={<Button onClick={() => setDeleting(true)} aria-label="Elimina simulazione"><Trash2 className="size-4" /></Button>} />
+      <PageHeader eyebrow={<Link to="/lab" className="hover:underline">Economic Laboratory</Link>} title={s.title || r.title} description={formatDateTime(s.created_at)}
+        actions={<div className="flex gap-1">
+          <Button onClick={() => { setName(s.title || r.title); setEditing(true); }} aria-label="Rinomina simulazione"><Pencil className="size-4" /></Button>
+          <Button onClick={() => setDeleting(true)} aria-label="Elimina simulazione"><Trash2 className="size-4" /></Button>
+        </div>} />
+      {editing && (
+        <form className="mb-4 flex flex-wrap items-end gap-2" onSubmit={async (e) => {
+          e.preventDefault();
+          if (!name.trim()) return setRenameErr('Il titolo non può essere vuoto.');
+          try { await api.renameSimulation(id, name.trim()); setEditing(false); setRenameErr(undefined); sim.reload(); } catch (err) { setRenameErr(errorText(err)); }
+        }}>
+          <Field label="Nuovo titolo" className="min-w-0 flex-1"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={300} autoFocus /></Field>
+          <Button type="submit" variant="primary" aria-label="Salva titolo"><Check className="size-4" /></Button>
+          <Button onClick={() => setEditing(false)} aria-label="Annulla"><X className="size-4" /></Button>
+          {renameErr && <p role="alert" className="basis-full text-sm text-bad">{renameErr}</p>}
+        </form>
+      )}
       <p role="note" className={`mb-4 rounded-md border p-3 text-sm ${r.counterfactual ? 'border-warn/40 bg-warn/5 text-warn' : 'border-ink-700 bg-ink-850 text-steel-300'}`}>{r.label}</p>
       {r.warnings.map((w) => <p key={w} className="mb-2 flex items-start gap-2 text-sm text-warn"><AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{w}</p>)}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

@@ -107,8 +107,9 @@ def list_events(
         stmt = stmt.where(HistoricalEvent.start_year <= y,
                           or_(HistoricalEvent.start_year == y, func.coalesce(HistoricalEvent.end_year, HistoricalEvent.start_year) >= y))
     elif q:
-        like = f"%{q}%"
-        stmt = stmt.where(or_(HistoricalEvent.title.ilike(like), HistoricalEvent.description.ilike(like)))
+        from ..research.crosslang import match_any
+
+        stmt = stmt.where(match_any([HistoricalEvent.title, HistoricalEvent.description], q))  # italiano ↔ inglese
     if from_year is not None:
         stmt = stmt.where(or_(HistoricalEvent.end_year >= from_year, HistoricalEvent.start_year >= from_year))
     if to_year is not None:

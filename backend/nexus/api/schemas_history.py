@@ -159,6 +159,7 @@ class TimelineIndicator(BaseModel):
     last_date: str
     last_value: float
     caveat: str
+    retrospective: bool = False
 
 
 class TimelineOut(BaseModel):

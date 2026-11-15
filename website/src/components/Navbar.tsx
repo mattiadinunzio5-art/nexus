@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useAuth } from '../lib/auth';
-import { counterpart, useI18n } from '../lib/i18n';
+import { counterpart, rememberLang, useI18n } from '../lib/i18n';
 
 export function useNav() {
   const { t, p } = useI18n();
@@ -20,7 +20,7 @@ function LangSwitch({ className = '' }: { className?: string }) {
   const { t, lang } = useI18n();
   const { pathname, hash } = useLocation();
   return (
-    <Link to={counterpart(pathname, hash)} hrefLang={lang === 'en' ? 'it' : 'en'} lang={lang === 'en' ? 'it' : 'en'}
+    <Link to={counterpart(pathname, hash)} onClick={() => rememberLang(lang === 'en' ? 'it' : 'en')} hrefLang={lang === 'en' ? 'it' : 'en'} lang={lang === 'en' ? 'it' : 'en'}
       className={`rounded-full border border-line px-3 py-2 text-[12px] font-medium text-mute-2 transition hover:border-ivory hover:text-ivory ${className}`}
       aria-label={`${t.language}: ${t.switchTo}`}>
       {t.switchToShort}

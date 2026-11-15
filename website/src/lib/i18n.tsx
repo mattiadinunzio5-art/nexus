@@ -34,3 +34,27 @@ export function useI18n() {
   const lang = langFromPath(pathname);
   return { lang, t: STRINGS[lang], p: (path: string) => localize(path, lang), ...CONTENT[lang] };
 }
+
+const PREF = 'nexus.site.lang';
+
+/** Ricorda la lingua scelta con il selettore: vale più della lingua del browser. */
+export function rememberLang(l: Lang): void {
+  try { localStorage.setItem(PREF, l); } catch { /* storage non disponibile */ }
+}
+
+/**
+ * Lingua preferita per la prima pagina aperta: scelta salvata, altrimenti la lingua del browser
+ * (italiano se fra le preferite l'italiano viene prima dell'inglese).
+ */
+export function preferredLang(): Lang | null {
+  try {
+    const saved = localStorage.getItem(PREF);
+    if (saved === 'it' || saved === 'en') return saved;
+  } catch { /* storage non disponibile */ }
+  if (typeof navigator === 'undefined') return null;
+  const langs = (navigator.languages?.length ? navigator.languages : [navigator.language]).map((x) => (x || '').toLowerCase());
+  const it = langs.findIndex((x) => x.startsWith('it'));
+  const en = langs.findIndex((x) => x.startsWith('en'));
+  if (it >= 0 && (en < 0 || it < en)) return 'it';
+  return null;
+}

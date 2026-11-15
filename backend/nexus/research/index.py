@@ -52,8 +52,10 @@ def fts_delete_document(db: Session, document_id: int) -> None:
 
 def _fts_query(q: str) -> str:
     # Ogni termine tra virgolette: nessuna sintassi FTS controllabile dall'utente.
-    toks = terms(q)
-    return " OR ".join(f'"{t}"*' for t in toks[:20])
+    from .crosslang import expand_terms
+
+    toks = expand_terms(terms(q)[:10])  # anche i termini equivalenti nell'altra lingua
+    return " OR ".join(f'"{t}"*' for t in toks[:24])
 
 
 def text_search(db: Session, owner_id: int, q: str, limit: int, document_ids: list[int] | None = None) -> list[tuple[int, float]]:
@@ -69,10 +71,13 @@ def text_search(db: Session, owner_id: int, q: str, limit: int, document_ids: li
         sql += " ORDER BY s LIMIT :l"
         params["l"] = limit
         return [(int(r[0]), float(-r[1])) for r in db.execute(text(sql), params)]
-    toks = terms(q)[:8]
+    from .crosslang import expand_terms
+
+    toks = expand_terms(terms(q)[:8])[:16]  # italiano ↔ inglese: «plastica» trova anche «plastic»
     if db.get_bind().dialect.name == "postgresql" and toks:
         # PostgreSQL: ricerca full-text nel database (indice GIN, migrazione 0013), senza caricare i testi in memoria.
-        tsq = " | ".join(re.sub(r"[^\w]", "", t) for t in toks if re.sub(r"[^\w]", "", t))
+        # Prefisso (:*): «plastic» trova anche «plastics».
+        tsq = " | ".join(re.sub(r"[^\w]", "", t) + ":*" for t in toks if re.sub(r"[^\w]", "", t))
         if not tsq:
             return []
         sql = ("SELECT id, ts_rank(to_tsvector('simple', text), to_tsquery('simple', :q)) AS s FROM document_chunks "
@@ -109,12 +114,23 @@ class _LSAModel:
     matrix: np.ndarray = field(repr=False)
 
 
+MAX_FEATURES = 15000  # termini del vocabolario
+N_COMPONENTS = 100  # dimensioni LSA
+MAX_CHUNKS = 5000  # segmenti più recenti indicizzati per utente
+MAX_MODELS = 3  # indici tenuti in memoria (i meno usati vengono scartati)
+
+
 class SemanticIndex:
-    """Indice semantico in memoria per utente, ricostruito quando l'archivio cambia."""
+    """Indice semantico in memoria per utente, ricostruito quando l'archivio cambia (al massimo MAX_MODELS in memoria)."""
 
     def __init__(self) -> None:
-        self._cache: dict[int, _LSAModel] = {}
+        from collections import OrderedDict
+
+        self._cache: OrderedDict[int, _LSAModel] = OrderedDict()
         self._lock = threading.Lock()
+
+    def has(self, owner_id: int) -> bool:
+        return owner_id in self._cache
 
     def invalidate(self, owner_id: int) -> None:
         with self._lock:
@@ -131,18 +147,21 @@ class SemanticIndex:
         from sklearn.feature_extraction.text import TfidfVectorizer
 
         rows = db.execute(
-            select(DocumentChunk.id, DocumentChunk.text).where(DocumentChunk.owner_id == owner_id).order_by(DocumentChunk.id)
+            select(DocumentChunk.id, DocumentChunk.text).where(DocumentChunk.owner_id == owner_id).order_by(DocumentChunk.id.desc()).limit(MAX_CHUNKS)
         ).all()
         if not rows:
             return None
         ids = np.array([r[0] for r in rows])
-        vec = TfidfVectorizer(analyzer=lambda s: terms(s), sublinear_tf=True, min_df=1)
+        # Vocabolario limitato e float32: sul server gratuito (512 MB) l'indice deve restare piccolo.
+        vec = TfidfVectorizer(analyzer=lambda s: terms(s), sublinear_tf=True, min_df=2 if len(rows) > 2000 else 1,
+                              max_features=MAX_FEATURES, dtype=np.float32)
         tfidf = vec.fit_transform([r[1] for r in rows])
+        del rows
         svd = None
-        n_comp = min(150, tfidf.shape[0] - 1, tfidf.shape[1] - 1)
-        if n_comp >= 2:
-            svd = TruncatedSVD(n_components=n_comp, random_state=0)
-            mat = svd.fit_transform(tfidf)
+        n_comp = min(N_COMPONENTS, tfidf.shape[0] - 1, tfidf.shape[1] - 1)
+        if n_comp >= 2 and tfidf.shape[0] >= 200:  # su archivi piccoli la TF-IDF piena è già leggera e più precisa
+            svd = TruncatedSVD(n_components=n_comp, algorithm="randomized", n_iter=4, random_state=0)
+            mat = svd.fit_transform(tfidf).astype(np.float32)
         else:
             mat = tfidf.toarray()
         norms = np.linalg.norm(mat, axis=1, keepdims=True)
@@ -150,15 +169,25 @@ class SemanticIndex:
         return _LSAModel(version, ids, vec, svd, mat)
 
     def search_lsa(self, db: Session, owner_id: int, q: str, limit: int) -> list[tuple[int, float]]:
+        from .crosslang import translations
+
+        q = " ".join([q, *translations(q)])  # il modello LSA è monolingue: si aggiungono gli equivalenti
         version = self._version(db, owner_id)
         with self._lock:
             model = self._cache.get(owner_id)
             if model is None or model.version != version:
+                self._cache.pop(owner_id, None)
+                while len(self._cache) >= MAX_MODELS:
+                    self._cache.popitem(last=False)
+                import gc
+
+                gc.collect()
                 model = self._build(db, owner_id, version)
                 if model is None:
                     return []
                 self._cache[owner_id] = model
-        qv = model.vectorizer.transform([q])
+            self._cache.move_to_end(owner_id)
+        qv = model.vectorizer.transform([q]).astype(np.float32)
         if qv.nnz == 0:
             return []
         qv = model.svd.transform(qv) if model.svd is not None else qv.toarray()

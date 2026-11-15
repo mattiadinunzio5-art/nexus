@@ -58,6 +58,7 @@ class RunSummary(ORMModel):
     mode: str
     provider: str
     created_at: UTCDateTime
+    error: str | None = None
 
 
 class DecisionIn(BaseModel):

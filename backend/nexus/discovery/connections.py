@@ -326,6 +326,14 @@ WINDOW = {"A": 1, "Q": 2, "M": 3, "W": 4, "D": 10}
 PERIOD_DAYS = {"A": 370, "Q": 95, "M": 33, "W": 8, "D": 5}
 
 
+def _concurrent(events: list[HistoricalEvent], e: HistoricalEvent, y0: int, y1: int) -> str:
+    """Gli altri eventi dello stesso periodo: spesso la spiegazione più semplice di una variazione è un'altra."""
+    others = [x.title for x in events if x.id != e.id and y0 - 1 <= x.start_year <= y1][:4]
+    if others:
+        return "Altri eventi nello stesso periodo, possibili spiegazioni alternative: " + "; ".join(others) + "."
+    return "Altri fatti contemporanei, non registrati nell'archivio, possono spiegare la variazione (verifica gli eventi di quegli anni)."
+
+
 def event_data_connections(db: Session, events: list[HistoricalEvent], series: list[Series], require_country: bool = True,
                            window: int | None = None, z_min: float = 2.0) -> list[Candidate]:
     out = []
@@ -341,7 +349,10 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
         v = series_frame(s)
         if len(v) < MIN_OBS:
             continue
-        d = v.diff().dropna()
+        from ..finance import analytics as _an
+
+        pct = _an.scale_free(v)  # serie che crescono di ordini di grandezza: si ragiona in variazioni percentuali (log)
+        d = (np.log(v).diff() if pct else v.diff()).dropna()
         sums = d.rolling(window).sum().dropna()  # variazioni su finestre di `window` periodi: il riferimento storico
         med = float(sums.median())
         mad = float((sums - med).abs().median() * 1.4826)
@@ -367,6 +378,7 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
                 continue
             change = float(after.sum())
             z = (change - med) / scale
+            shown = f"{(np.exp(change) - 1) * 100:+.1f}%" if pct else f"{change:+.4g} {s.unit}"
             # Quante finestre storiche hanno una variazione almeno altrettanto ampia: se sono molte, non è insolita.
             similar = int(((sums - med).abs() >= abs(change - med) - 1e-12).sum())
             if abs(z) < z_min or similar / len(sums) > 0.1:
@@ -378,12 +390,12 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
                 elements=[_event_el(e), {"type": "series", "id": s.id, "label": s.name}],
                 period=f"{after.index[0].strftime('%Y-%m')}–{after.index[-1].strftime('%Y-%m')}",
                 evidence=[{"kind": "data", "label": "Ultimo valore prima dell'evento", "detail": f"{before.index[-1].strftime('%Y-%m-%d')}: {before.iloc[-1]:.4g} {s.unit}"},
-                          {"kind": "data", "label": f"Variazione nei {len(after)} periodi successivi", "detail": f"{change:+.4g} {s.unit} (z robusto {z:+.1f})"},
+                          {"kind": "data", "label": f"Variazione nei {len(after)} periodi successivi", "detail": f"{shown} (z robusto {z:+.1f})"},
                           {"kind": "data", "label": "Variazioni altrettanto ampie nella serie", "detail": f"{similar} su {len(sums)} finestre di {window} periodi"}],
                 source_ids=src_ids, score=min(abs(z), 10.0),
                 explanation=(f"Dopo «{e.title}» ({fmt_years(*event_span(e))}) la serie «{s.name}» registra una variazione insolita "
-                             f"({change:+.4g} {s.unit}, z robusto {z:+.1f}). La coincidenza temporale merita una verifica."),
-                caveats=[NOT_CAUSAL, "Altri fatti contemporanei possono spiegare la variazione.",
+                             f"({shown}, z robusto {z:+.1f}). La coincidenza temporale merita una verifica."),
+                caveats=[NOT_CAUSAL, _concurrent(pool, e, after.index[0].year, after.index[-1].year),
                          "Il valore è la versione attuale della serie (possibili revisioni)."],
                 reliability="medium" if level != "low" else "low", reliability_reasons=reasons,
             ))

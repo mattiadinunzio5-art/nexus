@@ -13,7 +13,25 @@ from ..research.answer import Passage, coverage, extract_claims, support_level
 from ..research.citations import format_citation
 
 
+def _rss_mb() -> float | None:
+    """Memoria attualmente usata dal processo (Linux); None se non misurabile."""
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) / 1024
+    except OSError:
+        return None
+    return None
+
+
 def _semantic(db: Session, user: User, settings: Settings, q: str, limit: int) -> tuple[list, str]:
+    rss = _rss_mb()
+    mem_limit = settings.semantic_memory_limit_mb or (330 if settings.env == "production" else 0)
+    if mem_limit and rss is not None and rss > mem_limit and not index.semantic_index.has(user.id):
+        # Sul server con poca memoria costruire un nuovo indice potrebbe farlo cadere: si usa solo la ricerca testuale.
+        return [], "non usata (memoria del server limitata: risultati dalla sola ricerca testuale)"
+
     if settings.embeddings == "sentence-transformers":
         try:
             emb = index.NeuralEmbedder(settings.embedding_model)

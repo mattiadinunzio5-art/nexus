@@ -33,6 +33,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             upgrade_to_head(settings.database_url)
         with app.state.database.session_factory() as db:
             bootstrap(db, create_local_user=settings.auth_mode == "local")
+            from .services import warroom
+
+            warroom.fail_interrupted_runs(db)
         logger.info("NEXUS %s avviato (%s, db=%s)", __version__, settings.env, settings.database_label)
         yield
         app.state.database.engine.dispose()
@@ -45,6 +48,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.database = Database(settings.database_url)
+
+    @app.middleware("http")
+    async def unhandled_errors(request: Request, call_next):
+        # Dentro il CORS: anche un errore imprevisto arriva al browser come risposta leggibile (non «backend non raggiungibile»).
+        try:
+            return await call_next(request)
+        except Exception:  # noqa: BLE001
+            logger.exception("Errore non gestito su %s %s", request.method, request.url.path)
+            return JSONResponse(status_code=500, content={"error": {"code": "internal_error",
+                                "message": "Errore interno del server: l'operazione non è riuscita. Riprova; se il problema continua, segnalalo con «Suggerisci»."}})
 
     app.add_middleware(
         CORSMiddleware,

@@ -6,6 +6,7 @@ import { ENTITY_TYPES, PROVENANCE, RELATION_TYPES, type EntityType, type GraphDa
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { SearchPicker } from '../components/ui/SearchPicker';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
@@ -120,7 +121,6 @@ export function GraphPage() {
   const [selected, setSelected] = useState<number | undefined>(focus);
   const graph = useAsync(() => api.graph({ focus, depth, provenance: prov, relation_types: relTypes }), [focus, depth, prov, relTypes]);
   const entities = useAsync(() => api.entities(), []);
-  const sources = useAsync(() => api.sources(), []);
   const [form, setForm] = useStickyState<'entity' | 'relation' | 'path' | undefined>('graph.form', undefined);
   const [ent, setEnt, clearEnt] = useDraft('graph.entity', { entity_type: 'person', name: '', description: '', start_year: '', end_year: '' });
   const [rel, setRel, clearRel] = useDraft('graph.relation', { source_entity_id: '', target_entity_id: '', relation_type: 'influenced', provenance: 'user_hypothesis', source_id: '', evidence_note: '' });
@@ -153,7 +153,6 @@ export function GraphPage() {
     }
   }
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const entityOptions = entities.data?.map((e) => <option key={e.id} value={e.id}>{e.name} ({ENTITY_TYPES[e.entity_type]})</option>);
 
   return (
     <>
@@ -183,11 +182,11 @@ export function GraphPage() {
       {form === 'relation' && (
         <Card title="Nuova relazione" className="mb-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="Da"><Select value={rel.source_entity_id} onChange={(e) => setRel({ ...rel, source_entity_id: e.target.value })}><option value="">—</option>{entityOptions}</Select></Field>
+            <Field label="Da"><SearchPicker kind="entity" ariaLabel="Da" value={rel.source_entity_id} onChange={(v) => setRel({ ...rel, source_entity_id: v })} /></Field>
             <Field label="Relazione"><Select value={rel.relation_type} onChange={(e) => setRel({ ...rel, relation_type: e.target.value })}>{Object.entries(RELATION_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
-            <Field label="A"><Select value={rel.target_entity_id} onChange={(e) => setRel({ ...rel, target_entity_id: e.target.value })}><option value="">—</option>{entityOptions}</Select></Field>
+            <Field label="A"><SearchPicker kind="entity" ariaLabel="A" value={rel.target_entity_id} onChange={(v) => setRel({ ...rel, target_entity_id: v })} /></Field>
             <Field label="Provenienza"><Select value={rel.provenance} onChange={(e) => setRel({ ...rel, provenance: e.target.value })}><option value="user_hypothesis">{PROVENANCE.user_hypothesis}</option><option value="sourced">{PROVENANCE.sourced}</option></Select></Field>
-            {rel.provenance === 'sourced' && <Field label="Fonte" className="sm:col-span-2"><Select value={rel.source_id} onChange={(e) => setRel({ ...rel, source_id: e.target.value })}><option value="">—</option>{sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 100)}</option>)}</Select></Field>}
+            {rel.provenance === 'sourced' && <Field label="Fonte" className="sm:col-span-2"><SearchPicker kind="source" ariaLabel="Fonte" value={rel.source_id} onChange={(v) => setRel({ ...rel, source_id: v })} /></Field>}
             <Field label="Nota sull'evidenza" className="sm:col-span-3"><Input value={rel.evidence_note} onChange={(e) => setRel({ ...rel, evidence_note: e.target.value })} /></Field>
           </div>
           <div className="mt-3 flex justify-end gap-2">
@@ -200,12 +199,13 @@ export function GraphPage() {
       {form === 'path' && (
         <Card title="Percorso più breve" className="mb-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="Da"><Select value={pathSel.a} onChange={(e) => setPathSel({ ...pathSel, a: e.target.value })}><option value="">—</option>{entityOptions}</Select></Field>
-            <Field label="A"><Select value={pathSel.b} onChange={(e) => setPathSel({ ...pathSel, b: e.target.value })}><option value="">—</option>{entityOptions}</Select></Field>
+            <Field label="Da"><SearchPicker kind="entity" ariaLabel="Da" value={pathSel.a} onChange={(v) => setPathSel({ ...pathSel, a: v })} /></Field>
+            <Field label="A"><SearchPicker kind="entity" ariaLabel="A" value={pathSel.b} onChange={(v) => setPathSel({ ...pathSel, b: v })} /></Field>
             <div className="flex items-end"><Button disabled={!pathSel.a || !pathSel.b} onClick={async () => {
               const r = await api.graphPath(Number(pathSel.a), Number(pathSel.b));
               const n = new Map((entities.data ?? []).map((e) => [e.id, e.name]));
-              setPathResult(r.found ? r.entity_ids.map((i) => n.get(i)).join(' → ') : 'Nessun percorso tra le due entità.');
+              const names = await Promise.all(r.entity_ids.map(async (i) => n.get(i) ?? (await api.entity(i).then((e) => e.name).catch(() => `#${i}`))));
+              setPathResult(r.found ? names.join(' → ') : 'Nessun percorso tra le due entità.');
             }}>Calcola</Button></div>
           </div>
           {pathResult && <p className="mt-3 text-sm text-paper">{pathResult}</p>}

@@ -124,7 +124,8 @@ export function FinancialPage() {
     const t = setTimeout(() => setQuery(q.trim()), 350);
     return () => clearTimeout(t);
   }, [q]);
-  const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined), [category, query]);
+  const [origin, setOrigin] = useStickyState<'' | 'mine' | 'library'>('financial.origin', '');
+  const list = useAsync(() => api.seriesList(category || undefined, query.length >= 2 ? query : undefined, origin || undefined), [category, query, origin]);
   const [showImport, setShowImport] = useStickyState('financial.import.open', false);
   useContextPanel(
     <div className="space-y-2 text-steel-300">
@@ -146,10 +147,11 @@ export function FinancialPage() {
           {Object.entries(SERIES_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
         <Input aria-label="Cerca serie" placeholder="Cerca per nome o paese…" className="max-w-72" value={q} onChange={(e) => setQ(e.target.value)} />
+        <OriginTabs value={origin} onChange={setOrigin} />
       </div>
       {list.loading && !list.data && <Loading />}
       {list.error && <ErrorBox error={list.error} onRetry={list.reload} />}
-      {list.data?.length === 0 && <EmptyState>Nessuna serie importata.</EmptyState>}
+      {list.data?.length === 0 && <EmptyState>{origin === 'mine' ? 'Non hai ancora importato serie: usa «Importa serie».' : 'Nessuna serie trovata.'}</EmptyState>}
       {list.data && list.data.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-ink-700">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -171,6 +173,19 @@ export function FinancialPage() {
         </div>
       )}
     </>
+  );
+}
+
+/** Le tue serie, quelle della Biblioteca o tutte (le tue sempre per prime). */
+export function OriginTabs({ value, onChange }: { value: '' | 'mine' | 'library'; onChange: (v: '' | 'mine' | 'library') => void }) {
+  const tabs = [['mine', 'Le mie'], ['library', 'Biblioteca'], ['', 'Tutte']] as const;
+  return (
+    <div className="flex gap-1" role="tablist" aria-label="Origine delle serie">
+      {tabs.map(([k, l]) => (
+        <button key={k || 'all'} type="button" role="tab" aria-selected={value === k} onClick={() => onChange(k)}
+          className={`rounded-md px-3 py-1.5 text-sm ${value === k ? 'bg-ink-800 text-paper' : 'text-steel-400 hover:text-paper'}`}>{l}</button>
+      ))}
+    </div>
   );
 }
 
@@ -362,8 +377,13 @@ function AlertsCard({ seriesId, unit }: { seriesId: number; unit: string }) {
 }
 
 export function ComparePage() {
-  const list = useAsync(() => api.seriesList(), []);
+  const [origin, setOrigin] = useStickyState<'' | 'mine' | 'library'>('compare.origin', '');
+  const [cq, setCq] = useState('');
+  const [cquery, setCquery] = useState('');
+  useEffect(() => { const t = setTimeout(() => setCquery(cq.trim()), 300); return () => clearTimeout(t); }, [cq]);
+  const list = useAsync(() => api.seriesList(undefined, cquery.length >= 2 ? cquery : undefined, origin || undefined), [cquery, origin]);
   const [selected, setSelected] = useState<number[]>([]);
+  const [names, setNames] = useState<Record<number, string>>({});
   const [freq, setFreq] = useState('');
   const [method, setMethod] = useState('last');
   const [mode, setMode] = useState('returns');
@@ -392,11 +412,21 @@ export function ComparePage() {
       <Card className="mb-4">
         <fieldset className="mb-3">
           <legend className="mb-1 text-xs text-steel-400">Serie (da 2 a 8)</legend>
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+          <div className="mb-2 flex flex-wrap gap-2">
+            <Input aria-label="Cerca serie da confrontare" placeholder="Cerca per nome o paese…" className="max-w-72" value={cq} onChange={(e) => setCq(e.target.value)} />
+            <OriginTabs value={origin} onChange={setOrigin} />
+          </div>
+          {selected.length > 0 && (
+            <p className="mb-2 flex flex-wrap gap-1 text-xs text-steel-300">Selezionate:
+              {selected.map((id) => <button key={id} type="button" className="rounded border border-ink-600 px-1.5 hover:border-bad" onClick={() => setSelected(selected.filter((x) => x !== id))}
+                aria-label={`Togli ${names[id] ?? id}`}>{names[id] ?? `#${id}`} ×</button>)}
+            </p>
+          )}
+          <div className="grid max-h-80 grid-cols-1 gap-1 overflow-auto sm:grid-cols-2">
             {list.data?.map((s) => (
               <label key={s.id} className="flex items-center gap-2 text-sm text-steel-300">
                 <input type="checkbox" checked={selected.includes(s.id)} disabled={!selected.includes(s.id) && selected.length >= 8}
-                  onChange={() => setSelected(selected.includes(s.id) ? selected.filter((x) => x !== s.id) : [...selected, s.id])} />
+                  onChange={() => { setNames((n) => ({ ...n, [s.id]: s.name })); setSelected(selected.includes(s.id) ? selected.filter((x) => x !== s.id) : [...selected, s.id]); }} />
                 <span className="min-w-0 truncate">{s.name}</span><Badge>{s.frequency}</Badge>
               </label>
             ))}

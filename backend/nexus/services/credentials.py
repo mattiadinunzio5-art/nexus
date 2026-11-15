@@ -59,3 +59,22 @@ def get_secret(db: Session, user: User, settings: Settings, provider: str) -> tu
     if c is None:
         return None, {}
     return secrets.decrypt(settings, c.secret_encrypted), dict(c.config)
+
+
+def fred_key(db: Session, user: User, settings: Settings) -> str | None:
+    """Chiave FRED: quella dell'utente; altrimenti quella della piattaforma (variabile d'ambiente o amministratore).
+
+    La chiave resta sul server: agli utenti non viene mai mostrata.
+    """
+    key, _ = get_secret(db, user, settings, "fred")
+    if key:
+        return key
+    if settings.fred_api_key:
+        return settings.fred_api_key
+    from ..models import User as U
+
+    admin = db.scalar(select(U).join(Credential, Credential.owner_id == U.id)
+                      .where(U.role == "admin", U.is_active.is_(True), Credential.provider == "fred").order_by(U.id))
+    if admin is not None:
+        key, _ = get_secret(db, admin, settings, "fred")
+    return key or None

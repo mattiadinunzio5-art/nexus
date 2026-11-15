@@ -24,7 +24,7 @@ from . import history
 
 def timeline(
     db: Session, user: User, *, as_of_year: int | None, hindsight: bool, country: str | None, category: str | None,
-    from_year: int | None, to_year: int | None, event_id: int | None = None,
+    from_year: int | None, to_year: int | None, event_id: int | None = None, origin: str | None = None,
 ) -> TimelineOut:
     from ..core import library
 
@@ -32,12 +32,12 @@ def timeline(
     if as_of_year is not None and not hindsight:
         upper = min(as_of_year, to_year) if to_year is not None else as_of_year
     windowed = False
-    if as_of_year is not None and from_year is None and library.library_user_id(db) is not None:
+    if as_of_year is not None and from_year is None and origin != "mine" and library.library_user_id(db) is not None:
         # Con la Biblioteca l'archivio è molto grande: senza «dall'anno» si mostra una finestra
         # di WINDOW_YEARS anni prima della data scelta (modificabile con i filtri).
         from_year, windowed = as_of_year - WINDOW_YEARS, True
     all_events = history.list_events(db, user, category=category, country=country, from_year=from_year, to_year=to_year,
-                                     limit=MAX_EVENTS)
+                                     limit=MAX_EVENTS, origin=origin)
     events = [e for e in all_events if upper is None or e.start_year <= upper]
     if event_id is not None:
         events = [e for e in events if e.id == event_id]
@@ -76,11 +76,20 @@ def timeline(
         notes.append("Senno di poi attivo: sono incluse informazioni non disponibili all'epoca, evidenziate come tali.")
     if indicators:
         notes.append("Gli indicatori mostrano i valori attuali delle serie fino alla data scelta: possono differire dai dati pubblicati all'epoca (revisioni).")
+        if any(i.retrospective for i in indicators):
+            notes.append("Alcuni indicatori sono ricostruzioni pubblicate dopo la data scelta: segnalati come «ricostruzione a posteriori», non erano noti ai contemporanei.")
     return TimelineOut(
         as_of_year=as_of_year, hindsight=hindsight,
         filters={"country": country, "category": category, "from_year": from_year, "to_year": to_year},
         events=out, indicators=indicators, hidden_future_events=hidden_future if not hindsight else 0, notes=notes,
     )
+
+
+def _year(text: str | None) -> int | None:
+    import re
+
+    m = re.search(r"(1[89]\d\d|20\d\d)", text or "")
+    return int(m.group(1)) if m else None
 
 
 WINDOW_YEARS = 25
@@ -110,10 +119,16 @@ def _indicators_as_of(db: Session, user: User, year: int, country: str | None = 
             .limit(1)
         )
         if obs is not None:
+            # Data in cui la fonte ha pubblicato questa versione: se è successiva all'anno scelto, il valore è una
+            # ricostruzione a posteriori e all'epoca non era noto in questa forma.
+            published = _year(s.source_last_updated) or (s.retrieved_at.year if s.retrieved_at else None)
+            retro = published is not None and published > year
+            caveat = (f"Ricostruzione a posteriori: la fonte ha pubblicato questa serie nel {published}. All'epoca il dato non era disponibile in questa forma."
+                      if retro else "Valore della versione attuale della serie (possibili revisioni successive).")
             result.append(
                 TimelineIndicator(
                     series_id=s.id, name=s.name, unit=s.unit, source=s.source_label, last_date=obs.date, last_value=obs.value,
-                    caveat="Valore della versione attuale della serie (possibili revisioni successive).",
+                    caveat=caveat, retrospective=retro,
                 )
             )
     return result

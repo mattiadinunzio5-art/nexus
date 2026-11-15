@@ -124,3 +124,18 @@ describe('routes', () => {
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/it/privacy');
   });
 });
+
+describe('lingua preferita', () => {
+  it('sceglie l’italiano solo se viene prima dell’inglese, e la scelta salvata vince', async () => {
+    const { preferredLang, rememberLang } = await import('../lib/i18n');
+    const set = (langs: string[]) => Object.defineProperty(window.navigator, 'languages', { value: langs, configurable: true });
+    localStorage.clear();
+    set(['it-IT', 'it', 'en']);
+    expect(preferredLang()).toBe('it');
+    set(['en-US', 'it']);
+    expect(preferredLang()).toBe(null);
+    rememberLang('it');
+    expect(preferredLang()).toBe('it');
+    localStorage.clear();
+  });
+});

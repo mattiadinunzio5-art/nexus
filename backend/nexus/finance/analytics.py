@@ -82,7 +82,11 @@ def anomalies(s: pd.Series, z: float = 4.0) -> list[dict]:
     Si usa uno z-score robusto (mediana e MAD) perché con la deviazione standard
     un singolo valore estremo gonfia la dispersione e nasconde sé stesso.
     """
-    diffs = s.dropna().diff().dropna()
+    base = s.dropna()
+    raw = base.diff().dropna()
+    # Serie positive che crescono di ordini di grandezza (prezzi dal 1861, produzione dal 1950): le variazioni
+    # assolute recenti sembrerebbero tutte anomale. Si confrontano allora le variazioni percentuali (log).
+    diffs = np.log(base).diff().dropna() if scale_free(base) else raw
     if len(diffs) < 10:
         return []
     med = diffs.median()
@@ -90,10 +94,17 @@ def anomalies(s: pd.Series, z: float = 4.0) -> list[dict]:
     scale = 1.4826 * dev.median()
     if scale == 0:
         scale = dev.mean()
-    if scale == 0:
+    # Errori di arrotondamento su una crescita costante non sono variazioni: dispersione trascurabile = nessuna anomalia.
+    if scale <= 1e-9 * max(1.0, abs(float(med)), float(diffs.abs().max())):
         return []
     zs = (diffs - med) / scale
-    return [{"date": d.strftime("%Y-%m-%d"), "change": _f(diffs[d]), "z": _f(zs[d])} for d in zs[zs.abs() > z].index]
+    return [{"date": d.strftime("%Y-%m-%d"), "change": _f(raw[d]), "z": _f(zs[d])} for d in zs[zs.abs() > z].index]
+
+
+def scale_free(s: pd.Series) -> bool:
+    """Vero se la serie è positiva e spazia su più di un ordine di grandezza (×20): si ragiona in percentuale."""
+    v = s.dropna()
+    return len(v) > 2 and bool((v > 0).all()) and float(v.max()) / float(v.min()) > 20
 
 
 @dataclass

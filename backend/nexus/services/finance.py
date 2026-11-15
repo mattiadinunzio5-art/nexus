@@ -53,7 +53,7 @@ def _fetch(db: Session, user: User, settings: Settings, data: SeriesImportIn, fo
         if data.connector == "world-bank":
             return connectors.fetch_world_bank(f, data.indicator.strip(), data.country.strip(), force)
         if data.connector == "fred":
-            key, _ = credentials.get_secret(db, user, settings, "fred")
+            key = credentials.fred_key(db, user, settings)
             return connectors.fetch_fred(f, data.series_id.strip(), key, force)
         if data.connector == "owid":
             return connectors.fetch_owid(f, data.slug.strip(), data.entity.strip(), force)
@@ -184,8 +184,9 @@ def list_series(db: Session, user: User, category: str | None = None, q: str | N
     if category:
         stmt = stmt.where(Series.category == category)
     if q:
-        like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-        stmt = stmt.where(or_(Series.name.ilike(like, escape="\\"), Series.country.ilike(like, escape="\\")))
+        from ..research.crosslang import match_any
+
+        stmt = stmt.where(match_any([Series.name, Series.country], q))  # «produzione di plastica» trova «Plastic production»
     # Prima le serie dell'utente, poi quelle della Biblioteca.
     stmt = stmt.order_by((Series.owner_id != user.id), Series.name, Series.id)
     return list(db.scalars(stmt.offset(offset).limit(limit)))

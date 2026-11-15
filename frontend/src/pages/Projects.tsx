@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input, Select } from '../components/ui/Form';
 import { errorText } from '../lib/forms';
 import { api, ApiError } from '../api/client';
-import type { Project, ProjectStatus } from '../api/types';
+import type { Project, ProjectInput, ProjectStatus } from '../api/types';
 import { DemoBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -29,15 +29,37 @@ export function ProjectForm({
   draftKey = 'project.new',
 }: {
   draftKey?: string;
-  initial?: Pick<Project, 'title' | 'description'>;
+  initial?: Pick<Project, 'title' | 'description'> & ProjectInput;
   submitLabel: string;
-  onSubmit: (data: { title: string; description: string }) => Promise<void>;
+  onSubmit: (data: { title: string; description: string } & ProjectInput) => Promise<void>;
   onCancel?: () => void;
 }) {
   const [title, setTitle, clearTitle] = useDraft(`${draftKey}.title`, initial?.title ?? '');
   const [description, setDescription, clearDescription] = useDraft(`${draftKey}.description`, initial?.description ?? '');
+  const [question, setQuestion, clearQuestion] = useDraft(`${draftKey}.question`, initial?.research_question ?? '');
+  const [objectives, setObjectives, clearObjectives] = useDraft(`${draftKey}.objectives`, initial?.objectives ?? '');
+  const [scope, setScope, clearScope] = useDraft(`${draftKey}.scope`, initial?.scope ?? '');
+  const [from, setFrom, clearFrom] = useDraft(`${draftKey}.from`, initial?.period_start != null ? String(initial.period_start) : '');
+  const [to, setTo, clearTo] = useDraft(`${draftKey}.to`, initial?.period_end != null ? String(initial.period_end) : '');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const clearAll = () => [clearTitle, clearDescription, clearQuestion, clearObjectives, clearScope, clearFrom, clearTo].forEach((f) => f());
+
+  /** Solo i campi del disegno di ricerca cambiati (alla creazione: quelli compilati). */
+  function design(): ProjectInput | string {
+    const out: ProjectInput = {};
+    const year = (v: string) => (v.trim() === '' ? null : Number(v));
+    const ys = year(from), ye = year(to);
+    if ((ys !== null && !Number.isInteger(ys)) || (ye !== null && !Number.isInteger(ye))) return 'Gli anni del periodo devono essere numeri interi.';
+    if (ys !== null && ye !== null && ye < ys) return "L'anno finale del periodo precede quello iniziale.";
+    const text: [keyof ProjectInput, string, string | undefined][] = [
+      ['research_question', question.trim(), initial?.research_question], ['objectives', objectives.trim(), initial?.objectives], ['scope', scope.trim(), initial?.scope],
+    ];
+    for (const [k, v, old] of text) if (v !== (old ?? '')) (out as Record<string, unknown>)[k] = v;
+    if (ys !== (initial?.period_start ?? null)) out.period_start = ys;
+    if (ye !== (initial?.period_end ?? null)) out.period_end = ye;
+    return out;
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -45,12 +67,13 @@ export function ProjectForm({
     if (!t) return setError('Il titolo è obbligatorio.');
     if (t.length > 200) return setError('Il titolo non può superare 200 caratteri.');
     if (description.length > 5000) return setError('La descrizione non può superare 5000 caratteri.');
+    const extra = design();
+    if (typeof extra === 'string') return setError(extra);
     setBusy(true);
     setError(undefined);
     try {
-      await onSubmit({ title: t, description: description.trim() });
-      clearTitle();
-      clearDescription();
+      await onSubmit({ title: t, description: description.trim(), ...extra });
+      clearAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : String(err));
     } finally {
@@ -68,12 +91,54 @@ export function ProjectForm({
         <span className="mb-1 block text-xs text-steel-400">Descrizione (facoltativa)</span>
         <textarea className={`${inputCls} min-h-20`} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} />
       </label>
+      <fieldset className="space-y-3 rounded-md border border-ink-700 p-3">
+        <legend className="px-1 text-xs text-steel-400">Disegno della ricerca (facoltativo, consigliato per una tesi)</legend>
+        <label className="block">
+          <span className="mb-1 block text-xs text-steel-400">Domanda di ricerca</span>
+          <textarea className={`${inputCls} min-h-16`} value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={2000}
+            placeholder="Es. Come è cambiata la produzione di plastica tra il 1950 e il 2025, e con quali effetti?" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-steel-400">Obiettivi (uno per riga)</span>
+          <textarea className={`${inputCls} min-h-16`} value={objectives} onChange={(e) => setObjectives(e.target.value)} maxLength={5000} />
+        </label>
+        <div className="grid gap-3 sm:grid-cols-[8rem_8rem_1fr]">
+          <label className="block">
+            <span className="mb-1 block text-xs text-steel-400">Periodo: dal</span>
+            <input className={inputCls} inputMode="numeric" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="1950" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-steel-400">Periodo: al</span>
+            <input className={inputCls} inputMode="numeric" value={to} onChange={(e) => setTo(e.target.value)} placeholder="2025" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-steel-400">Perimetro (paesi, settori, fonti)</span>
+            <input className={inputCls} value={scope} onChange={(e) => setScope(e.target.value)} maxLength={2000} placeholder="Es. mondo, UE; produzione e rifiuti" />
+          </label>
+        </div>
+      </fieldset>
       {error && <p role="alert" className="text-sm text-bad">{error}</p>}
       <div className="flex justify-end gap-2">
-        {onCancel && <Button onClick={() => { clearTitle(); clearDescription(); onCancel(); }} disabled={busy}>Annulla</Button>}
+        {onCancel && <Button onClick={() => { clearAll(); onCancel(); }} disabled={busy}>Annulla</Button>}
         <Button type="submit" variant="primary" disabled={busy}>{submitLabel}</Button>
       </div>
     </form>
+  );
+}
+
+function ProjectDesign({ p }: { p: Project }) {
+  const period = p.period_start != null || p.period_end != null ? `${p.period_start ?? '…'}–${p.period_end ?? '…'}` : '';
+  if (!p.research_question && !p.objectives && !p.scope && !period) return null;
+  return (
+    <dl className="mt-2 grid gap-x-3 gap-y-1 rounded-md border border-ink-800 bg-ink-950/60 p-3 text-sm sm:grid-cols-[9rem_1fr]">
+      {p.research_question && <><dt className="text-xs text-steel-500">Domanda di ricerca</dt><dd className="text-paper">{p.research_question}</dd></>}
+      {p.objectives && (
+        <><dt className="text-xs text-steel-500">Obiettivi</dt>
+          <dd><ul className="list-disc pl-4 text-steel-300">{p.objectives.split('\n').filter((x) => x.trim()).map((o, i) => <li key={i}>{o.replace(/^[-•*]\s*/, '')}</li>)}</ul></dd></>
+      )}
+      {period && <><dt className="text-xs text-steel-500">Periodo</dt><dd className="text-steel-300">{period}</dd></>}
+      {p.scope && <><dt className="text-xs text-steel-500">Perimetro</dt><dd className="text-steel-300">{p.scope}</dd></>}
+    </dl>
   );
 }
 
@@ -289,6 +354,7 @@ export function ProjectsPage() {
                       {p.my_role && p.my_role !== 'owner' && <Badge tone="gold">Condiviso con te · {p.my_role === 'editor' ? 'modifica' : 'lettura'}</Badge>}
                     </div>
                     {p.description && <p className="mt-1 whitespace-pre-line text-sm text-steel-400">{p.description}</p>}
+                    <ProjectDesign p={p} />
                     <p className="mt-2 text-[11px] text-steel-500">
                       Creato {formatDateTime(p.created_at)} · Aggiornato {formatDateTime(p.updated_at)}
                     </p>

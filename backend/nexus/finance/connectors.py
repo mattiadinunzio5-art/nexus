@@ -152,9 +152,22 @@ class HttpFetcher:
             stale = self.cache.get(key, allow_stale=True)
             if stale and r.status_code >= 500:
                 return stale[0], True, datetime.fromtimestamp(stale[1], UTC)
-            raise ConnectorError(f"La fonte ha risposto HTTP {r.status_code}: {r.text[:200]}")
+            raise ConnectorError(_http_error(r))
         self.cache.put(key, r.text)
         return r.text, False, datetime.now(UTC)
+
+
+def _http_error(r) -> str:
+    """Messaggio leggibile per un errore della fonte: niente pagine HTML grezze."""
+    import re as _re
+
+    hint = {400: "richiesta non valida (controlla codice o paese)", 401: "accesso negato", 403: "accesso negato", 404: "serie o indicatore non trovato",
+            429: "troppe richieste, riprova tra qualche minuto"}.get(r.status_code, "la fonte è temporaneamente non disponibile, riprova più tardi" if r.status_code >= 500 else "")
+    body = r.text or ""
+    detail = ""
+    if "<html" not in body[:500].lower() and "<!doctype" not in body[:500].lower():
+        detail = _re.sub(r"\s+", " ", body).strip()[:160]
+    return f"La fonte ha risposto con un errore (HTTP {r.status_code}){': ' + hint if hint else ''}." + (f" Dettaglio: {detail}" if detail else "")
 
 
 # --- World Bank ----------------------------------------------------------------

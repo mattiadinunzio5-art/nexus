@@ -66,7 +66,8 @@ def series_anomalies(series: list[Series], events: list[HistoricalEvent], skippe
         if len(v) < MIN_CHANGES + 1:
             skipped["series_too_short"] = skipped.get("series_too_short", 0) + 1
             continue
-        d = v.diff().dropna()
+        pct = analytics.scale_free(v)
+        d = (np.log(v).diff() if pct else v.diff()).dropna()
         med = float(d.median())
         mad = float((d - med).abs().median() * 1.4826)
         official = s.connector != "upload"
@@ -82,7 +83,8 @@ def series_anomalies(series: list[Series], events: list[HistoricalEvent], skippe
             out.append(AnomalyCandidate(
                 kind="series_change", title=f"Variazione anomala in «{s.name}» ({a['date'][:7]})",
                 what_changed=f"Variazione di {a['change']:+.4g} {s.unit} rispetto al periodo precedente",
-                reference=f"Variazione tipica della serie: mediana {med:+.4g}, dispersione robusta (MAD) {mad:.4g}; z robusto {a['z']:+.1f}",
+                reference=(f"Variazione percentuale tipica della serie: mediana {med * 100:+.3g}%, dispersione robusta (MAD) {mad * 100:.3g} punti; z robusto {a['z']:+.1f}"
+                           if pct else f"Variazione tipica della serie: mediana {med:+.4g}, dispersione robusta (MAD) {mad:.4g}; z robusto {a['z']:+.1f}"),
                 period=a["date"], data={"date": a["date"], "change": a["change"], "z": a["z"], "unit": s.unit, "source": s.source_label},
                 alternatives=alts, refs={"series_id": s.id}, relevance=min(abs(a["z"]), 20.0),
                 verifiability="high" if official else "medium", keys=[f"series:{s.id}", a["date"]],

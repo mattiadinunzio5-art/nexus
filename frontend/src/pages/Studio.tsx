@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { SearchPicker } from '../components/ui/SearchPicker';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
@@ -189,15 +190,11 @@ function EmbedEditor({ embeds, onChange, projectId, draftKey }: { embeds: Embed[
 }
 
 function CiteInserter({ onInsert }: { onInsert: (code: string) => void }) {
-  const sources = useAsync(() => api.sources(), []);
   const [src, setSrc] = useStickyState('cite.source', '');
   const [loc, setLoc] = useState('');
   return (
     <div className="flex flex-wrap items-center gap-1.5" data-testid="cite-inserter">
-      <Select aria-label="Fonte da citare" className="!w-auto max-w-72 py-1 text-xs" value={src} onChange={(e) => setSrc(e.target.value)}>
-        <option value="">Cita una fonte…</option>
-        {sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 90)}</option>)}
-      </Select>
+      <SearchPicker kind="source" ariaLabel="Fonte da citare" className="min-w-64 flex-1 text-xs" value={src} onChange={setSrc} placeholder="Cita una fonte: cerca per titolo o autore…" />
       <Input aria-label="Pagina" className="!w-24 py-1 text-xs" placeholder="p. 12" value={loc} onChange={(e) => setLoc(e.target.value)} />
       <Button className="py-1 text-xs" disabled={!src} onClick={() => { onInsert(`[@${src}${loc.trim() ? `, ${loc.trim()}` : ''}]`); setLoc(''); }}><Quote className="size-3" aria-hidden /> Inserisci</Button>
     </div>
@@ -331,9 +328,11 @@ export function ReportEditorPage() {
 function ReportEditor({ id }: { id: number }) {
   const rep = useAsync(() => api.report(id), [id]);
   const check = useAsync(() => api.checkReport(id), [id, rep.data?.updated_at]);
-  const sources = useAsync(() => api.sources(), []);
+  const sources = useAsync(() => api.findSources({ origin: 'mine', limit: 300 }), []);
+  const [found, setFound] = useState<{ id: string; label: string }>();
   const [err, setErr] = useState<string>();
   const [chapter, setChapter, clearChapter] = useDraft(`report.${id}.newChapter`, '');
+  const [after, setAfter] = useStickyState(`report.${id}.newChapterAfter`, '');
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   useContextPanel(
@@ -346,14 +345,23 @@ function ReportEditor({ id }: { id: number }) {
           {sources.data?.map((s) => (
             <li key={s.id} className="flex items-start gap-2">
               <button className="shrink-0 font-mono text-gold-300 hover:underline" onClick={() => navigator.clipboard?.writeText(`[@${s.id}]`)} title="Copia codice"><Quote className="inline size-3" /> @{s.id}</button>
-              <span className="text-steel-300">{s.citation.slice(0, 120)} <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge></span>
+              <span className="text-steel-300">{s.citation} <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge></span>
             </li>
           ))}
-          {sources.data?.length === 0 && <li className="text-steel-500">Nessuna fonte: aggiungile in <Link to="/bibliography" className="text-gold-300">Bibliography</Link>.</li>}
+          {sources.data?.length === 0 && <li className="text-steel-500">Nessuna fonte tua: aggiungile in <Link to="/bibliography" className="text-gold-300">Bibliography</Link> o cercale qui sotto nella Biblioteca.</li>}
         </ul>
+        <div className="mt-3 space-y-1.5">
+          <SearchPicker kind="source" ariaLabel="Cerca una fonte da citare" value={found?.id ?? ''} onChange={(v, label) => setFound(v ? { id: v, label: label ?? '' } : undefined)} />
+          {found && (
+            <p className="flex items-start gap-2 text-xs">
+              <button className="shrink-0 font-mono text-gold-300 hover:underline" onClick={() => navigator.clipboard?.writeText(`[@${found.id}]`)} title="Copia codice"><Quote className="inline size-3" /> @{found.id}</button>
+              <span className="text-steel-300">{found.label}</span>
+            </p>
+          )}
+        </div>
       </div>
     </div>,
-    [check.data, sources.data],
+    [check.data, sources.data, found],
   );
   if (rep.loading && !rep.data) return <Loading />;
   if (rep.error) return <ErrorBox error={rep.error} onRetry={rep.reload} />;
@@ -381,8 +389,25 @@ function ReportEditor({ id }: { id: number }) {
       </div>
       <Card className="mt-4">
         <div className="flex flex-wrap items-end gap-2">
-          <Field label="Nuovo capitolo (inserito dopo «Analisi»)" className="min-w-64 flex-1"><Input value={chapter} onChange={(e) => setChapter(e.target.value)} /></Field>
-          <Button disabled={!chapter.trim()} onClick={async () => { saved(await api.addChapter(r.id, chapter.trim(), 'analysis')); clearChapter(); }}><Plus className="size-4" aria-hidden /> Aggiungi capitolo</Button>
+          <Field label="Nuovo capitolo" className="min-w-64 flex-1"><Input value={chapter} onChange={(e) => setChapter(e.target.value)} /></Field>
+          {(() => {
+            const ordered = [...r.sections].sort((a, b) => a.ordinal - b.ordinal);
+            const lastChapter = [...ordered].reverse().find((x) => x.key === 'chapter');
+            const fallback = lastChapter ? String(lastChapter.id) : 'analysis';
+            const pos = ordered.some((x) => String(x.id) === after || x.key === after) ? after : fallback;
+            return (
+              <>
+                <Field label="Posizione: dopo" className="min-w-56">
+                  <Select value={pos} onChange={(e) => setAfter(e.target.value)}>
+                    {ordered.filter((x) => x.key !== 'bibliography').map((x) => <option key={x.id} value={x.key === 'chapter' ? String(x.id) : x.key}>{x.title}</option>)}
+                  </Select>
+                </Field>
+                <Button disabled={!chapter.trim()} onClick={async () => {
+                  try { saved(await api.addChapter(r.id, chapter.trim(), pos)); clearChapter(); } catch (e) { setErr(errorText(e)); }
+                }}><Plus className="size-4" aria-hidden /> Aggiungi capitolo</Button>
+              </>
+            );
+          })()}
         </div>
         <p className="mt-2 text-xs text-steel-500">La bibliografia è generata automaticamente dalle fonti citate, con lo stato di verifica di ciascuna.</p>
       </Card>

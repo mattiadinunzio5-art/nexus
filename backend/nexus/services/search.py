@@ -7,7 +7,7 @@ ricercabili, invece di restituire risultati fittizi.
 
 from __future__ import annotations
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..api.schemas import SearchHit, SearchResultOut
@@ -34,20 +34,28 @@ def _escape_like(q: str) -> str:
     return q.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
 
 
+def _word_match(query: str):
+    """Corrispondenza a inizio parola, in italiano e in inglese: «oil» trova «oil crisis», «oils» e «petrolio», non «turmoil»."""
+    from ..research.crosslang import text_matcher
+
+    return text_matcher(query)
+
+
 def search(db: Session, user: User, query: str, limit: int = 25) -> SearchResultOut:
-    pattern = f"%{_escape_like(query)}%"
+    from ..research.crosslang import match_any
+
+    ok = _word_match(query)
+    wide = limit * 8  # si leggono più candidati e si tengono quelli che corrispondono a inizio parola
     projects = db.scalars(
         select(Project)
         .where(
             Project.owner_id == user.id,
-            or_(
-                Project.title.ilike(pattern, escape="\\"),
-                Project.description.ilike(pattern, escape="\\"),
-            ),
+            match_any([Project.title, Project.description, Project.research_question], query),
         )
         .order_by(Project.updated_at.desc())
-        .limit(limit)
+        .limit(wide)
     )
+    projects = [p for p in projects if ok(p.title, p.description, p.research_question)][:limit]
     hits = [
         SearchHit(
             type="project",
@@ -60,8 +68,10 @@ def search(db: Session, user: User, query: str, limit: int = 25) -> SearchResult
     ]
     doc_ids_seen: set[int] = set()
     for d in db.scalars(
-        select(Document).where(Document.owner_id == user.id, Document.title.ilike(pattern, escape="\\")).limit(limit)
+        select(Document).where(Document.owner_id == user.id, match_any([Document.title, Document.author], query)).limit(wide)
     ):
+        if not ok(d.title, d.author):
+            continue
         doc_ids_seen.add(d.id)
         hits.append(SearchHit(type="document", id=str(d.id), title=d.title, snippet=f"{d.kind.upper()} · {d.chunk_count} segmenti", url=f"/documents/{d.id}"))
     for cid, _ in index.text_search(db, user.id, query, 10):
@@ -81,18 +91,28 @@ def search(db: Session, user: User, query: str, limit: int = 25) -> SearchResult
     for e in db.scalars(
         select(HistoricalEvent).where(
             HistoricalEvent.owner_id.in_(owners),
-            or_(HistoricalEvent.title.ilike(pattern, escape="\\"), HistoricalEvent.description.ilike(pattern, escape="\\")),
-        ).limit(limit)
+            match_any([HistoricalEvent.title, HistoricalEvent.description], query),
+        ).order_by(HistoricalEvent.owner_id != user.id).limit(wide)
     ):
+        if not ok(e.title, e.description) or sum(1 for h in hits if h.type == "event") >= limit:
+            continue
         hits.append(SearchHit(type="event", id=str(e.id), title=e.title + (" [DEMO]" if e.is_demo else ""),
                               snippet=_snippet(e.description, query), url=f"/history/events/{e.id}"))
     for ent in db.scalars(
-        select(Entity).where(Entity.owner_id.in_(owners), Entity.event_id.is_(None), Entity.name.ilike(pattern, escape="\\")).limit(limit)
+        select(Entity).where(Entity.owner_id.in_(owners), Entity.event_id.is_(None), match_any([Entity.name], query))
+        .order_by(Entity.owner_id != user.id).limit(wide)
     ):
+        if not ok(ent.name) or sum(1 for h in hits if h.type == "entity") >= limit:
+            continue
         hits.append(SearchHit(type="entity", id=str(ent.id), title=ent.name, snippet=ent.entity_type, url=f"/graph?focus={ent.id}"))
-    for se in db.scalars(select(Series).where(Series.owner_id.in_(owners), Series.name.ilike(pattern, escape="\\")).limit(limit)):
+    for se in db.scalars(select(Series).where(Series.owner_id.in_(owners), match_any([Series.name], query))
+                         .order_by(Series.owner_id != user.id).limit(wide)):
+        if not ok(se.name) or sum(1 for h in hits if h.type == "series") >= limit:
+            continue
         hits.append(SearchHit(type="series", id=str(se.id), title=se.name, snippet=se.source_label, url=f"/financial/series/{se.id}"))
-    for rp in db.scalars(select(Report).where(Report.owner_id == user.id, Report.title.ilike(pattern, escape="\\")).limit(limit)):
+    for rp in db.scalars(select(Report).where(Report.owner_id == user.id, match_any([Report.title], query)).limit(wide)):
+        if not ok(rp.title):
+            continue
         hits.append(SearchHit(type="report", id=str(rp.id), title=rp.title, snippet="approvato" if rp.status == "approved" else "bozza", url=f"/studio/reports/{rp.id}"))
     q = query.lower()
     for m in MODULES:

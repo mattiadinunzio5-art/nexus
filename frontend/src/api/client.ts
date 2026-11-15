@@ -59,6 +59,7 @@ import type {
   Module,
   Notification,
   Project,
+  ProjectInput,
   ProjectStatus,
   SearchResult,
   SystemStatus,
@@ -184,8 +185,8 @@ export const api = {
   saveLayout: (layout: DashboardLayout) => request<DashboardLayout>('/dashboard/layout', json('PUT', layout)),
 
   projects: (status?: ProjectStatus) => request<Project[]>(`/projects${status ? `?status=${status}` : ''}`),
-  createProject: (data: { title: string; description: string }) => request<Project>('/projects', json('POST', data)),
-  updateProject: (id: number, data: Partial<Pick<Project, 'title' | 'description' | 'status'>>) =>
+  createProject: (data: { title: string; description: string } & ProjectInput) => request<Project>('/projects', json('POST', data)),
+  updateProject: (id: number, data: ProjectInput) =>
     request<Project>(`/projects/${id}`, json('PATCH', data)),
   deleteProject: (id: number) => request<void>(`/projects/${id}?confirm=true`, { method: 'DELETE' }),
 
@@ -212,6 +213,8 @@ export const api = {
   documentFilePath: (id: number) => `/documents/${id}/file`,
 
   sources: (q?: string) => request<Source[]>(`/sources${qs({ q })}`),
+  findSources: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number }) => request<Source[]>(`/sources${qs(params)}`),
+  source: (id: number) => request<Source>(`/sources/${id}`),
   createSource: (data: Partial<SourceInput>) => request<Source>('/sources', json('POST', data)),
   updateSource: (id: number, data: Partial<SourceInput>) => request<Source>(`/sources/${id}`, json('PUT', data)),
   verifySource: (id: number, method: 'user' | 'registry', note = '') =>
@@ -245,6 +248,7 @@ export const api = {
   },
   graphPath: (source: number, target: number) => request<{ found: boolean; entity_ids: number[]; relations: Relation[] }>(`/graph/path?source=${source}&target=${target}`),
   entities: (q?: string, entity_type?: EntityType) => request<Entity[]>(`/graph/entities${qs({ q, entity_type })}`),
+  findEntities: (params: { q?: string; origin?: 'mine' | 'library'; limit?: number }) => request<Entity[]>(`/graph/entities${qs(params)}`),
   entity: (id: number) => request<Entity>(`/graph/entities/${id}`),
   createEntity: (data: Partial<Entity>) => request<Entity>('/graph/entities', json('POST', data)),
   deleteEntity: (id: number) => request<void>(`/graph/entities/${id}?confirm=true`, { method: 'DELETE' }),
@@ -254,7 +258,7 @@ export const api = {
 
   // Fase 4
   presets: () => request<Preset[]>('/finance/presets'),
-  seriesList: (category?: string, q?: string) => request<SeriesInfo[]>(`/finance/series${qs({ category, q })}`),
+  seriesList: (category?: string, q?: string, origin?: 'mine' | 'library') => request<SeriesInfo[]>(`/finance/series${qs({ category, q, origin })}`),
   series: (id: number) => request<SeriesDetail>(`/finance/series/${id}`),
   importSeries: (data: Record<string, unknown>) => request<SeriesDetail>('/finance/series/import', json('POST', data)),
   uploadSeries: (form: FormData) => request<SeriesDetail>('/finance/series/upload', { method: 'POST', body: form }),
@@ -285,6 +289,7 @@ export const api = {
   runSimulation: (kind: string, data: Record<string, unknown>) => request<SimulationRun>(`/lab/simulations/${kind}`, json('POST', data)),
   simulations: () => request<SimulationSummary[]>('/lab/simulations'),
   simulation: (id: number) => request<SimulationRun>(`/lab/simulations/${id}`),
+  renameSimulation: (id: number, title: string) => request<SimulationRun>(`/lab/simulations/${id}`, json('PATCH', { title })),
   deleteSimulation: (id: number) => request<void>(`/lab/simulations/${id}?confirm=true`, { method: 'DELETE' }),
 
   // Fase 8

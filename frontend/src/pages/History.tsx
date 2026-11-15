@@ -14,6 +14,7 @@ import { Badge, DemoBadge, LibraryBadge, type BadgeTone } from '../components/ui
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { SearchPicker } from '../components/ui/SearchPicker';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyState, ErrorBox, Loading } from '../components/ui/States';
@@ -182,9 +183,13 @@ export function EventDetailPage() {
 
 function EventDetail({ id }: { id: number }) {
   const ev = useAsync(() => api.event(id), [id]);
-  const sources = useAsync(() => api.sources(), []);
-  const others = useAsync(() => api.events(), []);
   const rels = useAsync(async () => (ev.data?.entity_id ? api.entityRelations(ev.data.entity_id) : []), [ev.data?.entity_id]);
+  // Nomi delle entità collegate, letti una per una (possono stare anche nella Biblioteca, fuori da qualsiasi elenco).
+  const relNames = useAsync(async () => {
+    const ids = [...new Set((rels.data ?? []).flatMap((r) => [r.source_entity_id, r.target_entity_id]))];
+    const pairs = await Promise.all(ids.map(async (i) => [i, await api.entity(i).then((x) => x.name).catch(() => '')] as const));
+    return new Map(pairs);
+  }, [rels.data]);
   const [editing, setEditing] = useStickyState(`event.${id}.editing`, false);
   const [deleting, setDeleting] = useState(false);
   const [err, setErr] = useState<string>();
@@ -217,7 +222,7 @@ function EventDetail({ id }: { id: number }) {
   if (ev.loading && !ev.data) return <Loading />;
   if (ev.error) return <ErrorBox error={ev.error} onRetry={ev.reload} />;
   const e = ev.data!;
-  const titleOf = new Map((others.data ?? []).map((o) => [o.entity_id, o.title]));
+  const titleOf = relNames.data ?? new Map<number, string>();
 
   return (
     <>
@@ -268,10 +273,8 @@ function EventDetail({ id }: { id: number }) {
               </ul>
               <LicenseBox ids={[...new Set(e.sources.flatMap((s) => s.license_ids ?? []))]} />
               <div className="mt-3 space-y-2">
-                <Select aria-label="Fonte da collegare" value={srcSel} onChange={(x) => setSrcSel(x.target.value)}>
-                  <option value="">Seleziona una fonte…</option>
-                  {sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 90)}</option>)}
-                </Select>
+                <SearchPicker kind="source" ariaLabel="Fonte da collegare" value={srcSel} onChange={setSrcSel}
+                  exclude={e.sources.map((s) => s.source_id)} />
                 <div className="flex gap-2">
                   <Input aria-label="Pagine" placeholder="Pagine" value={srcPages} onChange={(x) => setSrcPages(x.target.value)} />
                   <Button disabled={!srcSel} onClick={() => act(() => api.linkEventSource(e.id, Number(srcSel), srcPages))}>Collega</Button>
@@ -314,10 +317,7 @@ function EventDetail({ id }: { id: number }) {
                 ))}
               </ul>
               <div className="mt-3 space-y-2">
-                <Select aria-label="Evento collegato" value={link.target} onChange={(x) => setLink({ ...link, target: x.target.value })}>
-                  <option value="">Collega a evento…</option>
-                  {others.data?.filter((o) => o.id !== e.id).map((o) => <option key={o.id} value={o.id}>{o.date_label} · {o.title}</option>)}
-                </Select>
+                <SearchPicker kind="event" ariaLabel="Evento collegato" value={link.target} onChange={(v) => setLink({ ...link, target: v })} exclude={[e.id]} />
                 <Select aria-label="Tipo di relazione" value={link.relation_type} onChange={(x) => setLink({ ...link, relation_type: x.target.value })}>
                   {Object.entries(RELATION_TYPES).map(([kk, v]) => <option key={kk} value={kk}>{v}</option>)}
                 </Select>
@@ -326,10 +326,7 @@ function EventDetail({ id }: { id: number }) {
                   <option value="sourced">{PROVENANCE.sourced} (richiede fonte)</option>
                 </Select>
                 {link.provenance === 'sourced' && (
-                  <Select aria-label="Fonte della relazione" value={link.source_id} onChange={(x) => setLink({ ...link, source_id: x.target.value })}>
-                    <option value="">Seleziona fonte…</option>
-                    {sources.data?.map((s) => <option key={s.id} value={s.id}>{s.citation.slice(0, 90)}</option>)}
-                  </Select>
+                  <SearchPicker kind="source" ariaLabel="Fonte della relazione" value={link.source_id} onChange={(v) => setLink({ ...link, source_id: v })} />
                 )}
                 <Button disabled={!link.target} onClick={() => act(() => api.linkEvents(e.id, {
                   target_event_id: Number(link.target), relation_type: link.relation_type, provenance: link.provenance,

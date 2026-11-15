@@ -32,7 +32,8 @@ describe('research studio', () => {
     const analysis = screen.getByTestId('section-analysis');
     await userEvent.click(within(analysis).getByText('Inserisci citazione'));
     const ins = within(analysis).getByTestId('cite-inserter');
-    await userEvent.selectOptions(within(ins).getByLabelText('Fonte da citare'), '5');
+    await userEvent.type(within(ins).getByRole('combobox', { name: 'Fonte da citare' }), 'Tarn');
+    await userEvent.click((await within(ins).findAllByRole('option', { name: /The Marshall Plan/ }))[0]);
     await userEvent.type(within(ins).getByLabelText('Pagina'), 'p. 9');
     await userEvent.click(within(ins).getByRole('button', { name: /Inserisci/ }));
     expect(within(analysis).getByLabelText('Testo: analysis')).toHaveValue('Testo [@1] [@5, p. 9]');

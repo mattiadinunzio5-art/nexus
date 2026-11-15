@@ -38,13 +38,23 @@ def get_project(db: Session, user: User, project_id: int, minimum: str = "viewer
     return project
 
 
+def _check_period(p: Project) -> None:
+    from ..core.errors import ValidationFailedError
+
+    if p.period_start is not None and p.period_end is not None and p.period_end < p.period_start:
+        raise ValidationFailedError("Il periodo di ricerca termina prima di iniziare: controlla gli anni.")
+
+
 def create_project(db: Session, user: User, data: ProjectCreate, is_demo: bool = False) -> Project:
     from ..core import plans
 
     plans.enforce(db, user, "projects")
     project = Project(
-        owner_id=user.id, title=data.title, description=data.description, is_demo=is_demo
+        owner_id=user.id, title=data.title, description=data.description, is_demo=is_demo,
+        research_question=data.research_question, objectives=data.objectives, scope=data.scope,
+        period_start=data.period_start, period_end=data.period_end,
     )
+    _check_period(project)
     db.add(project)
     db.flush()
     activity.record(
@@ -64,10 +74,15 @@ def create_project(db: Session, user: User, data: ProjectCreate, is_demo: bool =
 def update_project(db: Session, user: User, project_id: int, data: ProjectUpdate) -> Project:
     project = get_project(db, user, project_id, "editor")
     changes = data.model_dump(exclude_unset=True, exclude_none=True)
+    # Il periodo si può anche svuotare (null esplicito).
+    for k in ("period_start", "period_end"):
+        if k in data.model_fields_set and getattr(data, k) is None:
+            changes[k] = None
     if not changes:
         return project
     for field, value in changes.items():
         setattr(project, field, value)
+    _check_period(project)
     action = "project.update"
     if changes.get("status") == "archived":
         action = "project.archive"

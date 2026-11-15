@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Query, status
 
 from ...services import graph as svc
@@ -23,8 +25,9 @@ def path(db: DB, user: CurrentUser, source: int, target: int):
 
 
 @router.get("/entities", response_model=list[EntityOut])
-def list_entities(db: DB, user: CurrentUser, q: str | None = Query(None, max_length=200), entity_type: EntityType | None = None):
-    return svc.list_entities(db, user, q, entity_type)
+def list_entities(db: DB, user: CurrentUser, q: str | None = Query(None, max_length=200), entity_type: EntityType | None = None,
+                  limit: int = Query(500, ge=1, le=1000), origin: Literal["mine", "library"] | None = None):
+    return svc.list_entities(db, user, q, entity_type, limit=limit, origin=origin)
 
 
 @router.post("/entities", response_model=EntityOut, status_code=status.HTTP_201_CREATED)
