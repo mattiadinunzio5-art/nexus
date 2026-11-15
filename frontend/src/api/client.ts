@@ -60,6 +60,8 @@ import type {
   Notification,
   Project,
   ProjectInput,
+  SectionReview,
+  DocumentProposals,
   ProjectStatus,
   SearchResult,
   SystemStatus,
@@ -223,6 +225,8 @@ export const api = {
 
   researchSearch: (q: string, mode = 'hybrid', limit = 10) =>
     request<RetrievalResult>(`/research/search${qs({ q, mode, limit })}`),
+  reviewSection: (reportId: number, sectionId: number) => request<SectionReview>(`/reports/${reportId}/sections/${sectionId}/review`, { method: 'POST' }),
+  extractFromDocument: (id: number) => request<DocumentProposals>(`/documents/${id}/extract`, { method: 'POST' }),
   ask: (question: string, document_ids?: number[], use_ai = false) => request<AskResult>('/research/ask', json('POST', { question, document_ids, use_ai })),
 
   // Fase 3
@@ -278,6 +282,10 @@ export const api = {
   deleteCredential: (provider: string) => request<void>(`/credentials/${provider}`, { method: 'DELETE' }),
 
   // Fase 5
+  aiStatus: () => request<{ provider: string; shared: boolean; shared_available: boolean; daily_limit: number | null; used_today: number | null }>('/ai/provider'),
+  usePlatformAI: () => request<void>('/ai/provider', { method: 'DELETE' }),
+  aiPlatform: () => request<{ enabled: boolean; provider: string; daily_limit: number }>('/ai/platform'),
+  setAiPlatform: (data: { enabled: boolean; provider: string; daily_limit: number }) => request<{ enabled: boolean; provider: string; daily_limit: number }>('/ai/platform', json('PUT', data)),
   selectProvider: (provider: string, effort = 'medium') => request<{ provider: string }>('/ai/provider', json('PUT', { provider, effort })),
   runs: () => request<RunSummary[]>('/research/runs'),
   run: (id: number) => request<ResearchRun>(`/research/runs/${id}`),

@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Download, FileUp, Library, Trash2 } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api, ApiError } from '../api/client';
-import type { DocumentInfo } from '../api/types';
+import type { DocumentInfo, DocumentProposals } from '../api/types';
 import { InjectionWarning } from '../components/research';
 import { Badge, DemoBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -200,6 +200,90 @@ export function DocumentsPage() {
   );
 }
 
+/** Proposte AI dal documento: nulla si salva finché l'utente non aggiunge la singola voce. */
+function ProposalsCard({ doc }: { doc: DocumentInfo }) {
+  const [res, setRes] = useState<DocumentProposals>();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string>();
+  const [done, setDone] = useState<Record<string, string>>({});
+  const key = (k: string, i: number) => `${k}${i}`;
+  const mark = (k: string, text: string) => setDone((d) => ({ ...d, [k]: text }));
+  async function entityId(name: string): Promise<number | undefined> {
+    const found = await api.findEntities({ q: name, origin: 'mine', limit: 20 });
+    return found.find((e) => e.name.trim().toLowerCase() === name.trim().toLowerCase())?.id;
+  }
+  const where = (p: { locator: string; quote: string }) => <p className="mt-1 text-[11px] italic text-steel-500">«{p.quote}»{p.locator ? ` — ${p.locator}` : ''}</p>;
+  const action = (k: string, fn: () => Promise<string>) => (
+    done[k] ? <span className="text-xs text-ok">{done[k]}</span> : (
+      <Button className="py-1 text-xs" onClick={async () => { setErr(undefined); try { mark(k, await fn()); } catch (e) { setErr(e instanceof ApiError ? e.message : String(e)); } }}>Aggiungi</Button>
+    )
+  );
+  return (
+    <Card title="Proposte dal documento (AI)" className="mb-4">
+      <p className="mb-2 text-sm text-steel-300">L'AI legge il documento e propone eventi, entità e relazioni, ciascuno con la frase che lo sostiene. Aggiungi solo quelli che hai controllato.</p>
+      <Button disabled={busy} onClick={async () => {
+        setBusy(true); setErr(undefined);
+        try { setRes(await api.extractFromDocument(doc.id)); setDone({}); } catch (e) { setErr(e instanceof ApiError ? e.message : String(e)); } finally { setBusy(false); }
+      }}>{busy ? 'Lettura in corso…' : res ? 'Proponi di nuovo' : 'Proponi eventi ed entità'}</Button>
+      {err && <p role="alert" className="mt-2 text-sm text-bad">{err}</p>}
+      {res && (
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div>
+            <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Eventi</h3>
+            {res.events.length === 0 && <p className="text-xs text-steel-500">Nessuno.</p>}
+            <ul className="space-y-2 text-sm">{res.events.map((e, i) => (
+              <li key={i} className="border-l border-ink-600 pl-2">
+                <p className="text-paper">{e.title} <span className="text-steel-500">({e.start_year}{e.end_year && e.end_year !== e.start_year ? `–${e.end_year}` : ''})</span></p>
+                {e.description && <p className="text-xs text-steel-400">{e.description}</p>}
+                {where(e)}
+                <div className="mt-1">{action(key('e', i), async () => {
+                  const ev = await api.createEvent({ title: e.title, start_year: e.start_year, end_year: e.end_year, countries: e.countries, description: e.description,
+                    reliability: 'unverified', reliability_note: `Proposto dall'AI dal documento «${doc.title}»${e.locator ? `, ${e.locator}` : ''}: «${e.quote}»` } as never);
+                  if (doc.source_id) await api.linkEventSource(ev.id, doc.source_id, e.locator);
+                  return 'Aggiunto all\'archivio storico';
+                })}</div>
+              </li>
+            ))}</ul>
+          </div>
+          <div>
+            <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Entità</h3>
+            {res.entities.length === 0 && <p className="text-xs text-steel-500">Nessuna.</p>}
+            <ul className="space-y-2 text-sm">{res.entities.map((x, i) => (
+              <li key={i} className="border-l border-ink-600 pl-2">
+                <p className="text-paper">{x.name} <span className="text-[11px] text-steel-500">{x.entity_type}</span></p>
+                {where(x)}
+                <div className="mt-1">{action(key('n', i), async () => {
+                  await api.createEntity({ name: x.name, entity_type: x.entity_type, description: `Dal documento «${doc.title}»: «${x.quote}»`, document_id: doc.id } as never);
+                  return 'Aggiunta al grafo';
+                })}</div>
+              </li>
+            ))}</ul>
+          </div>
+          <div>
+            <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Relazioni</h3>
+            {res.relations.length === 0 && <p className="text-xs text-steel-500">Nessuna.</p>}
+            <ul className="space-y-2 text-sm">{res.relations.map((r, i) => (
+              <li key={i} className="border-l border-ink-600 pl-2">
+                <p className="text-paper">{r.source} <span className="text-gold-300">→ {r.relation_type} →</span> {r.target}</p>
+                {where(r)}
+                <div className="mt-1">{action(key('r', i), async () => {
+                  const [a, b] = await Promise.all([entityId(r.source), entityId(r.target)]);
+                  if (!a || !b) throw new Error(`Aggiungi prima ${!a ? `«${r.source}»` : `«${r.target}»`} (come entità o evento).`);
+                  await api.createRelation({ source_entity_id: a, target_entity_id: b, relation_type: r.relation_type,
+                    provenance: doc.source_id ? 'sourced' : 'ai_hypothesis', source_id: doc.source_id ?? null,
+                    evidence_note: `«${r.quote}»${r.locator ? ` — ${r.locator}` : ''}` });
+                  return 'Aggiunta al grafo';
+                })}</div>
+              </li>
+            ))}</ul>
+          </div>
+          <p className="text-[11px] text-steel-500 lg:col-span-3">{res.note}{!doc.source_id && ' Il documento non ha una scheda bibliografica: le relazioni saranno ipotesi AI da verificare.'}</p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function DocumentDetailPage() {
   const id = Number(useParams().documentId);
   const doc = useAsync(() => api.document(id), [id]);
@@ -236,6 +320,7 @@ export function DocumentDetailPage() {
         <LicenseBox ids={[d.license_id]} />
         {saveError && <div className="mt-2"><ErrorBox error={saveError} /></div>}
       </Card>
+      {!d.library && <ProposalsCard doc={d} />}
       <Card title="Testo estratto">
         {chunks.loading && <Loading />}
         {chunks.error && <ErrorBox error={chunks.error} />}

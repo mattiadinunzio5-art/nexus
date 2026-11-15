@@ -115,9 +115,20 @@ AI_DISCLAIMER = (
 
 
 def ask(db: Session, user: User, settings: Settings, question: str, document_ids: list[int] | None, limit: int, use_ai: bool = False) -> AskOut:
-    passages, _ = retrieve(db, user, settings, question, "hybrid", limit, document_ids)
     if use_ai:
-        return _ask_ai(db, user, settings, question, passages)
+        from . import ai, assist
+
+        from ..agents import llm
+
+        try:
+            client = ai.client_for(db, user, settings)
+        except llm.ProviderError:
+            client = None
+        # La domanda tradotta dall'AI si aggiunge alla ricerca: trova i passaggi scritti nell'altra lingua.
+        extra = assist.translate_query(client, question)
+        passages, _ = retrieve(db, user, settings, " ".join([question, *extra]), "hybrid", limit, document_ids)
+        return _ask_ai(db, user, settings, question, passages, translations=extra)
+    passages, _ = retrieve(db, user, settings, question, "hybrid", limit, document_ids)
     claims = extract_claims(question, passages)
     return AskOut(
         question=question,
@@ -129,7 +140,7 @@ def ask(db: Session, user: User, settings: Settings, question: str, document_ids
     )
 
 
-def _ask_ai(db: Session, user: User, settings: Settings, question: str, passages) -> AskOut:
+def _ask_ai(db: Session, user: User, settings: Settings, question: str, passages, translations: list[str] | None = None) -> AskOut:
     from ..agents import guard, llm, prompts
     from ..core.errors import ValidationFailedError
     from ..research.safety import wrap_untrusted
@@ -162,4 +173,5 @@ def _ask_ai(db: Session, user: User, settings: Settings, question: str, passages
     activity.record(db, user=user, actor="ai", action="research.ask_ai", summary=f"Domanda all'archivio con {client.provider}: «{question[:80]}»")
     db.commit()
     return AskOut(question=question, mode="ai_grounded", provider=client.provider, model=res.model, claims=[Claim(**c) for c in claims],
-                  passages=hits, disclaimer=AI_DISCLAIMER, issues=issues + res.notes)
+                  passages=hits, disclaimer=AI_DISCLAIMER,
+                  issues=issues + res.notes + ([f"Ricerca estesa con la traduzione: «{'», «'.join(translations)}»."] if translations else []))
