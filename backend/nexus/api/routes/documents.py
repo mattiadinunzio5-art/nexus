@@ -72,3 +72,10 @@ def download(document_id: int, db: DB, user: CurrentUser, settings: AppSettings)
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(document_id: int, db: DB, user: CurrentUser, settings: AppSettings, confirm: bool = False) -> None:
     svc.delete_document(db, user, settings, document_id, confirm)
+
+
+@router.post("/{document_id}/extract", summary="Proposte AI di eventi, entità e relazioni, ciascuna con il passaggio che la sostiene")
+def extract(document_id: int, db: DB, user: CurrentUser, settings: AppSettings) -> dict:
+    from ...services import assist
+
+    return assist.extract_from_document(db, user, settings, document_id)

@@ -89,16 +89,20 @@ class Runner:
 
     def plan(self) -> dict:
         q = self.run.question
+        from ..research.crosslang import expand_terms, variants
+
         local_terms = terms(q)
-        local = {"sub_questions": [], "search_queries": [q, " ".join(local_terms[:4])] if local_terms else [q],
-                 "terms": local_terms[:12], "method": "estrazione dei termini (locale)"}
+        # Anche la domanda nell'altra lingua (glossario italiano ↔ inglese): i documenti possono essere in inglese.
+        queries = [q, " ".join(local_terms[:4])] if local_terms else [q]
+        local = {"sub_questions": [], "search_queries": list(dict.fromkeys(queries + variants(q)[1:])),
+                 "terms": expand_terms(local_terms[:12])[:20], "method": "estrazione dei termini (locale)"}
         if self.client:
             t0 = time.perf_counter()
             try:
                 data, res = self.ai("planner", f"Domanda di ricerca:\n{q}")
                 queries = [str(x)[:200] for x in data.get("search_queries", []) if str(x).strip()][:6]
                 plan = {**local, "sub_questions": [str(x)[:300] for x in data.get("sub_questions", [])][:5],
-                        "search_queries": list(dict.fromkeys([q, *queries])), "method": "pianificazione AI"}
+                        "search_queries": list(dict.fromkeys([q, *queries, *local["search_queries"][1:]]))[:8], "method": "pianificazione AI"}
                 self.step("planner", status="executed", executor="ai", summary=f"{len(plan['sub_questions'])} sotto-domande, {len(plan['search_queries'])} query", output=plan, res=res)
                 return plan
             except (llm.ProviderError, guard.ParseError) as exc:

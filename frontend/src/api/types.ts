@@ -799,3 +799,13 @@ export interface LicenseEntry {
 export interface LicenseRegistry { version: string; updated: string; library_licenses: string[]; licenses: LicenseEntry[] }
 
 export type ProjectInput = Partial<Pick<Project, 'title' | 'description' | 'status' | 'research_question' | 'objectives' | 'scope' | 'period_start' | 'period_end'>>;
+
+export interface ReviewIssue { kind: 'uncited' | 'overclaim' | 'inconsistency' | 'clarity'; quote: string; comment: string }
+export interface SectionReview { mode: 'ai' | 'local'; provider: string; model?: string; issues: ReviewIssue[]; note: string }
+interface Anchored { quote: string; chunk_id: number; locator: string }
+export interface DocumentProposals {
+  provider: string; model: string; document_id: number; note: string;
+  events: (Anchored & { title: string; start_year: number; end_year: number | null; countries: string[]; description: string })[];
+  entities: (Anchored & { name: string; entity_type: EntityType })[];
+  relations: (Anchored & { source: string; target: string; relation_type: string })[];
+}

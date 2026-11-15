@@ -67,6 +67,12 @@ class DecisionIn(BaseModel):
     accepted_relations: list[int] = Field(default_factory=list, description="Indici delle relazioni proposte da salvare come ipotesi AI")
 
 
+class PlatformAIIn(BaseModel):
+    enabled: bool
+    provider: Literal["ollama", "openai-compatible", "anthropic"]
+    daily_limit: int = Field(default=30, ge=1, le=1000)
+
+
 class ProviderSelectIn(BaseModel):
     provider: Literal["none", "ollama", "openai-compatible", "anthropic"]
     effort: Literal["low", "medium", "high", "xhigh", "max"] = "medium"

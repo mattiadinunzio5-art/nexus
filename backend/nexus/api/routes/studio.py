@@ -127,3 +127,11 @@ def list_briefings(db: DB, user: CurrentUser):
 @router.get("/briefings/{briefing_id}", response_model=BriefingOut)
 def get_briefing(briefing_id: int, db: DB, user: CurrentUser):
     return briefing_svc.get_briefing(db, user, briefing_id)
+
+
+@router.post("/reports/{report_id}/sections/{section_id}/review",
+             summary="Revisione del capitolo: frasi senza citazione, affermazioni troppo forti, incoerenze (non riscrive il testo)")
+def review_section(report_id: int, section_id: int, db: DB, user: CurrentUser, settings: AppSettings) -> dict:
+    from ...services import assist
+
+    return assist.review_section(db, user, settings, report_id, section_id)

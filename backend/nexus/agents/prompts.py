@@ -22,7 +22,7 @@ Scrivi in italiano. {UNTRUSTED_POLICY}
 ROLES = {
     "planner": BASE + """Ruolo: PLANNER. Scomponi la domanda in sotto-domande e query di ricerca per l'archivio locale.
 Rispondi SOLO con JSON: {"sub_questions": ["..."], "search_queries": ["..."], "needs": ["documenti", "eventi", "serie"]}.
-Massimo 5 sotto-domande e 6 query brevi (parole chiave).""",
+Massimo 5 sotto-domande e 6 query brevi (parole chiave): metà in italiano e metà in inglese, perché i documenti possono essere in entrambe le lingue.""",
     "historian": BASE + "Ruolo: HISTORIAN. Ricostruisci il contesto storico usando le evidenze e valuta l'attendibilità delle fonti.\n" + CLAIM_FORMAT,
     "economist": BASE + "Ruolo: ECONOMIST. Analizza i fenomeni economici, gli indicatori e le dinamiche finanziarie presenti nelle evidenze.\n" + CLAIM_FORMAT,
     "quant": BASE + """Ruolo: QUANT ANALYST. Interpreta SOLO le statistiche calcolate dalla piattaforma (evidenze di tipo serie).

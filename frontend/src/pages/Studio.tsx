@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, FileDown, Plus, Quote, Trash2 } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
 import { api } from '../api/client';
-import type { CitationStyle, Embed, Report, ReportCheck, ReportSection, ReportTemplate } from '../api/types';
+import type { CitationStyle, Embed, Report, ReportCheck, ReportSection, ReportTemplate, ReviewIssue, SectionReview } from '../api/types';
 import { VERIFICATION } from '../components/research';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -189,6 +189,36 @@ function EmbedEditor({ embeds, onChange, projectId, draftKey }: { embeds: Embed[
   );
 }
 
+const ISSUE_LABEL: Record<ReviewIssue['kind'], string> = {
+  uncited: 'Senza citazione', overclaim: 'Affermazione troppo forte', inconsistency: 'Incoerenza', clarity: 'Poco chiaro',
+};
+
+function ReviewPanel({ review, dirty, onClose }: { review: SectionReview; dirty: boolean; onClose: () => void }) {
+  return (
+    <div className="mt-3 rounded-md border border-ink-700 bg-ink-950/60 p-3" data-testid="review-panel">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Revisione</h3>
+        <Badge tone={review.mode === 'ai' ? 'gold' : 'neutral'}>{review.mode === 'ai' ? `AI · ${review.model ?? review.provider}` : 'Controlli locali'}</Badge>
+        <span className="flex-1" />
+        <button className="text-xs text-steel-400 hover:text-paper" onClick={onClose}>Chiudi</button>
+      </div>
+      {dirty && <p className="mb-2 text-[11px] text-warn">La revisione riguarda la versione salvata: salva la sezione e ripetila per controllare le ultime modifiche.</p>}
+      {review.issues.length === 0 ? <p className="text-sm text-ok">Nessun problema segnalato.</p> : (
+        <ul className="space-y-2 text-sm">
+          {review.issues.map((i, n) => (
+            <li key={n} className="border-l-2 border-warn/60 pl-2">
+              <Badge tone="warn">{ISSUE_LABEL[i.kind]}</Badge>
+              <p className="mt-1 italic text-steel-300">«{i.quote}»</p>
+              <p className="text-steel-400">{i.comment}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-[11px] text-steel-500">{review.note}</p>
+    </div>
+  );
+}
+
 function CiteInserter({ onInsert }: { onInsert: (code: string) => void }) {
   const [src, setSrc] = useStickyState('cite.source', '');
   const [loc, setLoc] = useState('');
@@ -220,6 +250,8 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
   const [cite, setCite] = useStickyState(`${key}.cite`, false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const caret = useRef<number | null>(null);
+  const [review, setReview] = useState<SectionReview>();
+  const [reviewing, setReviewing] = useState(false);
   const dirty = body !== section.body || title !== section.title || JSON.stringify(embeds) !== JSON.stringify(section.embeds);
   const chapter = section.key === 'chapter';
   const words = body.trim() ? body.trim().split(/\s+/).length : 0;
@@ -248,12 +280,19 @@ function SectionEditor({ report, section, onSaved, onError }: { report: Report; 
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <button className="text-xs text-gold-300 hover:underline" onClick={() => setShowEmbeds((v) => !v)}>{showEmbeds ? 'Nascondi grafici e tabelle' : `Grafici e tabelle (${embeds.length})`}</button>
         <button className="text-xs text-gold-300 hover:underline" onClick={() => setCite((v) => !v)}>{cite ? 'Chiudi citazione' : 'Inserisci citazione'}</button>
+        {section.body.trim().length >= 40 && (
+          <button className="text-xs text-gold-300 hover:underline disabled:opacity-50" disabled={reviewing} onClick={async () => {
+            setReviewing(true);
+            try { setReview(await api.reviewSection(report.id, section.id)); } catch (e) { onError(errorText(e)); } finally { setReviewing(false); }
+          }}>{reviewing ? 'Revisione in corso…' : 'Revisione'}</button>
+        )}
         <span className="flex-1" />
         {dirty && <Button variant="primary" className="text-xs" onClick={async () => {
           try { const r = await api.updateSection(report.id, section.id, { body, embeds, ...(chapter ? { title } : {}) }); clearDraft(); onSaved(r); } catch (e) { onError(errorText(e)); }
         }}>Salva sezione</Button>}
       </div>
       {cite && <div className="mt-2"><CiteInserter onInsert={insert} /></div>}
+      {review && <ReviewPanel review={review} dirty={dirty} onClose={() => setReview(undefined)} />}
       {showEmbeds && <EmbedEditor embeds={embeds} onChange={setEmbeds} projectId={report.project_id} draftKey={key} />}
       {dirty && !conflict && <p className="mt-1 text-[11px] text-warn">Modifiche non salvate: restano qui anche se cambi sezione, finché non premi «Salva sezione».</p>}
       {conflict && <p className="mt-1 text-[11px] text-warn">Questa sezione è stata modificata altrove (per esempio con «Cita nel rapporto») mentre avevi modifiche non salvate: qui vedi la tua bozza. Salvandola sostituisci la versione salvata.{' '}

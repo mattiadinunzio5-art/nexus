@@ -17,6 +17,21 @@ const check = { ready: false, checklist: [
 ], empty_sections: ['abstract'], invalid_citations: [7], unverified_sources: [], cited_sources: 1, bibliography_size: 1, embed_problems: [], warnings: [] };
 
 describe('research studio', () => {
+  it('reviews a section and shows the quoted sentences', async () => {
+    const long = { ...report, sections: report.sections.map((x) => (x.key === 'analysis' ? { ...x, body: 'La produzione è cresciuta da 2 a 400 milioni di tonnellate. Questo dimostra tutto.' } : x)) };
+    mockApi({
+      'GET /api/notifications': [], 'GET /api/sources': [], 'GET /api/reports/2/check': check, 'GET /api/reports/2': long,
+      'POST /api/reports/2/sections/4/review': { mode: 'local', provider: 'none', note: 'Controlli locali.', issues: [
+        { kind: 'uncited', quote: 'La produzione è cresciuta da 2 a 400 milioni di tonnellate.', comment: 'Dato senza fonte.' }] },
+    });
+    renderApp('/studio/reports/2');
+    const analysis = await screen.findByTestId('section-analysis');
+    await userEvent.click(within(analysis).getByText('Revisione'));
+    const panel = await within(analysis).findByTestId('review-panel');
+    expect(panel).toHaveTextContent('Senza citazione');
+    expect(panel).toHaveTextContent('Dato senza fonte.');
+  });
+
   it('shows the delivery checklist, layout settings and inserts a citation at the cursor', async () => {
     const { calls } = mockApi({
       'GET /api/notifications': [], 'GET /api/reports/2/check': check, 'GET /api/reports/2': report,
