@@ -111,3 +111,22 @@ def test_database_url_normalization():
     assert normalize_url("postgresql://u:p@h:5432/db") == "postgresql+psycopg://u:p@h:5432/db"
     assert normalize_url("postgres://u:p@h/db") == "postgresql+psycopg://u:p@h/db"
     assert normalize_url("sqlite:///x.db") == "sqlite:///x.db"
+
+
+def test_logout_revokes_supabase_token_immediately(online):
+    assert online.get("/api/projects", headers=as_("tok-bruno")).status_code == 200  # ora in cache
+    assert online.post("/api/auth/logout", headers=as_("tok-bruno")).status_code == 204
+    r = online.get("/api/projects", headers=as_("tok-bruno"))
+    assert r.status_code == 401 and "chiusa" in r.json()["error"]["message"]
+    assert online.get("/api/projects", headers=as_("tok-anna")).status_code == 200  # gli altri utenti non sono toccati
+
+
+def test_revocation_expires_with_token():
+    import base64
+    import json
+    import time
+
+    exp = int(time.time()) + 120
+    jwt = "h." + base64.urlsafe_b64encode(json.dumps({"exp": exp}).encode()).decode().rstrip("=") + ".s"
+    assert 100 < supabase_auth._token_ttl(jwt) <= 120
+    assert supabase_auth._token_ttl("non-un-jwt") == 3600

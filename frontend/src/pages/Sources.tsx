@@ -9,6 +9,7 @@ import { CONNECTOR_STATUS_LABEL, StatusDot } from '../components/ui/StatusDot';
 import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
+import { safeHref } from '../lib/safeUrl';
 
 export function SourcesPage() {
   const { data, error, loading, reload, setData } = useAsync(() => api.connectors(), []);
@@ -102,10 +103,10 @@ export function SourcesPage() {
               {c.last_error && <p className="mt-1 break-words font-mono text-[11px] text-bad">{c.last_error}</p>}
               <p className="mt-3 text-sm text-steel-400">{c.notes}</p>
               <div className="mt-3 flex flex-wrap gap-4 text-xs">
-                <a href={c.homepage} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">
+                <a href={safeHref(c.homepage)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">
                   Sito <ExternalLink className="size-3" aria-hidden />
                 </a>
-                <a href={c.terms_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">
+                <a href={safeHref(c.terms_url)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">
                   Termini d'uso e licenza <ExternalLink className="size-3" aria-hidden />
                 </a>
               </div>

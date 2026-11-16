@@ -98,7 +98,12 @@ def login(data: LoginIn, request: Request, response: Response, db: DB, settings:
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: DB) -> None:
-    svc.logout(db, request_token(request))
+    token = request_token(request)
+    if request.app.state.settings.auth_mode == "supabase" and token:
+        from ...security import supabase_auth
+
+        supabase_auth.revoke(token)
+    svc.logout(db, token)
     response.delete_cookie(svc.COOKIE_NAME, path="/api")
 
 

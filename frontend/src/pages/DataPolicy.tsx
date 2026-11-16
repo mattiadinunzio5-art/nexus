@@ -6,6 +6,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { ErrorBox, Loading } from '../components/ui/States';
 import { useAsync } from '../lib/useAsync';
 import { locale, tr } from '../i18n';
+import { safeHref } from '../lib/safeUrl';
 
 /** NEXUS Copyright & Data Policy: principi e registro delle licenze di ogni fonte, con i conteggi reali della Biblioteca. */
 
@@ -45,7 +46,7 @@ export function DataPolicyPage() {
               <Card key={e.id} title={e.name}>
                 <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-steel-400">
                   <span>{e.publisher}</span>
-                  <a href={e.homepage} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">sito <ExternalLink className="size-3" aria-hidden /></a>
+                  <a href={safeHref(e.homepage)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">sito <ExternalLink className="size-3" aria-hidden /></a>
                   {reg.data!.library_licenses.includes(e.id) ? <Badge tone="gold">LIBRARY</Badge> : <Badge>fuori dalla Biblioteca</Badge>}
                   {e.status === 'per_item' && <Badge tone="warn">da verificare serie per serie</Badge>}
                 </div>

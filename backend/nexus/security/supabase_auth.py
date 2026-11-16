@@ -45,6 +45,9 @@ class _Cache:
 
 
 cache = _Cache()
+# Token chiusi con il logout: rifiutati fino alla loro scadenza naturale (hash → istante monotonic di scadenza).
+_revoked: dict[str, float] = {}
+_revoked_lock = threading.Lock()
 _client: httpx.Client | None = None
 
 
@@ -62,6 +65,8 @@ def verify_token(settings: Settings, token: str) -> dict:
     if not settings.supabase_url or not settings.supabase_anon_key:
         raise AuthError("Accesso online non configurato sul server (NEXUS_SUPABASE_URL / NEXUS_SUPABASE_ANON_KEY).")
     key = hashlib.sha256(token.encode()).hexdigest()
+    if is_revoked(key):
+        raise AuthError("Sessione chiusa: accedi di nuovo.")
     hit = cache.get(key)
     if hit:
         return hit
@@ -110,3 +115,34 @@ def _aware(dt):
     from datetime import UTC
 
     return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
+
+def _token_ttl(token: str) -> float:
+    """Secondi alla scadenza del JWT (campo exp, letto senza fidarsene: serve solo a non tenere la revoca per sempre)."""
+    import base64
+    import json
+
+    try:
+        payload = token.split(".")[1]
+        exp = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))["exp"]
+        return max(60.0, min(float(exp) - time.time(), 7 * 24 * 3600))
+    except Exception:  # noqa: BLE001 - token non JWT: si tiene la revoca per un'ora
+        return 3600.0
+
+
+def revoke(token: str) -> None:
+    """Logout: il token non vale più su questo server, anche se Supabase lo considera ancora valido o è in cache."""
+    key = hashlib.sha256(token.encode()).hexdigest()
+    with cache._lock:
+        cache._data.pop(key, None)
+    now = time.monotonic()
+    with _revoked_lock:
+        for k in [k for k, t in _revoked.items() if t < now]:
+            del _revoked[k]
+        _revoked[key] = now + _token_ttl(token)
+
+
+def is_revoked(key: str) -> bool:
+    with _revoked_lock:
+        t = _revoked.get(key)
+        return t is not None and t > time.monotonic()

@@ -273,8 +273,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       return;
     }
+    // Prima il server (revoca subito il token anche nella sua cache), poi Supabase (chiude la sessione ovunque).
+    await api.logout().catch(() => undefined);
     if (supa) await supa.auth.signOut();
-    else await api.logout().catch(() => undefined);
     setUser(null);
   }, [supa]);
 
