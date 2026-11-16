@@ -74,3 +74,10 @@ lanciare a mano (Actions → Backup database → *Run workflow*).
   gira da solo ogni 24 ore (`NEXUS_INTEGRITY_INTERVAL_HOURS`, 0 = disattivato), dall'area Amministrazione
   («Controlla ora») o da riga di comando: `scripts/py.sh scripts/storage_check.py [--fix] [--json]`.
 - La pulizia rimuove solo file orfani e copie scadute del cestino, mai file collegati a un documento.
+
+## Server sempre sveglio
+
+Sul piano gratuito di Render il server si spegne dopo 15 minuti senza richieste. Un job pianificato nel database
+Supabase (`pg_cron` + `pg_net`, nome `nexus-wake-backend`) chiama `/api/health` ogni 10 minuti; il workflow GitHub
+«Sveglia backend» resta come riserva (GitHub salta spesso i workflow pianificati frequenti).
+Per toglierlo: `select cron.unschedule('nexus-wake-backend');`
