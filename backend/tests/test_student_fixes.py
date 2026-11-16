@@ -141,3 +141,16 @@ def test_archive_text_search_is_bilingual(client):
     assert up.status_code == 201, up.text
     r = client.get("/api/research/search", params={"q": "rifiuti di plastica", "mode": "text"}).json()
     assert r["hits"] and "Plastic waste" in r["hits"][0]["text"]
+
+
+def test_bank_failures_are_found_in_both_languages(client):
+    """Controllo generale del 16/11: «fallimenti bancari» non trovava i documenti inglesi su «bank failures»."""
+    from nexus.research.crosslang import text_matcher, variants
+
+    assert "bank failures" in variants("fallimenti bancari")
+    assert "fallimenti bancari" in variants("bank failures")
+    assert text_matcher("fallimenti bancari")("Bank failures in 1930 followed the crash")
+    text = "Bank failures in 1930 followed the crash and reduced credit to firms. " * 3
+    client.post("/api/documents", files={"file": ("crash.txt", text.encode(), "text/plain")}, data={"title": "Estratto sulla crisi"})
+    hits = client.get("/api/search", params={"q": "fallimenti bancari"}).json()["hits"]
+    assert any(h["title"].startswith("Estratto sulla crisi") for h in hits)
