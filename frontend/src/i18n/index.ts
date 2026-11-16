@@ -13,6 +13,7 @@ import { EN_SERVER_3 } from './en-server-3';
 import { EN_FASE23 } from './en-fase23';
 import { EN_RITOCCHI } from './en-ritocchi';
 import { EN_CONFIDENCE } from './en-confidence';
+import { EN_CAUSAL } from './en-causal';
 
 export type Lang = 'it' | 'en';
 const KEY = 'nexus.lang';
@@ -66,7 +67,7 @@ const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
 const exact = new Map<string, string>();
 const patterns: { re: RegExp; out: string }[] = [];
 // Testi del server (messaggi, etichette, metodi) e dell'interfaccia: un unico dizionario.
-for (const [k, v] of Object.entries({ ...EN_SERVER_1, ...EN_SERVER_2, ...EN_SERVER_3, ...EN_FASE23, ...EN_RITOCCHI, ...EN_CONFIDENCE, ...EN })) {
+for (const [k, v] of Object.entries({ ...EN_SERVER_1, ...EN_SERVER_2, ...EN_SERVER_3, ...EN_FASE23, ...EN_RITOCCHI, ...EN_CONFIDENCE, ...EN_CAUSAL, ...EN })) {
   const key = norm(k);
   if (/\{\d+\}/.test(key)) {
     const re = new RegExp('^' + key.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\d+)\}/g, '(?<g$1>[\\s\\S]+?)') + '$');

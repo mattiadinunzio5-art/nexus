@@ -353,7 +353,7 @@ def event_data_connections(db: Session, events: list[HistoricalEvent], series: l
         from ..finance import analytics as _an
 
         pct = _an.scale_free(v)  # serie che crescono di ordini di grandezza: si ragiona in variazioni percentuali (log)
-        d = (np.log(v).diff() if pct else v.diff()).dropna()
+        d = _an.changes(v, s.frequency, "log" if pct else "diff")[0]  # nessuna variazione a cavallo di periodi mancanti
         sums = d.rolling(window).sum().dropna()  # variazioni su finestre di `window` periodi: il riferimento storico
         med = float(sums.median())
         mad = float((sums - med).abs().median() * 1.4826)
@@ -413,8 +413,9 @@ def lagged_association(a: pd.Series, b: pd.Series, freq_a: str, freq_b: str, max
     e p corretto per il numero di ritardi provati (Bonferroni).
     """
     target = freq_a if analytics.FREQ_ORDER[freq_a] >= analytics.FREQ_ORDER[freq_b] else freq_b
-    ra = analytics.resample(a, freq_a, target, "mean").diff().dropna()
-    rb = analytics.resample(b, freq_b, target, "mean").diff().dropna()
+    # Variazioni tra periodi consecutivi: quelle a cavallo di periodi mancanti sono escluse (i buchi non si colmano).
+    ra, ia = analytics.changes(analytics.resample(a, freq_a, target, "mean"), target)
+    rb, ib = analytics.changes(analytics.resample(b, freq_b, target, "mean"), target)
     best = None
     for lag in range(-max_lag, max_lag + 1):
         x, y = ra.align(rb.shift(-lag), join="inner")
@@ -427,6 +428,7 @@ def lagged_association(a: pd.Series, b: pd.Series, freq_a: str, freq_b: str, max
             best = {"r": float(r), "p": float(p), "lag": lag, "n": int(len(x)), "freq": target}
     if best:
         best["p_adj"] = min(1.0, best["p"] * (2 * max_lag + 1))
+        best["gaps_excluded"] = ia["gaps"] + ib["gaps"]
     return best
 
 

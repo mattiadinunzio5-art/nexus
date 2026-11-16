@@ -129,7 +129,8 @@ def debt_paths(d0: float, eff: np.ndarray, g: float, pb: float, cov: list[list[f
         shocks = rng.multivariate_normal([0, 0], cov, size=(b, years))
         r = eff[None, :] + shocks[:, :, 0]
         gg = g + shocks[:, :, 1]
-        if (gg <= -1).any():
+        if (gg <= -0.99).any():
+            col.clipped = getattr(col, "clipped", 0) + int((gg < -0.99).sum())
             gg = np.maximum(gg, -0.99)
         path = np.empty((b, years + 1))
         path[:, 0] = d0

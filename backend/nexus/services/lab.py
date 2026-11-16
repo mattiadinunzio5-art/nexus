@@ -50,7 +50,7 @@ def run(db: Session, user: User, kind: str, data, settings=None) -> SimulationRu
         s = finance.get_series(db, user, data.series_id)
         obs = [(o.date, o.value) for o in s.observations if o.value is not None]
         res = _guard(lambda: M.monte_carlo_bootstrap(s.name, [d for d, _ in obs], [v for _, v in obs], analytics.PERIODS_PER_YEAR[s.frequency],
-                                                     data.years, data.n_paths, data.block, data.seed, limits=lim))
+                                                     data.years, data.n_paths, data.block, data.seed, limits=lim, freq=s.frequency))
     elif kind == "debt":
         res = _guard(lambda: M.debt_dynamics(**{k: v for k, v in params.items() if k != "title"}, limits=lim))
     elif kind == "sensitivity":
@@ -80,7 +80,26 @@ def run(db: Session, user: User, kind: str, data, settings=None) -> SimulationRu
         raise NotFoundError("Tipo di simulazione sconosciuto.")
     if getattr(data, "title", None) and data.title.strip():
         res.title = data.title.strip()
+    res.results["reproducibility"] = _reproducibility(db, user, data, params)
     return _save(db, user, res, params)
+
+
+def _reproducibility(db: Session, user: User, data, params: dict) -> dict:
+    """Ciò che serve per rifare la simulazione e ottenere lo stesso risultato: parametri (salvati con la simulazione),
+    seme e generatore casuale, versione di numpy, impronta dei dati delle serie usate."""
+    import numpy as np
+
+    from ..discovery.foresight import fingerprint
+
+    ids = [getattr(data, "series_id", None), getattr(data, "y_series_id", None), *(getattr(data, "x_series_ids", None) or [])]
+    out: dict = {"numpy": np.__version__}
+    if "seed" in params:
+        out.update(seed=params["seed"], generator="numpy.random.default_rng (PCG64)")
+    series = [finance.get_series(db, user, i) for i in ids if i is not None]
+    if series:
+        out["data"] = {s.name: fingerprint(s) for s in series}
+        out["note"] = "Stessi parametri, stesso seme e stessa impronta dei dati = stesso risultato."
+    return out
 
 
 def _annual(s, aggregation: str | None) -> tuple[list[tuple[int, float]], list[str]]:
@@ -178,7 +197,7 @@ def _regression(db: Session, user: User, data: S.RegressionIn) -> M.SimulationRe
     y = prep(ys)
     x_map = {s.name: prep(s) for s in xs}
     used = [f"{s.name} — {s.source_label}" for s in [ys, *xs]]
-    return _guard(lambda: M.regression(ys.name, y, x_map, data.transform, data.lags, used, procedure))
+    return _guard(lambda: M.regression(ys.name, y, x_map, data.transform, data.lags, used, procedure, freq=target))
 
 
 def list_runs(db: Session, user: User, kind: str | None = None) -> list[SimulationRun]:
