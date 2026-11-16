@@ -1,6 +1,9 @@
 /** Testi rimasti in italiano dopo le Fasi 1–3 (frammenti accanto a valori, suggerimenti, voci di menu). Vedi en.ts. */
 export const EN_RITOCCHI: Record<string, string> = {
   'Biblioteca': 'Library', 'del': 'on',
+  // Piani (nome e nota arrivano dal server)
+  'Gratuito': 'Free', 'Locale (personale)': 'Local (personal)', 'Uso personale sul proprio computer': 'Personal use on your own computer',
+  'Prezzo da definire: pagamenti non ancora attivi': 'Price to be defined: payments not active yet',
   // Ambito e progetto
   'Ambito:': 'Scope:', '· si cambia dalla barra in alto': '· change it from the bar at the top',
   'ricerche nella War Room': 'War Room research runs', '· Rapporti:': '· Reports:', '{0} elementi dalla Biblioteca ·': '{0} items from the Library ·',
