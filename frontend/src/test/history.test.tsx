@@ -46,6 +46,28 @@ describe('time machine', () => {
     expect(screen.getByText(/2 eventi successivi alla data sono nascosti/)).toBeInTheDocument();
     expect(calls.find((c) => c.url.startsWith('/api/history/timeline'))?.url).toContain('as_of_year=1931');
   });
+
+  it('separates event, publication and availability dates and shows the completeness of the reconstruction', async () => {
+    const t: Timeline = {
+      ...timeline,
+      indicators: [{ series_id: 3, name: 'PIL USA', unit: 'mld', source: 'BEA', last_date: '1930-01-01', last_value: 92, caveat: 'Ricostruzione a posteriori', retrospective: true, published: 2023, retrieved_at: '2026-01-01T00:00:00Z', availability: 'retrospective' }],
+      events: [{ ...timeline.events[0],
+        known_then: [{ id: 1, content: 'Vendite di panico.', known_since_year: 1929, kind: 'contemporary', source_id: 4, refers_to: '1929-10-24', published_on: '1929-10-25', available_on: '1929-10-25', source_citation: 'New York Times (1929).', availability: 'then' }],
+        sources: [{ source_id: 4, citation: 'New York Times (1929).', year: 1929, pages: '1', evidence_class: 'primary', published_after: false }], date_precision: 'day' }],
+      completeness: { score: 0.5, level: 'medium', method: 'Media di quattro componenti.', gaps: ['1 eventi senza informazioni datate.'],
+        components: [{ key: 'sources', label: "Eventi con una fonte disponibile all'epoca", ok: 1, total: 2, ratio: 0.5 }] },
+    };
+    mockApi({ 'GET /api/notifications': [], 'GET /api/history/timeline': t });
+    renderApp('/time-machine?year=1931');
+    expect(await screen.findByText(/fatto: 1929-10-24 · pubblicata: 1929-10-25 · disponibile dal 1929-10-25/)).toBeInTheDocument();
+    expect(screen.getAllByText(/New York Times \(1929\)/).length).toBeGreaterThan(0);
+    const c = screen.getByTestId('completeness');
+    expect(c).toHaveTextContent('50%');
+    expect(c).toHaveTextContent('Ricostruzione parziale');
+    expect(c).toHaveTextContent("Eventi con una fonte disponibile all'epoca: 1/2");
+    expect(c).toHaveTextContent('1 eventi senza informazioni datate.');
+    expect(screen.getByText(/dato del 1930-01-01, pubblicato nel 2023, scaricato il 2026-01-01/)).toBeInTheDocument();
+  });
 });
 
 const graph: GraphData = {

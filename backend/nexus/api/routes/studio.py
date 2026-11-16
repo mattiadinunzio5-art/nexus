@@ -75,6 +75,22 @@ def check_report(report_id: int, db: DB, user: CurrentUser):
     return svc.check(db, user, report_id)
 
 
+@router.get("/reports/{report_id}/trace", summary="Tracciabilità: affermazioni ↔ fonti e pagine, uso della bibliografia, coerenza")
+def trace_report(report_id: int, db: DB, user: CurrentUser) -> dict:
+    return svc.trace(db, user, report_id)
+
+
+@router.get("/reports/{report_id}/sections/{section_id}/versions", summary="Cronologia delle versioni di una sezione")
+def section_versions(report_id: int, section_id: int, db: DB, user: CurrentUser) -> list[dict]:
+    return svc.list_versions(db, user, report_id, section_id)
+
+
+@router.post("/reports/{report_id}/sections/{section_id}/versions/{version_id}/restore", response_model=ReportOut,
+             summary="Ripristina una versione precedente (la versione corrente resta nella cronologia)")
+def restore_section_version(report_id: int, section_id: int, version_id: int, db: DB, user: CurrentUser):
+    return svc.restore_version(db, user, report_id, section_id, version_id)
+
+
 @router.post("/reports/{report_id}/status", response_model=ReportOut, summary="Approva il rapporto o riportalo in bozza")
 def set_status(report_id: int, db: DB, user: CurrentUser, value: Literal["approved", "draft"]):
     return svc.set_status(db, user, report_id, value)

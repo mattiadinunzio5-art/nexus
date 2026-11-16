@@ -44,11 +44,33 @@ def timeline(
         events = [e for e in events if e.id == event_id]
     hidden_future = len(all_events) - len([e for e in all_events if upper is None or e.start_year <= upper])
 
+    from ..models import Source
+    from ..research.citations import format_citation
+
+    src_ids = {link.source_id for e in events for link in e.source_links} | {k.source_id for e in events for k in e.knowledge if k.source_id}
+    srcs = {s.id: s for s in db.scalars(select(Source).where(Source.id.in_(src_ids)))} if src_ids else {}
+
+    def k_out(k, then: bool) -> KnowledgeOut:
+        o = KnowledgeOut.model_validate(k)
+        o.availability = "not_applicable" if as_of_year is None else ("then" if then else "later")
+        if k.source_id and k.source_id in srcs:
+            o.source_citation = format_citation(srcs[k.source_id])
+        return o
+
     out = []
     for e in events:
         k_then, k_later = [], []
         for k in e.knowledge:
-            (k_then if as_of_year is None or k.known_since_year <= as_of_year else k_later).append(KnowledgeOut.model_validate(k))
+            then = as_of_year is None or k.known_since_year <= as_of_year
+            (k_then if then else k_later).append(k_out(k, then))
+        ev_sources = []
+        for link in e.source_links:
+            src = srcs.get(link.source_id)
+            if src is None:
+                continue
+            after = as_of_year is not None and src.year is not None and src.year > as_of_year
+            ev_sources.append({"source_id": src.id, "citation": format_citation(src), "year": src.year, "pages": link.pages,
+                               "evidence_class": src.evidence_class or "", "published_after": after})
         if as_of_year is None:
             status = "not_applicable"
         else:
@@ -64,6 +86,8 @@ def timeline(
                 consequences=None if strict else e.consequences, consequences_hidden=strict and bool(e.consequences),
                 known_then=k_then, known_later=[] if strict else k_later, hidden_later_count=len(k_later) if strict else 0,
                 is_demo=e.is_demo, library=library.is_library(db, e.owner_id),
+                date_precision="day" if e.start_day else "month" if e.start_month else "year",
+                sources=[x for x in ev_sources if not (strict and x["published_after"])] if strict else ev_sources,
             )
         )
 
@@ -83,7 +107,47 @@ def timeline(
         as_of_year=as_of_year, hindsight=hindsight,
         filters={"country": country, "category": category, "from_year": from_year, "to_year": to_year},
         events=out, indicators=indicators, hidden_future_events=hidden_future if not hindsight else 0, notes=notes,
+        completeness=completeness(out, indicators, as_of_year, country) if as_of_year is not None else None,
     )
+
+
+def completeness(events: list, indicators: list, as_of_year: int, country: str | None) -> dict:
+    """Quanto è completa la ricostruzione alla data scelta, con le lacune da colmare.
+
+    Quattro componenti (0–1), media semplice: eventi con almeno una fonte disponibile all'epoca,
+    eventi con almeno un'informazione datata nota all'epoca, eventi con data precisa (mese),
+    indicatori economici disponibili all'epoca (non ricostruiti dopo).
+    """
+    n = len(events)
+    gaps: list[str] = []
+    comps = []
+
+    def comp(key: str, label: str, ok: int, total: int, gap: str | None):
+        comps.append({"key": key, "label": label, "ok": ok, "total": total, "ratio": round(ok / total, 2) if total else None})
+        if gap and total and ok < total:
+            gaps.append(gap)
+
+    with_src = [e for e in events if any(not s["published_after"] for s in e.sources)]
+    comp("sources", "Eventi con una fonte disponibile all'epoca", len(with_src), n,
+         f"{n - len(with_src)} eventi senza fonti pubblicate entro il {as_of_year}: " + "; ".join(e.title for e in events if e not in with_src)[:300])
+    with_k = [e for e in events if e.known_then]
+    comp("knowledge", "Eventi con informazioni datate note all'epoca", len(with_k), n,
+         f"{n - len(with_k)} eventi senza informazioni datate: non si sa che cosa ne sapessero i contemporanei.")
+    precise = [e for e in events if e.date_precision != "year"]
+    comp("dates", "Eventi datati almeno al mese", len(precise), n, f"{n - len(precise)} eventi datati solo all'anno: l'ordine nello stesso anno è incerto.")
+    avail = [i for i in indicators if i.availability == "available"]
+    comp("indicators", "Indicatori economici disponibili all'epoca", len(avail), len(indicators),
+         f"{len(indicators) - len(avail)} indicatori sono ricostruzioni successive o senza data di pubblicazione.")
+    if not events:
+        gaps.append(f"Nessun evento registrato entro il {as_of_year}" + (f" per «{country}»." if country else "."))
+    if not indicators:
+        gaps.append("Nessun indicatore economico con dati entro la data scelta" + (f" per «{country}»." if country else "."))
+    ratios = [c["ratio"] for c in comps if c["ratio"] is not None]
+    score = round(sum(ratios) / 4, 2) if ratios else 0.0  # le componenti senza dati contano zero
+    level = "high" if score >= 0.75 else "medium" if score >= 0.4 else "low"
+    return {"score": score, "level": level, "components": comps, "gaps": gaps,
+            "method": "Media di quattro componenti (fonti dell'epoca, informazioni datate, precisione delle date, indicatori disponibili all'epoca); "
+                      "una componente senza elementi conta zero."}
 
 
 def _year(text: str | None) -> int | None:
@@ -124,12 +188,14 @@ def _indicators_as_of(db: Session, user: User, year: int, country: str | None = 
             # ricostruzione a posteriori e all'epoca non era noto in questa forma.
             published = _year(s.source_last_updated) or (s.retrieved_at.year if s.retrieved_at else None)
             retro = published is not None and published > year
+            availability = "unknown" if published is None else ("retrospective" if retro else "available")
             caveat = (f"Ricostruzione a posteriori: la fonte ha pubblicato questa serie nel {published}. All'epoca il dato non era disponibile in questa forma."
                       if retro else "Valore della versione attuale della serie (possibili revisioni successive).")
             result.append(
                 TimelineIndicator(
                     series_id=s.id, name=s.name, unit=s.unit, source=s.source_label, last_date=obs.date, last_value=obs.value,
-                    caveat=caveat, retrospective=retro,
+                    caveat=caveat, retrospective=retro, published=published,
+                    retrieved_at=s.retrieved_at.isoformat() if s.retrieved_at else None, availability=availability,
                 )
             )
     return result

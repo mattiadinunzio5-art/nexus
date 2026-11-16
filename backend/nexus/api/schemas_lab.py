@@ -131,6 +131,70 @@ class ScenariosIn(Titled):
     scenarios: list[ScenarioIn] = Field(min_length=1, max_length=6)
     uncertainty: float = Field(default=0.0, ge=0, le=0.5, description="Deviazione standard annua della crescita: banda al 90%")
     history_years: int = Field(default=10, ge=2, le=100, description="Anni per la crescita storica di riferimento")
+    # Serie non annuali: come passare ad anni (obbligatorio, nessuna scelta implicita).
+    aggregation: Literal["mean", "sum", "last"] | None = None
+    # Genera da solo base, ottimistico e pessimistico: base = crescita storica della serie (o il primo scenario), ± spread.
+    three_scenarios: bool = False
+    spread: float = Field(default=0.01, gt=0, le=0.2)
+
+
+class SectorIn(Titled):
+    """Base comune dei modelli settoriali: orizzonte, unità e scenari alternativi (parametri che cambiano)."""
+
+    years: int = Field(ge=1, le=100)
+    unit: str = Field(default="", max_length=60)
+    optimistic: dict[str, float] = Field(default_factory=dict, max_length=12)
+    pessimistic: dict[str, float] = Field(default_factory=dict, max_length=12)
+
+    def base_params(self) -> dict:
+        return self.model_dump(exclude={"title", "unit", "optimistic", "pessimistic"})
+
+
+Share = Field(ge=-1, le=1)
+
+
+class IndustrialIn(SectorIn):
+    ip0: float = Field(gt=0, le=1e9, description="Indice di partenza (es. 100)")
+    trend_growth: float = Share
+    demand_growth: float = Share
+    demand_elasticity: float = Field(ge=0, le=5)
+    energy_price_change: float = Field(ge=-1, le=5, description="Variazione annua del prezzo dell'energia (0.1 = +10%)")
+    energy_elasticity: float = Field(ge=0, le=2)
+    capacity_ratio: float = Field(ge=1, le=3, description="Capacità iniziale / produzione iniziale (1.2 = utilizzo all'83%)")
+    capacity_growth: float = Share
+
+
+class EmploymentIn(SectorIn):
+    labour_force0: float = Field(gt=0, le=1e10)
+    u0: float = Field(ge=0.01, le=0.6, description="Tasso di disoccupazione iniziale (0.07 = 7%)")
+    gdp_growth: float = Share
+    potential_growth: float = Share
+    okun_beta: float = Field(ge=0, le=2)
+    labour_force_growth: float = Field(ge=-0.2, le=0.2)
+
+
+class TradeIn(SectorIn):
+    exports0: float = Field(gt=0, le=1e15)
+    imports0: float = Field(gt=0, le=1e15)
+    gdp0: float = Field(gt=0, le=1e16)
+    world_growth: float = Share
+    domestic_growth: float = Share
+    income_elasticity_exports: float = Field(ge=0, le=5)
+    income_elasticity_imports: float = Field(ge=0, le=5)
+    price_elasticity_exports: float = Field(ge=0, le=5)
+    price_elasticity_imports: float = Field(ge=0, le=5)
+    reer_change: float = Field(ge=-0.5, le=0.5, description="Variazione annua del cambio reale (+ = apprezzamento)")
+
+
+class ConsumptionIn(SectorIn):
+    income0: float = Field(gt=0, le=1e16)
+    income_growth: float = Share
+    tax_rate: float = Field(ge=0, le=0.9)
+    mpc: float = Field(ge=0, le=1.2, description="Propensione marginale al consumo")
+    autonomous: float = Field(ge=0, le=1e16)
+    wealth0: float = Field(ge=0, le=1e17)
+    wealth_effect: float = Field(ge=0, le=0.2)
+    wealth_growth: float = Share
 
 
 class SimulationRename(BaseModel):

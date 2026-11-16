@@ -207,7 +207,7 @@ function EventDetail({ id }: { id: number }) {
   const [err, setErr] = useState<string>();
   const [srcSel, setSrcSel] = useDraft(`event.${id}.source`, '');
   const [srcPages, setSrcPages] = useDraft(`event.${id}.pages`, '');
-  const [k, setK] = useDraft(`event.${id}.knowledge`, { content: '', known_since_year: '', kind: 'contemporary' });
+  const [k, setK] = useDraft(`event.${id}.knowledge`, { content: '', known_since_year: '', kind: 'contemporary', refers_to: '', published_on: '' });
   const [link, setLink] = useDraft(`event.${id}.link`, { target: '', relation_type: 'caused', provenance: 'user_hypothesis', source_id: '' });
   const navigate = useNavigate();
 
@@ -299,7 +299,7 @@ function EventDetail({ id }: { id: number }) {
               <ul className="space-y-2 text-sm">
                 {e.knowledge.map((ki) => (
                   <li key={ki.id} className="border-l border-ink-600 pl-2">
-                    <p className="text-[11px] text-steel-500">Nota dal {ki.known_since_year} · {KNOWLEDGE_KINDS[ki.kind]} <button className="ml-2 hover:text-bad" onClick={() => act(() => api.deleteKnowledge(e.id, ki.id))}>rimuovi</button></p>
+                    <p className="text-[11px] text-steel-500">Nota dal {ki.available_on || ki.known_since_year} · {KNOWLEDGE_KINDS[ki.kind]}{ki.refers_to ? ` · fatto del ${ki.refers_to}` : ''}{ki.published_on ? ` · pubblicata il ${ki.published_on}` : ''} <button className="ml-2 hover:text-bad" onClick={() => act(() => api.deleteKnowledge(e.id, ki.id))}>rimuovi</button></p>
                     <p className="text-steel-300">{ki.content}</p>
                   </li>
                 ))}
@@ -307,13 +307,18 @@ function EventDetail({ id }: { id: number }) {
               <div className="mt-3 space-y-2">
                 <Textarea aria-label="Informazione" placeholder="Cosa era noto…" value={k.content} onChange={(x) => setK({ ...k, content: x.target.value })} />
                 <div className="flex gap-2">
-                  <Input aria-label="Nota dall'anno" placeholder="Anno" inputMode="numeric" value={k.known_since_year} onChange={(x) => setK({ ...k, known_since_year: x.target.value })} />
+                  <Input aria-label="Nota dall'anno" placeholder="Disponibile dal (anno)" inputMode="numeric" value={k.known_since_year} onChange={(x) => setK({ ...k, known_since_year: x.target.value })} />
                   <Select aria-label="Tipo" value={k.kind} onChange={(x) => setK({ ...k, kind: x.target.value })}>
                     {Object.entries(KNOWLEDGE_KINDS).map(([kk, v]) => <option key={kk} value={kk}>{v}</option>)}
                   </Select>
                 </div>
-                <Button disabled={!k.content.trim() || toInt(k.known_since_year) === null}
-                  onClick={() => act(async () => { const r = await api.addKnowledge(e.id, { content: k.content, known_since_year: toInt(k.known_since_year)!, kind: k.kind as never, source_id: null }); setK({ ...k, content: '' }); return r; })}>
+                <div className="flex gap-2">
+                  <Input aria-label="Data del fatto" placeholder="Fatto del (AAAA-MM-GG)" value={k.refers_to ?? ''} onChange={(x) => setK({ ...k, refers_to: x.target.value })} />
+                  <Input aria-label="Data di pubblicazione" placeholder="Pubblicata il (AAAA-MM-GG)" value={k.published_on ?? ''} onChange={(x) => setK({ ...k, published_on: x.target.value })} />
+                </div>
+                <p className="text-[11px] text-steel-500">Tre date distinte: quando è avvenuto il fatto, quando il dato o il documento è stato pubblicato, da quando l'informazione era disponibile.</p>
+                <Button disabled={!k.content.trim() || (toInt(k.known_since_year) === null && !(k.published_on ?? '').trim())}
+                  onClick={() => act(async () => { const r = await api.addKnowledge(e.id, { content: k.content, known_since_year: toInt(k.known_since_year), kind: k.kind as never, source_id: null, refers_to: (k.refers_to ?? '').trim(), published_on: (k.published_on ?? '').trim() }); setK({ ...k, content: '', refers_to: '', published_on: '' }); return r; })}>
                   Aggiungi
                 </Button>
               </div>

@@ -31,17 +31,28 @@ def _guard(fn):
         raise ValidationFailedError(str(exc)) from exc
 
 
-def run(db: Session, user: User, kind: str, data) -> SimulationRun:
+SECTORS = ("industrial_production", "employment", "trade", "consumption")
+
+
+def run(db: Session, user: User, kind: str, data, settings=None) -> SimulationRun:
+    from ..simulations.engine import DEFAULT, Limits
+
+    lim = Limits.from_settings(settings) if settings is not None else DEFAULT
     params = data.model_dump()
     if kind == "monte_carlo":
-        res = _guard(lambda: M.monte_carlo_gbm(data.s0, data.mu, data.sigma, data.years, data.steps_per_year, data.n_paths, data.seed, data.threshold))
+        res = _guard(lambda: M.monte_carlo_gbm(data.s0, data.mu, data.sigma, data.years, data.steps_per_year, data.n_paths, data.seed, data.threshold,
+                                               limits=lim))
+    elif kind in SECTORS:
+        from ..simulations import sectors
+
+        res = _guard(lambda: sectors.run_sector(kind, data.base_params(), {"optimistic": data.optimistic, "pessimistic": data.pessimistic}, data.unit))
     elif kind == "monte_carlo_bootstrap":
         s = finance.get_series(db, user, data.series_id)
         obs = [(o.date, o.value) for o in s.observations if o.value is not None]
         res = _guard(lambda: M.monte_carlo_bootstrap(s.name, [d for d, _ in obs], [v for _, v in obs], analytics.PERIODS_PER_YEAR[s.frequency],
-                                                     data.years, data.n_paths, data.block, data.seed))
+                                                     data.years, data.n_paths, data.block, data.seed, limits=lim))
     elif kind == "debt":
-        res = _guard(lambda: M.debt_dynamics(**{k: v for k, v in params.items() if k != "title"}))
+        res = _guard(lambda: M.debt_dynamics(**{k: v for k, v in params.items() if k != "title"}, limits=lim))
     elif kind == "sensitivity":
         b = data.base.model_dump()
         base = {k: b[k] for k in ("d0", "r_eff0", "r_market", "avg_maturity", "g", "pb", "years")}
@@ -72,35 +83,63 @@ def run(db: Session, user: User, kind: str, data) -> SimulationRun:
     return _save(db, user, res, params)
 
 
+def _annual(s, aggregation: str | None) -> tuple[list[tuple[int, float]], list[str]]:
+    """Valori annuali della serie. Frequenze diverse dall'annuale richiedono un metodo esplicito;
+    l'ultimo anno incompleto viene escluso (dichiarato nella procedura)."""
+    obs = [(o.date, o.value) for o in s.observations if o.value is not None]
+    if s.frequency == "A":
+        return [(int(str(d)[:4]), v) for d, v in obs], []
+    if aggregation is None:
+        raise ValidationFailedError(f"La serie «{s.name}» ha frequenza {s.frequency}: scegli come passare ad anni "
+                                    "(media, somma o ultimo valore dell'anno).")
+    series = analytics.to_pandas(obs)
+    counts = series.groupby(series.index.year).count()
+    annual = analytics.resample(series, s.frequency, "A", aggregation)
+    need = analytics.PERIODS_PER_YEAR[s.frequency]
+    full = [(int(ix.year), float(v)) for ix, v in annual.items() if v == v and counts.get(ix.year, 0) >= (need if s.frequency != "D" else 200)]
+    dropped = [int(ix.year) for ix, _ in annual.items() if int(ix.year) not in {y for y, _ in full}]
+    note = [f"«{s.name}»: da frequenza {s.frequency} ad annuale con «{ {'mean': 'media', 'sum': 'somma', 'last': 'ultimo valore'}[aggregation] }» dei periodi"]
+    if dropped:
+        note.append(f"Anni incompleti esclusi: {', '.join(map(str, dropped[-5:]))}")
+    return full, note
+
+
 def _scenarios(db: Session, user: User, data: S.ScenariosIn) -> M.SimulationResult:
     history, used = None, ["Crescite degli scenari scelte dall'utente"]
     name, unit = "valore inserito", data.unit
     if data.series_id is not None:
         s = finance.get_series(db, user, data.series_id)
-        obs = [(o.date, o.value) for o in s.observations if o.value is not None and o.value > 0]
+        annual, procedure = _annual(s, data.aggregation)
+        obs = [(y, v) for y, v in annual if v > 0]
         if len(obs) < 2:
-            raise ValidationFailedError("La serie non ha abbastanza valori positivi per una proiezione.")
-        obs.sort(key=lambda x: x[0])
-        last_d, last_v = obs[-1]
-        y_last = int(str(last_d)[:4])
+            raise ValidationFailedError("La serie non ha abbastanza valori annuali positivi per una proiezione.")
+        y_last, last_v = obs[-1]
         name, unit = s.name, data.unit or s.unit
         base_value = data.base_value or last_v
         base_year = data.base_year or y_last
-        past = [(d, v) for d, v in obs if int(str(d)[:4]) <= y_last - data.history_years]
+        past = [(y, v) for y, v in obs if y <= y_last - data.history_years]
         if past:
-            d0, v0 = past[-1]
-            span = y_last - int(str(d0)[:4])
+            y0, v0 = past[-1]
+            span = y_last - y0
             if span > 0:
-                history = {"from": int(str(d0)[:4]), "to": y_last, "cagr": round((last_v / v0) ** (1 / span) - 1, 6),
-                           "years": [int(str(d)[:4]) for d, _ in obs if int(str(d)[:4]) >= y_last - 3 * data.history_years],
-                           "values": [round(v, 4) for d, v in obs if int(str(d)[:4]) >= y_last - 3 * data.history_years]}
-        used.insert(0, f"Serie «{s.name}» — {s.source_label} (ultimo dato {str(last_d)[:10]}: {last_v:.4g} {s.unit})")
+                history = {"from": y0, "to": y_last, "cagr": round((last_v / v0) ** (1 / span) - 1, 6),
+                           "years": [y for y, _ in obs if y >= y_last - 3 * data.history_years],
+                           "values": [round(v, 4) for y, v in obs if y >= y_last - 3 * data.history_years]}
+        used.insert(0, f"Serie «{s.name}» — {s.source_label} (ultimo anno usato {y_last}: {last_v:.4g} {s.unit})")
+        used[1:1] = procedure
     else:
         if data.base_value is None or data.base_year is None:
             raise ValidationFailedError("Indica una serie oppure valore e anno di partenza.")
         base_value, base_year = data.base_value, data.base_year
         used.insert(0, "Valore di partenza inserito dall'utente")
-    return _guard(lambda: M.scenario_projection(name, unit, base_value, base_year, data.horizon, [x.model_dump() for x in data.scenarios],
+    scenarios = [x.model_dump() for x in data.scenarios]
+    if data.three_scenarios:
+        g = history["cagr"] if history else scenarios[0]["growth"]
+        origin = (f"crescita media storica {history['from']}–{history['to']}" if history else f"crescita dello scenario «{scenarios[0]['name']}»")
+        scenarios = [{"name": "Base", "growth": round(g, 6)}, {"name": "Ottimistico", "growth": round(g + data.spread, 6)},
+                     {"name": "Pessimistico", "growth": round(g - data.spread, 6)}]
+        used.append(f"Scenari generati: base = {origin} ({g * 100:+.2f}%), ottimistico e pessimistico ±{data.spread * 100:.1f} punti")
+    return _guard(lambda: M.scenario_projection(name, unit, base_value, base_year, data.horizon, scenarios,
                                                 data.uncertainty, history, used))
 
 

@@ -44,6 +44,10 @@ async def upload_series(
     date_col: Annotated[str | None, Form(max_length=100)] = None,
     value_col: Annotated[str | None, Form(max_length=100)] = None,
 ):
+    from ...research.citations import valid_url
+
+    if source_url.strip() and not valid_url(source_url):
+        raise ValidationFailedError("URL della fonte non valido: deve iniziare con http:// o https://.")
     raw = await file.read(10 * 1024 * 1024 + 1)
     if len(raw) > 10 * 1024 * 1024:
         raise ValidationFailedError("CSV troppo grande (massimo 10 MB).")

@@ -34,4 +34,24 @@ describe('economic lab', () => {
     const body = calls.find((c) => c.method === 'POST')?.body as Record<string, unknown>;
     expect(body).toMatchObject({ d0: 135, rate_shock: 0.01, crisis: null, stochastic: null, counterfactual: false });
   });
+
+  it('runs a sector model with base, optimistic and pessimistic scenarios', async () => {
+    const out: SimulationRun = { ...sim, id: 11, kind: 'employment', counterfactual: false, result: { ...sim.result, kind: 'employment', counterfactual: false, label: 'Simulazione', warnings: [],
+      results: { years: [0, 1], headline: 'Occupati', unit: 'milioni',
+        scenarios: { Base: { Occupati: [24, 24.1] }, Ottimistico: { Occupati: [24, 24.3] }, Pessimistico: { Occupati: [24, 23.8] } },
+        comparison: [{ scenario: 'Base', key: 'base', end_value: 24.1, delta_vs_base: 0, changed: {} }, { scenario: 'Ottimistico', key: 'optimistic', end_value: 24.3, delta_vs_base: 0.2, changed: { gdp_growth: 0.02 } },
+          { scenario: 'Pessimistico', key: 'pessimistic', end_value: 23.8, delta_vs_base: -0.3, changed: { gdp_growth: -0.01 } }] } } };
+    const { calls } = mockApi({ 'GET /api/notifications': [], 'GET /api/lab/simulations': [], 'GET /api/finance/series': [], 'POST /api/lab/simulations/employment': out, 'GET /api/lab/simulations/11': out });
+    renderApp('/lab');
+    await userEvent.selectOptions(await screen.findByLabelText('Tipo di analisi'), 'employment');
+    for (const [label, v] of [['Forze di lavoro iniziali', '25.9'], ['Disoccupazione iniziale', '0.07'], ['Crescita del PIL reale', '0.01'], ['Crescita potenziale', '0.007'], ['Coefficiente di Okun (β)', '0.4'], ['Crescita forze di lavoro', '0']]) {
+      await userEvent.type(screen.getByLabelText(label), v);
+    }
+    await userEvent.type(screen.getByLabelText(/Scenario ottimistico/), 'gdp_growth: 0.02');
+    await userEvent.type(screen.getByLabelText(/Scenario pessimistico/), 'gdp_growth: -0.01');
+    await userEvent.click(screen.getByRole('button', { name: /Esegui/ }));
+    expect(await screen.findByTestId('scenario-comparison')).toHaveTextContent('gdp_growth=0.02');
+    const body = calls.find((c) => c.method === 'POST')?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ labour_force0: 25.9, okun_beta: 0.4, years: 10, optimistic: { gdp_growth: 0.02 }, pessimistic: { gdp_growth: -0.01 } });
+  });
 });

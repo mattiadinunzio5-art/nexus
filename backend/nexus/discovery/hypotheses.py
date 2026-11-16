@@ -94,6 +94,40 @@ def _stability(db: Session, c: DiscoveryConnection) -> dict | None:
                       f"seconda metà: r = {halves[1]['r']:+.2f} (n = {halves[1]['n']}, ritardo {halves[1]['lag']})."}
 
 
+def _robustness(db: Session, user: User, c: DiscoveryConnection) -> dict | None:
+    """Trend comune, autocorrelazione e confondenti (le altre serie dell'archivio come controlli)."""
+    from .stats_checks import robustness, verdict
+
+    ids = [e["id"] for e in c.elements if e["type"] == "series"]
+    if len(ids) != 2:
+        return None
+    a, b = db.get(Series, ids[0]), db.get(Series, ids[1])
+    if not a or not b:
+        return None
+    fa, fb = series_frame(a), series_frame(b)
+    try:
+        best = lagged_association(fa, fb, a.frequency, b.frequency)
+    except Exception:  # noqa: BLE001
+        best = None
+    lag = best["lag"] if best else 0
+    others = list(db.scalars(select(Series).where(Series.owner_id == a.owner_id, Series.id.not_in(ids)).limit(40)))
+    controls = []
+    for o in others:
+        fo = series_frame(o)
+        if len(fo) >= 12:
+            controls.append((o.name, fo, o.frequency))
+        if len(controls) >= 8:
+            break
+    try:
+        rob = robustness(fa, a.frequency, fb, b.frequency, lag=lag, controls=controls)
+    except Exception:  # noqa: BLE001 - dati irregolari: il controllo non è possibile, non deve fermare la verifica
+        rob = None
+    if rob is None:
+        return {"check": "Robustezza statistica", "outcome": "insufficient_data", "detail": "Dati insufficienti per i controlli di trend, autocorrelazione e confondenti."}
+    outcome, detail = verdict(rob)
+    return {"check": "Robustezza statistica", "outcome": outcome, "detail": detail, "statistics": rob}
+
+
 def _element_names(db: Session, c: DiscoveryConnection) -> list[list[str]]:
     names = []
     for e in c.elements:
@@ -158,14 +192,17 @@ def _graph(db: Session, user: User, c: DiscoveryConnection) -> dict | None:
     rels = list(db.scalars(select(Relation).where(Relation.owner_id == user.id, Relation.source_entity_id.in_(ents), Relation.target_entity_id.in_(ents))))
     sourced = [r for r in rels if r.provenance == "sourced"]
     if sourced:
-        return {"check": "Knowledge Graph", "outcome": "supports", "detail": f"{len(sourced)} relazioni documentate collegano ora i due elementi."}
+        causal = [r for r in sourced if r.relation_type in ("caused", "consequence_of")]
+        return {"check": "Knowledge Graph", "outcome": "supports", "causal": bool(causal),
+                "detail": f"{len(sourced)} relazioni documentate collegano ora i due elementi"
+                          + (f", di cui {len(causal)} causali con fonte." if causal else " (nessuna di tipo causale).")}
     return {"check": "Knowledge Graph", "outcome": "nothing_found", "detail": "Nessuna relazione documentata tra i due elementi nel grafo."}
 
 
 def verify(db: Session, user: User, settings: Settings, c: DiscoveryConnection | None) -> list[dict]:
     if c is None:
         return [{"check": "Connessione di origine", "outcome": "not_possible", "detail": "La connessione da cui nasce l'ipotesi è stata eliminata."}]
-    checks = [x for x in (_stability(db, c), _documents(db, user, settings, c), _sources(db, c), _graph(db, user, c)) if x]
+    checks = [x for x in (_stability(db, c), _robustness(db, user, c), _documents(db, user, settings, c), _sources(db, c), _graph(db, user, c)) if x]
     return checks
 
 
@@ -181,7 +218,35 @@ def suggested_outcome(checks: list[dict]) -> str:
     outs = [c["outcome"] for c in checks]
     if "contradicts" in outs:
         return "rejected"
-    documentary = any(c["outcome"] == "supports" and c["check"] in DOCUMENTARY for c in checks)
-    if outs.count("supports") >= 2 and documentary:
+    if can_confirm(checks):
         return "confirmed"
     return "inconclusive"
+
+
+def can_confirm(checks: list[dict]) -> bool:
+    """Almeno 2 controlli a favore, di cui almeno uno documentario: la sola statistica non basta mai."""
+    documentary = any(c["outcome"] == "supports" and c["check"] in DOCUMENTARY for c in checks)
+    return sum(1 for c in checks if c["outcome"] == "supports") >= 2 and documentary
+
+
+# --- Livello dell'evidenza ---------------------------------------------------------------------------
+
+EVIDENCE_LEVELS = {
+    "correlation": ("Correlazione", "Due serie si muovono insieme: non dice quale influenzi l'altra, né se esista un legame."),
+    "temporal_association": ("Associazione temporale", "Un fatto e una variazione dei dati sono vicini nel tempo: la vicinanza non prova il legame."),
+    "association": ("Associazione", "Elementi collegati da attori, citazioni o vicinanza nel grafo: legame da documentare."),
+    "hypothesis": ("Ipotesi", "Spiegazione proposta, da verificare con le fonti."),
+    "causal": ("Causalità documentata", "Relazione causale sostenuta da fonti verificabili nel Knowledge Graph e confermata dall'utente."),
+}
+KIND_LEVEL = {"statistical_association": "correlation", "event_data_change": "temporal_association",
+              "graph_proximity": "association", "shared_actors": "association", "textual_reference": "association"}
+
+
+def evidence_level(kind: str | None, status: str, verification: list[dict]) -> dict:
+    """Che cosa dimostra davvero l'ipotesi. «Causalità» solo con una relazione causale documentata e una conferma."""
+    base = KIND_LEVEL.get(kind or "", "hypothesis")
+    last = (verification or [{}])[-1].get("checks", []) if verification else []
+    documented_causal = any(c.get("check") == "Knowledge Graph" and c.get("outcome") == "supports" and c.get("causal") for c in last)
+    level = "causal" if status == "confirmed" and documented_causal else ("hypothesis" if status == "confirmed" else base)
+    label, explanation = EVIDENCE_LEVELS[level]
+    return {"level": level, "label": label, "explanation": explanation, "basis": base, "basis_label": EVIDENCE_LEVELS[base][0]}

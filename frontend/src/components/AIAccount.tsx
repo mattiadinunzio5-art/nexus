@@ -7,6 +7,7 @@ import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Field, Input, Select } from './ui/Form';
+import { safeHref } from '../lib/safeUrl';
 
 /** Collega il proprio account Gemini, ChatGPT, Grok o Claude con una chiave API, in tre passi. */
 export function AIAccountCard({ onChange }: { onChange: () => void }) {
@@ -40,7 +41,7 @@ export function AIAccountCard({ onChange }: { onChange: () => void }) {
         <ol className="space-y-3 text-sm">
           <li>
             <span className="text-steel-400">1.</span> Crea una chiave su{' '}
-            <a href={svc.key_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">{svc.key_url.replace('https://', '')} <ExternalLink className="size-3" aria-hidden /></a>
+            <a href={safeHref(svc.key_url)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">{svc.key_url.replace('https://', '')} <ExternalLink className="size-3" aria-hidden /></a>
             <span className="block text-[11px] text-steel-500">{svc.free}</span>
           </li>
           <li className="flex flex-wrap items-end gap-2">

@@ -26,6 +26,15 @@ class DecisionIn(BaseModel):
     note: Annotated[str, StringConstraints(max_length=5000)] = ""
 
 
+class HypothesisEdit(BaseModel):
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=500)] | None = None
+    description: Annotated[str, StringConstraints(max_length=10_000)] | None = None
+    supporting: list[Annotated[str, StringConstraints(max_length=1000)]] | None = Field(default=None, max_length=30)
+    contrary: list[Annotated[str, StringConstraints(max_length=1000)]] | None = Field(default=None, max_length=30)
+    missing: list[Annotated[str, StringConstraints(max_length=1000)]] | None = Field(default=None, max_length=30)
+    method: list[Annotated[str, StringConstraints(max_length=1000)]] | None = Field(default=None, max_length=30)
+
+
 class AnomalyIn(BaseModel):
     status: Literal["open", "explained", "dismissed"]
     note: Annotated[str, StringConstraints(max_length=5000)] = ""
@@ -130,6 +139,11 @@ def verify(hid: int, db: DB, user: CurrentUser, settings: AppSettings) -> dict:
 @router.post("/hypotheses/{hid}/decision", summary="Esito deciso dall'utente (con motivazione)")
 def decide(hid: int, data: DecisionIn, db: DB, user: CurrentUser) -> dict:
     return svc.hypothesis_out(svc.decide_hypothesis(db, user, hid, data.status, data.note))
+
+
+@router.patch("/hypotheses/{hid}", summary="Modifica l'ipotesi (titolo, descrizione, evidenze, metodo): l'esito torna «da verificare»")
+def edit_hypothesis(hid: int, data: HypothesisEdit, db: DB, user: CurrentUser) -> dict:
+    return svc.hypothesis_out(svc.update_hypothesis(db, user, hid, data.model_dump(exclude_unset=True)))
 
 
 @router.post("/hypotheses/{hid}/archive")

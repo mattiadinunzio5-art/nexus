@@ -98,7 +98,12 @@ def login(data: LoginIn, request: Request, response: Response, db: DB, settings:
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: DB) -> None:
-    svc.logout(db, request_token(request))
+    token = request_token(request)
+    if request.app.state.settings.auth_mode == "supabase" and token:
+        from ...security import supabase_auth
+
+        supabase_auth.revoke(token)
+    svc.logout(db, token)
     response.delete_cookie(svc.COOKIE_NAME, path="/api")
 
 
@@ -155,6 +160,27 @@ def admin_users(db: DB, _: AdminUser) -> list[dict]:
 @router.patch("/admin/users/{user_id}")
 def admin_update_user(user_id: int, data: AdminUserUpdate, db: DB, admin: AdminUser) -> dict:
     return admin_svc.update_user(db, admin, user_id, data.role, data.plan, data.is_active)
+
+
+@router.get("/admin/storage/check", summary="Ultimo controllo di integrità dei file (database ↔ storage)")
+def admin_storage_last(db: DB, _: AdminUser) -> dict:
+    from ...services import filesafety
+
+    return {"last": filesafety.check_out(filesafety.last_check(db))}
+
+
+@router.post("/admin/storage/check", summary="Esegue ora il controllo di integrità e la ricerca dei file orfani (sola lettura)")
+def admin_storage_check(db: DB, _: AdminUser, settings: AppSettings) -> dict:
+    from ...services import filesafety
+
+    return filesafety.check_out(filesafety.run_check(db, settings, "admin"))
+
+
+@router.post("/admin/storage/cleanup", summary="Rimuove i file orfani e le copie scadute del cestino (con verifica; confirm=true)")
+def admin_storage_cleanup(db: DB, admin: AdminUser, settings: AppSettings, confirm: bool = False, orphans: bool = True, expired: bool = True) -> dict:
+    from ...services import filesafety
+
+    return filesafety.cleanup(db, settings, admin, confirm, orphans, expired)
 
 
 @router.get("/admin/stats")

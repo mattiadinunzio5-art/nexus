@@ -93,6 +93,28 @@ describe('discovery intelligence', () => {
     expect(calls.find((c) => c.url.endsWith('/decision'))?.body).toEqual({ status: 'inconclusive', note: 'Mancano fonti' });
   });
 
+  it('shows what the hypothesis proves, blocks confirmation on correlation alone and lets the user edit it', async () => {
+    const corr = { ...hyp, evidence_level: { level: 'correlation', label: 'Correlazione', explanation: 'Due serie si muovono insieme.', basis: 'correlation', basis_label: 'Correlazione' }, can_confirm: false };
+    const { calls } = mockApi({
+      'GET /api/notifications': [],
+      'GET /api/discovery/hypotheses/9': corr,
+      'PATCH /api/discovery/hypotheses/9': { ...corr, title: 'Ipotesi riformulata', status: 'to_verify', verification: [...corr.verification, { at: '2026-11-08T10:00:00Z', checks: [], suggested: 'to_verify', edited: ['title'] }] },
+    });
+    renderApp('/discovery/hypotheses/9');
+    expect(await screen.findByTestId('evidence-level')).toHaveTextContent('Correlazione: Due serie si muovono insieme.');
+    expect(screen.getByRole('option', { name: /Confermata \(non ancora possibile\)/ })).toBeDisabled();
+    expect(screen.getByTestId('confirm-rule')).toHaveTextContent('da sola non basta');
+    await userEvent.click(screen.getByRole('button', { name: /Modifica titolo/ }));
+    const title = screen.getByLabelText('Titolo');
+    await userEvent.clear(title);
+    await userEvent.type(title, 'Ipotesi riformulata');
+    await userEvent.click(screen.getByRole('button', { name: 'Salva modifiche' }));
+    expect(await screen.findByText(/Ultima modifica: title/)).toBeInTheDocument();
+    expect((calls.find((c) => c.method === 'PATCH')?.body as { title: string }).title).toBe('Ipotesi riformulata');
+    // la verifica precedente resta visibile anche dopo la modifica
+    expect(screen.getByText(/solo un suggerimento/)).toBeInTheDocument();
+  });
+
   it('is reachable from the main navigation', async () => {
     mockApi({ 'GET /api/notifications': [], 'GET /api/discovery/overview': new Response('{}', { status: 500 }) });
     renderApp('/discovery/anomalies');

@@ -27,7 +27,35 @@ const KINDS = {
   regression: 'Regressione',
   backtest: 'Backtesting',
   scenarios: 'Proiezione a scenari',
+  industrial_production: 'Produzione industriale',
+  employment: 'Occupazione (Okun)',
+  trade: 'Commercio internazionale',
+  consumption: 'Consumi delle famiglie',
 } as const;
+
+/** Modelli settoriali: parametri senza valori predefiniti (vanno presi da fonti e citati). */
+const SECTOR_FIELDS: Record<string, [string, string, string][]> = {
+  industrial_production: [['ip0', 'Indice di partenza', 'es. 100'], ['trend_growth', 'Crescita di fondo annua', '0.01 = 1%'],
+    ['demand_growth', 'Crescita della domanda', 'decimale'], ['demand_elasticity', 'Elasticità alla domanda (ε_d)', 'da una fonte'],
+    ['energy_price_change', 'Variazione annua prezzo energia', '0.1 = +10%'], ['energy_elasticity', 'Elasticità al prezzo dell\'energia (ε_e)', 'da una fonte'],
+    ['capacity_ratio', 'Capacità / produzione iniziale', '1.2 = utilizzo 83%'], ['capacity_growth', 'Crescita della capacità', 'decimale']],
+  employment: [['labour_force0', 'Forze di lavoro iniziali', 'es. milioni'], ['u0', 'Disoccupazione iniziale', '0.07 = 7%'],
+    ['gdp_growth', 'Crescita del PIL reale', 'decimale'], ['potential_growth', 'Crescita potenziale', 'decimale'],
+    ['okun_beta', 'Coefficiente di Okun (β)', 'da una fonte'], ['labour_force_growth', 'Crescita forze di lavoro', 'decimale']],
+  trade: [['exports0', 'Esportazioni iniziali', 'stessa unità del PIL'], ['imports0', 'Importazioni iniziali', ''], ['gdp0', 'PIL iniziale', ''],
+    ['world_growth', 'Crescita mondiale', 'decimale'], ['domestic_growth', 'Crescita interna', 'decimale'],
+    ['income_elasticity_exports', 'Elasticità export al reddito (ε_X)', 'da una fonte'], ['income_elasticity_imports', 'Elasticità import al reddito (ε_M)', 'da una fonte'],
+    ['price_elasticity_exports', 'Elasticità export al prezzo (η_X)', 'valore positivo'], ['price_elasticity_imports', 'Elasticità import al prezzo (η_M)', 'valore positivo'],
+    ['reer_change', 'Variazione annua cambio reale', '+ = apprezzamento']],
+  consumption: [['income0', 'Reddito iniziale', ''], ['income_growth', 'Crescita del reddito', 'decimale'], ['tax_rate', 'Aliquota media (τ)', '0.25 = 25%'],
+    ['mpc', 'Propensione marginale al consumo (c)', 'da una fonte'], ['autonomous', 'Consumo autonomo (a)', ''], ['wealth0', 'Ricchezza iniziale', ''],
+    ['wealth_effect', 'Effetto ricchezza (w)', 'da una fonte'], ['wealth_growth', 'Crescita della ricchezza', 'decimale']],
+};
+const sectorDefaults = (k: string): FormState => ({ ...Object.fromEntries(SECTOR_FIELDS[k].map(([f]) => [f, ''])), years: '10', unit: '', optimistic: '', pessimistic: '' });
+/** «parametro: valore» una riga per parametro che cambia nello scenario. */
+function parseOverrides(text: string): Record<string, number> {
+  return Object.fromEntries(text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const i = l.lastIndexOf(':'); return [l.slice(0, i).trim(), num(l.slice(i + 1)) as number]; }));
+}
 type Kind = keyof typeof KINDS;
 
 const pct = (v: unknown) => (typeof v === 'number' ? `${formatNumber(v * 100, 4)}%` : '—');
@@ -45,7 +73,11 @@ const DEFAULTS: Record<Kind, FormState> = {
   monetary_policy: { labels: '2021 2022 2023', inflation: '0.026 0.084 0.054', output_gap: '-0.01 0.005 0.0', actual_rate: '', r_star: '0.005', pi_target: '0.02' },
   regression: { y_series_id: '', x_series_ids: '', transform: 'diff', lags: '0', target_frequency: '', method: 'mean' },
   backtest: { series_id: '', strategy: 'ma_cross', fast: '10', slow: '50', lookback: '12', cost_bps: '10', rf: '0' },
-  scenarios: { series_id: '', base_value: '', base_year: '', unit: '', horizon: '25', scenarios: 'Base: 0.03\nRiduzione: -0.01\nAccelerazione: 0.05', uncertainty: '0', history_years: '10' },
+  scenarios: { series_id: '', base_value: '', base_year: '', unit: '', horizon: '25', scenarios: 'Base: 0.03\nRiduzione: -0.01\nAccelerazione: 0.05', uncertainty: '0', history_years: '10', aggregation: '', three: '', spread: '0.01' },
+  industrial_production: sectorDefaults('industrial_production'),
+  employment: sectorDefaults('employment'),
+  trade: sectorDefaults('trade'),
+  consumption: sectorDefaults('consumption'),
 };
 
 /** «Nome: crescita» una riga per scenario (crescita decimale, 0.03 = +3% l'anno). */
@@ -83,7 +115,14 @@ function payload(kind: Kind, f: FormState): Record<string, unknown> {
                target_frequency: f.target_frequency || null, method: f.method };
     case 'scenarios':
       return { series_id: num(f.series_id) ?? null, base_value: num(f.base_value) ?? null, base_year: num(f.base_year) ?? null, unit: f.unit.trim(),
-               horizon: num(f.horizon), scenarios: parseScenarios(f.scenarios), uncertainty: num(f.uncertainty) ?? 0, history_years: num(f.history_years) ?? 10 };
+               horizon: num(f.horizon), scenarios: parseScenarios(f.scenarios), uncertainty: num(f.uncertainty) ?? 0, history_years: num(f.history_years) ?? 10,
+               aggregation: f.aggregation || null, three_scenarios: f.three === '1', spread: num(f.spread ?? '') ?? 0.01 };
+    case 'industrial_production':
+    case 'employment':
+    case 'trade':
+    case 'consumption':
+      return { ...Object.fromEntries(SECTOR_FIELDS[kind].map(([k]) => [k, num(f[k] ?? '')])), years: num(f.years), unit: f.unit.trim(),
+               optimistic: parseOverrides(f.optimistic ?? ''), pessimistic: parseOverrides(f.pessimistic ?? '') };
     case 'backtest':
       return { series_id: num(f.series_id), strategy: f.strategy, fast: num(f.fast), slow: num(f.slow), lookback: num(f.lookback), cost_bps: num(f.cost_bps), rf: num(f.rf) };
   }
@@ -153,8 +192,24 @@ function SimForm({ kind, onDone }: { kind: Kind; onDone: (id: number) => void })
         <Textarea {...b('scenarios')} className="min-h-24 font-mono text-xs" /></Field>
       <Field label="Orizzonte (anni)"><Input inputMode="numeric" {...b('horizon')} /></Field>
       <Field label="Incertezza: σ annua della crescita" hint="0 = nessuna banda; 0.02 = ±2 punti"><Input {...b('uncertainty')} /></Field>
-      <Field label="Anni per la crescita storica di riferimento"><Input inputMode="numeric" {...b('history_years')} /></Field></>,
+      <Field label="Anni per la crescita storica di riferimento"><Input inputMode="numeric" {...b('history_years')} /></Field>
+      <Field label="Serie non annuale: passaggio ad anni" hint="Obbligatorio per serie mensili, trimestrali…"><Select {...b('aggregation')}><option value="">— (serie annuale)</option><option value="mean">Media dell'anno</option><option value="sum">Somma dell'anno</option><option value="last">Ultimo valore dell'anno</option></Select></Field>
+      <label className="flex items-center gap-2 text-sm text-steel-300"><input type="checkbox" checked={f.three === '1'} onChange={(e) => setF({ ...f, three: e.target.checked ? '1' : '' })} />Genera base, ottimistico e pessimistico</label>
+      {f.three === '1' && <Field label="Scarto degli scenari (± crescita)" hint="Base = crescita storica della serie"><Input {...b('spread')} /></Field>}</>,
+    industrial_production: () => sectorForm('industrial_production'),
+    employment: () => sectorForm('employment'),
+    trade: () => sectorForm('trade'),
+    consumption: () => sectorForm('consumption'),
   };
+  function sectorForm(k: string) {
+    return <>
+      {SECTOR_FIELDS[k].map(([key, label, ph]) => <Field key={key} label={label}><Input {...b(key)} placeholder={ph} /></Field>)}
+      <Field label="Anni"><Input inputMode="numeric" {...b('years')} /></Field><Field label="Unità (facoltativa)"><Input {...b('unit')} /></Field>
+      <Field label="Scenario ottimistico: «parametro: valore»" hint={`Parametri: ${SECTOR_FIELDS[k].map(([x]) => x).join(', ')}`} className="sm:col-span-2"><Textarea {...b('optimistic')} className="font-mono text-xs" /></Field>
+      <Field label="Scenario pessimistico: «parametro: valore»" className="sm:col-span-2"><Textarea {...b('pessimistic')} className="font-mono text-xs" /></Field>
+      <p className="text-xs text-steel-500 sm:col-span-4">NEXUS non propone valori: elasticità, tassi e valori di partenza vanno presi da fonti e citati nel rapporto.</p>
+    </>;
+  }
   return (
     <div>
       <Field label="Titolo della simulazione (facoltativo)" className="mb-3 max-w-xl"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} placeholder="Es. Produzione di plastica al 2050: tre scenari" /></Field>
@@ -224,6 +279,7 @@ function ResultsView({ r }: { r: SimulationEnvelope }) {
     case 'monte_carlo':
     case 'monte_carlo_bootstrap':
       return <>{fanChart(res.fan, 'Distribuzione delle traiettorie')}
+        {res.computation && <p className="mt-1 text-[11px] text-steel-500" data-testid="computation">{res.computation.note} Valori calcolati: {formatNumber(res.computation.computed_values, 12)}.</p>}
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">{Object.entries(res.final).map(([k, v]) => <div key={k}><dt className="text-[11px] text-steel-500">{k}</dt><dd className="text-paper">{formatNumber(v as number, 6)}</dd></div>)}</dl></>;
     case 'debt': {
       const rows = (res.years as number[]).map((y, i) => ({ date: String(y), base: res.baseline.debt[i], shock: res.rate_shock?.debt[i] ?? null, crisis: res.crisis?.debt[i] ?? null }));
@@ -276,7 +332,26 @@ function ResultsView({ r }: { r: SimulationEnvelope }) {
         <table className="mt-3 w-full text-left text-sm"><thead className="text-[11px] text-steel-500"><tr><th>Scenario</th><th>Crescita annua</th><th>Valore finale</th>{band && <th>Banda 90%</th>}<th>Multiplo</th><th>Raddoppio</th></tr></thead>
           <tbody>{res.summary.map((x: Row) => <tr key={String(x.scenario)} className="border-t border-ink-700"><td className="text-paper">{x.scenario}</td><td>{pct(x.growth)}</td><td>{formatNumber(x.end_value as number)} {res.unit}</td>
             {band && <td>{formatNumber(x.end_low as number)} – {formatNumber(x.end_high as number)}</td>}<td>×{formatNumber(x.multiple as number, 3)}</td><td>{x.doubling_years ? `${x.doubling_years} anni` : '—'}</td></tr>)}</tbody></table>
+        {res.comparison && res.comparison.length > 1 && <p className="mt-2 text-xs text-steel-400" data-testid="scenario-delta">Rispetto a «{res.reference}» a fine orizzonte: {res.comparison.slice(1).map((c: Record<string, any>) => `${c.scenario} ${c.pct_vs_reference >= 0 ? '+' : ''}${formatNumber(c.pct_vs_reference * 100, 3)}%`).join(' · ')}</p>}
       </>;
+    }
+    case 'industrial_production':
+    case 'employment':
+    case 'trade':
+    case 'consumption': {
+      const names = Object.keys(res.scenarios);
+      const vars = Object.keys(res.scenarios[names[0]]);
+      return <div data-testid="sector-results">
+        {vars.map((v) => (
+          <div key={v} className="mb-4">
+            <h4 className="mb-1 text-xs text-steel-400">{v}</h4>
+            <TimeChart data={(res.years as number[]).map((y, i) => Object.fromEntries([['date', String(y)], ...names.map((n, j) => [`s${j}`, res.scenarios[n][v][i]])]))}
+              series={names.map((n, j) => ({ key: `s${j}`, label: n, dashed: j > 0 }))} unit={v === res.headline ? res.unit : ''} ariaLabel={v} />
+          </div>
+        ))}
+        <table className="w-full text-left text-sm" data-testid="scenario-comparison"><thead className="text-[11px] text-steel-500"><tr><th>Scenario</th><th>{res.headline} a fine orizzonte</th><th>Differenza dalla base</th><th>Parametri cambiati</th></tr></thead>
+          <tbody>{res.comparison.map((c: Record<string, any>) => <tr key={c.key} className="border-t border-ink-700"><td className="text-paper">{c.scenario}</td><td>{formatNumber(c.end_value)} {res.unit}</td><td>{formatNumber(c.delta_vs_base)}</td><td className="font-mono text-xs">{Object.entries(c.changed).map(([k, v]) => `${k}=${v}`).join(', ') || '—'}</td></tr>)}</tbody></table>
+      </div>;
     }
     default:
       return <pre className="overflow-auto text-xs text-steel-300">{JSON.stringify(res, null, 2)}</pre>;

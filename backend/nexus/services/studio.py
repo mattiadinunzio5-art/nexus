@@ -9,13 +9,15 @@ from sqlalchemy.orm import Session
 
 from ..api.schemas_studio import ChapterIn, CheckItem, DocTable, NoteIn, QuoteIn, ReportCheck, ReportCreate, ReportUpdate, SectionIn
 from ..core.errors import ConfirmationRequiredError, NotFoundError, ValidationFailedError
-from ..models import Document, Note, Project, Report, ReportSection, ResearchRun, Series, SimulationRun, Source, User
+from ..models import Document, Note, Project, Report, ReportSection, ReportSectionVersion, ResearchRun, Series, SimulationRun, Source, User
 from ..models.studio import STANDARD_SECTIONS
 from ..research.citations import VERIFICATION_LABEL, format_citation
 from ..studio import charts, citations, export
 from . import activity
 
-VERIFIED = ("verified_user", "verified_registry")
+from ..models.source import VERIFIED_STATES as VERIFIED  # noqa: E402
+
+MAX_VERSIONS = 50  # versioni conservate per sezione
 
 
 def _project(db: Session, user: User, project_id: int | None) -> None:
@@ -74,6 +76,10 @@ def _owner(db: Session, r: Report) -> User:
 def _to_draft(r: Report) -> None:
     # Ogni modifica a un rapporto approvato lo riporta in bozza: l'approvazione vale per il contenuto approvato.
     r.status = "draft"
+    # Anche una modifica alle sole sezioni aggiorna la data del rapporto (l'app ricarica verifica e cronologia).
+    from ..database.base import utcnow
+
+    r.updated_at = utcnow()
 
 
 def update_report(db: Session, user: User, report_id: int, data: ReportUpdate) -> Report:
@@ -81,12 +87,17 @@ def update_report(db: Session, user: User, report_id: int, data: ReportUpdate) -
     changes = data.model_dump(exclude_unset=True)
     if "project_id" in changes:
         _project(db, user, changes["project_id"])
-    if changes.get("source_ids") is not None:
-        ids = list(dict.fromkeys(changes["source_ids"]))
-        found = set(db.scalars(select(Source.id).where(Source.owner_id == r.owner_id, Source.id.in_(ids))))
-        if set(ids) - found:
-            raise ValidationFailedError(f"Fonti inesistenti: {sorted(set(ids) - found)}")
-        changes["source_ids"] = ids
+    for field in ("source_ids", "consulted_ids"):
+        if changes.get(field) is not None:
+            ids = list(dict.fromkeys(changes[field]))
+            found = set(db.scalars(select(Source.id).where(Source.owner_id == r.owner_id, Source.id.in_(ids))))
+            if set(ids) - found:
+                raise ValidationFailedError(f"Fonti inesistenti: {sorted(set(ids) - found)}")
+            changes[field] = ids
+    if changes.get("consulted_ids"):
+        # Una fonte «consultata» entra in bibliografia anche se non è citata.
+        base = changes.get("source_ids", list(r.source_ids))
+        changes["source_ids"] = base + [i for i in changes["consulted_ids"] if i not in base]
     for k, v in changes.items():
         setattr(r, k, v)
     _to_draft(r)
@@ -95,19 +106,37 @@ def update_report(db: Session, user: User, report_id: int, data: ReportUpdate) -
     return r
 
 
+def _snapshot(db: Session, user: User, r: Report, sec: ReportSection, reason: str) -> None:
+    """Conserva la versione corrente della sezione prima di modificarla (le più vecchie oltre MAX_VERSIONS si scartano)."""
+    db.add(ReportSectionVersion(report_id=r.id, section_id=sec.id, author_id=user.id, title=sec.title, body=sec.body,
+                                embeds=list(sec.embeds or []), reason=reason))
+    db.flush()
+    old = list(db.scalars(select(ReportSectionVersion.id).where(ReportSectionVersion.section_id == sec.id)
+                          .order_by(ReportSectionVersion.id.desc()).offset(MAX_VERSIONS)))
+    if old:
+        from sqlalchemy import delete
+
+        db.execute(delete(ReportSectionVersion).where(ReportSectionVersion.id.in_(old)))
+
+
 def update_section(db: Session, user: User, report_id: int, section_id: int, data: SectionIn) -> Report:
     r = get_report(db, user, report_id, "editor")
     sec = next((s for s in r.sections if s.id == section_id), None)
     if sec is None:
         raise NotFoundError("Sezione non trovata.")
+    new_embeds = [e.model_dump() for e in data.embeds] if data.embeds is not None else None
+    changed = ((data.title is not None and data.title != sec.title) or (data.body is not None and data.body != sec.body)
+               or (new_embeds is not None and new_embeds != list(sec.embeds or [])))
+    if changed and (sec.body or sec.embeds or sec.key == "chapter"):
+        _snapshot(db, user, r, sec, "edit")
     if data.title is not None:
         if sec.key != "chapter":
             raise ValidationFailedError("Il titolo delle sezioni obbligatorie non è modificabile.")
         sec.title = data.title
     if data.body is not None:
         sec.body = data.body
-    if data.embeds is not None:
-        sec.embeds = [e.model_dump() for e in data.embeds]
+    if new_embeds is not None:
+        sec.embeds = new_embeds
     _to_draft(r)
     db.commit()
     db.refresh(r)
@@ -172,6 +201,42 @@ def delete_report(db: Session, user: User, report_id: int, confirm: bool) -> Non
     db.commit()
 
 
+# --- Cronologia delle versioni -------------------------------------------------------------------
+
+
+def list_versions(db: Session, user: User, report_id: int, section_id: int) -> list[dict]:
+    r = get_report(db, user, report_id)
+    if not any(s.id == section_id for s in r.sections):
+        raise NotFoundError("Sezione non trovata.")
+    rows = db.scalars(select(ReportSectionVersion).where(ReportSectionVersion.section_id == section_id, ReportSectionVersion.report_id == r.id)
+                      .order_by(ReportSectionVersion.id.desc()))
+    out = []
+    for v in rows:
+        author = db.get(User, v.author_id) if v.author_id else None
+        out.append({"id": v.id, "created_at": v.created_at, "reason": v.reason, "title": v.title, "body": v.body, "embeds": v.embeds,
+                    "words": len(v.body.split()), "author": (author.display_name or author.email) if author else ""})
+    return out
+
+
+def restore_version(db: Session, user: User, report_id: int, section_id: int, version_id: int) -> Report:
+    r = get_report(db, user, report_id, "editor")
+    sec = next((s for s in r.sections if s.id == section_id), None)
+    v = db.get(ReportSectionVersion, version_id)
+    if sec is None or v is None or v.section_id != sec.id or v.report_id != r.id:
+        raise NotFoundError("Versione non trovata.")
+    _snapshot(db, user, r, sec, "restore")  # anche il ripristino è annullabile
+    sec.body = v.body
+    sec.embeds = list(v.embeds or [])
+    if sec.key == "chapter":
+        sec.title = v.title
+    _to_draft(r)
+    activity.record(db, user=user, actor="user", action="report.restore_version", entity_type="report", entity_id=r.id,
+                    summary=f"Ripristinata una versione di «{sec.title}» del {v.created_at:%d/%m/%Y %H:%M}")
+    db.commit()
+    db.refresh(r)
+    return r
+
+
 # --- Verifica e bibliografia -------------------------------------------------------------------
 
 
@@ -183,6 +248,104 @@ def _bibliography(db: Session, user: User, r: Report) -> tuple[list[Source], lis
     order = [i for i in cited if i in sources] + [i for i in r.source_ids if i in sources and i not in cited]
     numbering = {sid: n for n, sid in enumerate(order, start=1)}
     return [sources[i] for i in order], invalid, numbering
+
+
+def _year_of(d: str | None) -> int | None:
+    try:
+        return int(d[:5] if d and d.startswith("-") else (d or "")[:4])
+    except ValueError:
+        return None
+
+
+def _coherence(db: Session, user: User, r: Report) -> list[dict]:
+    """Coerenza tra grafici, tabelle, testo e fonti. Ogni problema: sezione, tipo, dettaglio."""
+    import re
+
+    from ..studio import trace as tr
+
+    issues: list[dict] = []
+    n_fig = n_tab = 0
+    for sec in sorted(r.sections, key=lambda x: x.ordinal):
+        values: dict[str, dict[str, float]] = {}
+        for e in sec.embeds:
+            if e["type"] == "table":
+                n_tab += 1
+                if not (e.get("source_note") or "").strip():
+                    issues.append({"section": sec.title, "kind": "table_source", "detail": f"Tabella «{e.get('caption') or 'senza didascalia'}» senza fonte dichiarata."})
+                if e.get("document_id") and not _owned(db, Document, e["document_id"], user):
+                    issues.append({"section": sec.title, "kind": "table_document", "detail": f"Il documento {e['document_id']} da cui proviene la tabella non esiste più."})
+                continue
+            n_fig += 1
+            if e["type"] not in ("series", "compare"):
+                continue
+            ids = [e["series_id"]] if e["type"] == "series" else e["series_ids"]
+            series = [x for x in (_owned(db, Series, i, user) for i in ids) if x is not None]
+            for x in series:
+                a, b = _year_of(x.start_date), _year_of(x.end_date)
+                lo, hi = e.get("start_year"), e.get("end_year")
+                if (lo is not None and b is not None and lo > b) or (hi is not None and a is not None and hi < a):
+                    issues.append({"section": sec.title, "kind": "period", "detail": f"Il periodo del grafico ({lo or '…'}–{hi or '…'}) è fuori dai dati di «{x.name}» ({a}–{b})."})
+                if x.frequency == "A":
+                    values[x.name] = {o.date[:4]: o.value for o in x.observations if o.value is not None}
+            units = {x.unit for x in series if x.unit}
+            if e["type"] == "compare" and len(units) > 1 and not e.get("rebase"):
+                issues.append({"section": sec.title, "kind": "units", "detail": f"Confronto tra unità diverse ({', '.join(sorted(units))}) senza ribasare a 100."})
+        for m in tr.numeric_mismatches(sec.body, values):
+            issues.append({"section": sec.title, "kind": "value", "detail": f"Nel testo {m['year']}: {', '.join(f'{v:g}' for v in m['text_values'])}; "
+                           f"nel grafico «{m['series']}»: {m['data_value']:g}.", "sentence": m["sentence"]})
+    text = " ".join(s.body for s in r.sections)
+    for kind, n, label in (("figure_ref", n_fig, "Figura"), ("table_ref", n_tab, "Tabella")):
+        refs = {int(x) for x in re.findall(rf"\b{label}\s+(\d+)", text, re.I)}
+        missing = sorted(i for i in refs if i > n)
+        if missing:
+            issues.append({"section": "", "kind": kind, "detail": f"Il testo rimanda a {label} {', '.join(map(str, missing))}, ma il rapporto ne contiene {n}."})
+    return issues
+
+
+def trace(db: Session, user: User, report_id: int) -> dict:
+    """Tracciabilità: affermazioni rilevanti ↔ fonti (e pagine), uso della bibliografia, coerenza."""
+    from ..studio import trace as tr
+
+    r = get_report(db, user, report_id)
+    owner = _owner(db, r)
+    bib, invalid, numbering = _bibliography(db, owner, r)
+    by_id = {s.id: s for s in bib}
+    classes = {s.id: s.evidence_class or "" for s in bib}
+    sections = []
+    for sec in sorted(r.sections, key=lambda x: x.ordinal):
+        claims = tr.analyze_section(sec.key, sec.body, by_id, classes)
+        sections.append({"section_id": sec.id, "key": sec.key, "title": sec.title, "claims": claims})
+    all_claims = [c for x in sections for c in x["claims"]]
+    uses: dict[int, list[str]] = {}
+    for c in all_claims:
+        for ref in c["citations"]:
+            if ref["valid"]:
+                uses.setdefault(ref["source_id"], []).append(ref["locator"])
+    cited = set(citations.cited_ids([s.body for s in r.sections]))
+    consulted = set(r.consulted_ids or [])
+    usage = []
+    for s in bib:
+        status = "cited" if s.id in cited else ("consulted" if s.id in consulted else "unused")
+        usage.append({"source_id": s.id, "number": numbering.get(s.id), "citation": format_citation(s), "status": status,
+                      "evidence_class": s.evidence_class or "", "verification_status": s.verification_status,
+                      "verified": s.verification_status in VERIFIED, "locators": sorted({x for x in uses.get(s.id, []) if x})})
+    cited_refs = [ref for c in all_claims for ref in c["citations"] if ref["valid"]]
+    summary = {
+        "claims": len(all_claims),
+        "supported": sum(1 for c in all_claims if c["status"] == "supported"),
+        "paragraph": sum(1 for c in all_claims if c["status"] == "paragraph"),
+        "unsupported": sum(1 for c in all_claims if c["status"] == "unsupported"),
+        "invalid": sum(1 for c in all_claims if c["status"] == "invalid_citation"),
+        "exempt": sum(1 for c in all_claims if c["status"] == "exempt"),
+        "with_page": sum(1 for ref in cited_refs if ref["has_page"]),
+        "citations": len(cited_refs),
+        "primary_cited": sum(1 for u in usage if u["status"] == "cited" and u["evidence_class"] == "primary"),
+        "secondary_cited": sum(1 for u in usage if u["status"] == "cited" and u["evidence_class"] == "secondary"),
+        "unclassified_cited": sum(1 for u in usage if u["status"] == "cited" and not u["evidence_class"]),
+        "unused": sum(1 for u in usage if u["status"] == "unused"),
+    }
+    return {"report_id": r.id, "summary": summary, "sections": sections, "bibliography": usage,
+            "invalid_citations": invalid, "coherence": _coherence(db, owner, r)}
 
 
 def check(db: Session, user: User, report_id: int) -> ReportCheck:
@@ -228,10 +391,26 @@ def check(db: Session, user: User, report_id: int) -> ReportCheck:
         CheckItem(key="author", label="Autore indicato (frontespizio)", ok=bool(r.author.strip()), blocking=False),
         CheckItem(key="length", label="Lunghezza adeguata (almeno 1.500 parole per una tesina)", ok=words >= 1500, blocking=False, detail=f"{words} parole"),
     ]
+    t = trace(db, user, report_id)
+    sm = t["summary"]
+    unsupported = [c["text"] for x in t["sections"] for c in x["claims"] if c["status"] == "unsupported"]
+    unused = [u["citation"] for u in t["bibliography"] if u["status"] == "unused"]
+    checklist += [
+        CheckItem(key="claims_supported", label="Le affermazioni rilevanti (numeri, date, nessi causali) hanno una fonte", ok=not unsupported, blocking=False,
+                  detail=f"{len(unsupported)} senza supporto, es. «{unsupported[0][:120]}»" if unsupported else f"{sm['claims']} affermazioni controllate"),
+        CheckItem(key="pages", label="Le citazioni indicano la pagina", ok=sm["citations"] == 0 or sm["with_page"] == sm["citations"], blocking=False,
+                  detail=f"{sm['with_page']} su {sm['citations']} con pagina o collocazione"),
+        CheckItem(key="bib_used", label="Ogni voce della bibliografia è citata o indicata come consultata", ok=not unused, blocking=False,
+                  detail="; ".join(x[:80] for x in unused[:3])),
+        CheckItem(key="evidence_class", label="Fonti citate classificate come primarie o secondarie", ok=sm["unclassified_cited"] == 0, blocking=False,
+                  detail=f"{sm['primary_cited']} primarie, {sm['secondary_cited']} secondarie, {sm['unclassified_cited']} non indicate"),
+        CheckItem(key="coherence", label="Grafici, tabelle, testo e fonti sono coerenti", ok=not t["coherence"], blocking=False,
+                  detail="; ".join(i["detail"] for i in t["coherence"][:3])),
+    ]
     if r.contains_ai_text:
         checklist.append(CheckItem(key="ai", label="Testo automatico rivisto", ok=False, blocking=False, detail="Rileggi le parti estratte o generate da NEXUS."))
     return ReportCheck(ready=not (empty or invalid or problems), checklist=checklist, empty_sections=empty, invalid_citations=invalid, unverified_sources=unverified,
-                       cited_sources=len([1 for s in bib if s.id in numbering]), bibliography_size=len(bib), embed_problems=problems, warnings=warnings)
+                       cited_sources=len([1 for s in bib if s.id in set(citations.cited_ids([x.body for x in r.sections]))]), bibliography_size=len(bib), embed_problems=problems, warnings=warnings)
 
 
 def _owned(db: Session, model, oid: int, user: User):
@@ -393,8 +572,17 @@ def build_view(db: Session, user: User, report_id: int) -> export.ReportView:
     unv = sum(1 for s in bib if s.verification_status not in VERIFIED)
     if unv:
         notices.append(f"{unv} fonti in bibliografia non sono verificate (segnalate).")
+    cited_set = set(citations.cited_ids([s.body for s in r.sections]))
+    consulted = set(r.consulted_ids or [])
+
+    def _label(s: Source) -> str:
+        lab = VERIFICATION_LABEL[s.verification_status]
+        if s.id not in cited_set:
+            lab += "; consultata, non citata nel testo" if s.id in consulted else "; non citata nel testo"
+        return lab
+
     entries = [export.BibEntry(numbering[s.id] if style == "numeric" else None, format_citation(s), s.verification_status in VERIFIED,
-                               VERIFICATION_LABEL[s.verification_status]) for s in (bib if style == "numeric" else sorted(bib, key=_alpha_key))]
+                               _label(s)) for s in (bib if style == "numeric" else sorted(bib, key=_alpha_key))]
     project = ""
     if r.project_id:
         p = db.get(Project, r.project_id)
@@ -444,6 +632,8 @@ def add_quote(db: Session, user: User, report_id: int, section_id: int, data: Qu
     loc = data.locator.strip()
     text = " ".join(data.text.split()).strip("«»\"' ")
     para = (data.comment.strip() + " " if data.comment.strip() else "") + f"«{text}» [@{doc.source_id}{', ' + loc if loc else ''}]"
+    if sec.body.strip():
+        _snapshot(db, user, r, sec, "quote")
     sec.body = (sec.body.rstrip() + "\n\n" + para) if sec.body.strip() else para
     _to_draft(r)
     activity.record(db, user=user, actor="user", action="report.quote", entity_type="report", entity_id=r.id,

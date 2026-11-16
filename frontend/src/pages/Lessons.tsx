@@ -12,6 +12,7 @@ import { ErrorBox, Loading } from '../components/ui/States';
 import { errorText } from '../lib/forms';
 import { useAsync } from '../lib/useAsync';
 import { useContextPanel } from '../state/AppState';
+import { safeHref } from '../lib/safeUrl';
 
 const panel = (
   <div className="space-y-2 text-steel-300">
@@ -70,7 +71,7 @@ function DataTableCard({ t }: { t: LessonTable }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-steel-400">Fonte: {t.source_url ? <a href={t.source_url} target="_blank" rel="noreferrer noopener" className="text-gold-300 hover:underline">{t.source}</a> : t.source}</p>
+      <p className="mt-3 text-xs text-steel-400">Fonte: {t.source_url ? <a href={safeHref(t.source_url)} target="_blank" rel="noreferrer noopener" className="text-gold-300 hover:underline">{t.source}</a> : t.source}</p>
       {t.notes && <p className="mt-1 text-xs text-steel-500">{t.notes}</p>}
       <a href={href} download={file} className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-ink-700 px-3 py-1.5 text-sm text-paper hover:border-gold-500"><Download className="size-4" aria-hidden /> Scarica CSV</a>
       <LicenseBox ids={[t.license_id]} />
@@ -158,7 +159,7 @@ export function LessonDetailPage() {
                 <li key={g.what} className="rounded-md border border-ink-700 bg-ink-850 p-3">
                   <p className="font-medium text-paper">{g.what}</p>
                   <p className="text-steel-400">Dove: {g.where}</p>
-                  {g.url && <a href={g.url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-xs text-gold-300 hover:underline">{g.url.replace(/^https?:\/\//, '')} <ExternalLink className="size-3" aria-hidden /></a>}
+                  {g.url && <a href={safeHref(g.url)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-xs text-gold-300 hover:underline">{g.url.replace(/^https?:\/\//, '')} <ExternalLink className="size-3" aria-hidden /></a>}
                 </li>
               ))}
             </ul>

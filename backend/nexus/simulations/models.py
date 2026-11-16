@@ -58,22 +58,44 @@ def _fan(paths: np.ndarray, times: list) -> list[dict]:
 # --- Monte Carlo -----------------------------------------------------------------------
 
 
+def _limits(limits):
+    from .engine import DEFAULT
+
+    return limits or DEFAULT
+
+
+def _check(lim, n_paths: int, steps: int, years: float) -> None:
+    from .engine import LimitError
+
+    try:
+        lim.check(n_paths, steps, years)
+    except LimitError as exc:
+        raise SimulationError(str(exc)) from exc
+
+
+def _compute_note(col, n_paths: int, steps: int) -> dict:
+    return {"blocks": col.blocks, "computed_values": n_paths * steps, "stored_values": int(col.on_grid.size),
+            "note": f"Calcolo a {col.blocks} blocchi: in memoria solo {len(col.idx)} punti per traiettoria (griglia del grafico) invece di {steps + 1}."}
+
+
 def monte_carlo_gbm(s0: float, mu: float, sigma: float, years: float, steps_per_year: int, n_paths: int, seed: int,
-                    threshold: float | None = None) -> SimulationResult:
+                    threshold: float | None = None, limits=None) -> SimulationResult:
+    from . import engine
+
     if s0 <= 0 or sigma < 0 or years <= 0:
         raise SimulationError("Valore iniziale > 0, volatilità ≥ 0 e orizzonte > 0 sono obbligatori.")
-    rng = np.random.default_rng(seed)
+    lim = _limits(limits)
     n = int(round(years * steps_per_year))
+    _check(lim, n_paths, n, years)
     dt = 1 / steps_per_year
-    z = rng.standard_normal((n_paths, n))
-    log_inc = (mu - 0.5 * sigma**2) * dt + sigma * math.sqrt(dt) * z
-    paths = s0 * np.exp(np.concatenate([np.zeros((n_paths, 1)), np.cumsum(log_inc, axis=1)], axis=1))
-    final = paths[:, -1]
+    col = engine.gbm(s0, mu, sigma, n, dt, n_paths, np.random.default_rng(seed), lim)
+    final = col.final
     res = {
-        "fan": _fan(paths, [_r(i * dt, 4) for i in range(n + 1)]),
+        "fan": engine.fan(col, [_r(i * dt, 4) for i in range(n + 1)]),
         "final": {"mean": _r(final.mean()), "median": _r(np.median(final)), **{f"p{p}": _r(np.percentile(final, p)) for p in PERCENTILES},
                   "analytic_mean": _r(s0 * math.exp(mu * years))},
-        "sample_paths": [[_r(v, 4) for v in p[:: max(1, n // 120)]] for p in paths[:10]],
+        "sample_paths": [[_r(v, 4) for v in p] for p in col.samples],
+        "computation": _compute_note(col, n_paths, n),
     }
     if threshold is not None:
         res["final"]["prob_below_threshold"] = _r((final < threshold).mean())
@@ -83,7 +105,7 @@ def monte_carlo_gbm(s0: float, mu: float, sigma: float, years: float, steps_per_
                     "Nessun salto, nessun cambio di regime, nessuna correlazione seriale"],
         variables={"S(t)": "valore simulato", "μ": "drift annuo", "σ": "volatilità annua"},
         parameters={"s0": s0, "mu": mu, "sigma": sigma, "years": years, "steps_per_year": steps_per_year, "n_paths": n_paths, "seed": seed, "threshold": threshold},
-        method="S(t+Δt) = S(t)·exp((μ − σ²/2)Δt + σ√Δt·Z), Z ~ N(0,1); percentili empirici sulle traiettorie",
+        method="S(t+Δt) = S(t)·exp((μ − σ²/2)Δt + σ√Δt·Z), Z ~ N(0,1); percentili empirici sulle traiettorie, calcolate a blocchi",
         data_used=["Nessun dato storico: parametri inseriti dall'utente"], results=res,
         limitations=["Le code reali dei mercati sono più spesse della normale", "Parametri stimati dal passato non garantiscono il futuro",
                      f"Errore Monte Carlo: con {n_paths} traiettorie i percentili estremi sono instabili"],
@@ -91,34 +113,31 @@ def monte_carlo_gbm(s0: float, mu: float, sigma: float, years: float, steps_per_
 
 
 def monte_carlo_bootstrap(series_name: str, dates: list[str], values: list[float], ppy: int, years: float, n_paths: int,
-                          block: int, seed: int) -> SimulationResult:
+                          block: int, seed: int, limits=None) -> SimulationResult:
+    from . import engine
+
     v = np.array(values, dtype=float)
     if len(v) < 24 or (v <= 0).any():
         raise SimulationError("Il bootstrap richiede almeno 24 valori positivi (prezzi o indici).")
+    lim = _limits(limits)
     rets = np.diff(np.log(v))
-    rng = np.random.default_rng(seed)
     n = int(round(years * ppy))
+    _check(lim, n_paths, n, years)
     block = max(1, min(block, len(rets)))
-    paths = np.empty((n_paths, n))
-    for k in range(n_paths):
-        out = []
-        while len(out) < n:
-            start = rng.integers(0, len(rets) - block + 1)
-            out.extend(rets[start : start + block])
-        paths[k] = out[:n]
     s0 = v[-1]
-    levels = s0 * np.exp(np.concatenate([np.zeros((n_paths, 1)), np.cumsum(paths, axis=1)], axis=1))
-    final = levels[:, -1]
+    col = engine.bootstrap(s0, rets, n, block, n_paths, np.random.default_rng(seed), lim)
+    final = col.final
     return SimulationResult(
         kind="monte_carlo_bootstrap", title=f"Monte Carlo bootstrap — {series_name}",
         hypotheses=["Il futuro ricampiona blocchi di rendimenti storici osservati", "La distribuzione storica è rappresentativa"],
         variables={"r": "rendimento logaritmico per periodo"},
         parameters={"years": years, "n_paths": n_paths, "block": block, "seed": seed, "periods_per_year": ppy},
-        method="Block bootstrap dei rendimenti logaritmici storici (blocchi contigui per preservare parte dell'autocorrelazione)",
+        method="Block bootstrap dei rendimenti logaritmici storici (blocchi contigui per preservare parte dell'autocorrelazione), traiettorie calcolate a blocchi",
         data_used=[f"{series_name}: {len(v)} osservazioni dal {dates[0]} al {dates[-1]}"],
-        results={"fan": _fan(levels, [_r(i / ppy, 4) for i in range(n + 1)]),
+        results={"fan": engine.fan(col, [_r(i / ppy, 4) for i in range(n + 1)]),
                  "final": {"start": _r(s0), "mean": _r(final.mean()), **{f"p{p}": _r(np.percentile(final, p)) for p in PERCENTILES}},
-                 "historical": {"mean_log_return": _r(rets.mean()), "std_log_return": _r(rets.std(ddof=1)), "n_returns": len(rets)}},
+                 "historical": {"mean_log_return": _r(rets.mean()), "std_log_return": _r(rets.std(ddof=1)), "n_returns": len(rets)},
+                 "computation": _compute_note(col, n_paths, n)},
         limitations=["Non può generare eventi più estremi di quelli già osservati", "Ignora cambi strutturali successivi al campione",
                      "I dati sono la versione attuale della serie (possibili revisioni)"],
     )
@@ -139,7 +158,7 @@ def debt_path(d0: float, r: list[float], g: list[float], pb: list[float]) -> lis
 
 def debt_dynamics(d0: float, r_eff0: float, r_market: float, avg_maturity: float, g: float, pb: float, years: int,
                   rate_shock: float = 0.0, shock_start: int = 1, crisis: dict | None = None, stochastic: dict | None = None,
-                  seed: int = 0, counterfactual: bool = False) -> SimulationResult:
+                  seed: int = 0, counterfactual: bool = False, limits=None) -> SimulationResult:
     if years < 1 or years > 100:
         raise SimulationError("Orizzonte tra 1 e 100 anni.")
     if avg_maturity <= 0:
@@ -171,17 +190,18 @@ def debt_dynamics(d0: float, r_eff0: float, r_market: float, avg_maturity: float
     stable_pb = d0 * (r_market - g) / (1 + g)
     res["debt_stabilizing_primary_balance"] = _r(stable_pb, 4)
     if stochastic:
-        rng = np.random.default_rng(seed)
+        from . import engine
+
+        lim = _limits(limits)
         n = int(stochastic.get("n_paths", 2000))
+        _check(lim, n, years, years)
         sd_r, sd_g, rho = stochastic.get("sd_r", 0.01), stochastic.get("sd_g", 0.02), stochastic.get("corr", 0.0)
         cov = [[sd_r**2, rho * sd_r * sd_g], [rho * sd_r * sd_g, sd_g**2]]
-        paths = np.empty((n, years + 1))
         eff = np.array(base["effective_rate"], dtype=float)
-        for k in range(n):
-            shocks = rng.multivariate_normal([0, 0], cov, size=years)
-            paths[k] = debt_path(d0, list(eff + shocks[:, 0]), list(g + shocks[:, 1]), [pb] * years)
-        res["fan"] = _fan(paths, list(range(years + 1)))
-        res["prob_final_above_start"] = _r((paths[:, -1] > d0).mean())
+        col = engine.debt_paths(d0, eff, g, pb, cov, n, np.random.default_rng(seed), lim)
+        res["fan"] = engine.fan(col, list(range(years + 1)))
+        res["prob_final_above_start"] = _r((col.final > d0).mean())
+        res["computation"] = _compute_note(col, n, years)
     return SimulationResult(
         kind="debt", title="Dinamica del debito pubblico",
         hypotheses=["Debito e saldo primario in % del PIL", "Il costo medio del debito converge al tasso di mercato al ritmo 1/vita media",
@@ -435,6 +455,10 @@ def scenario_projection(name: str, unit: str, base_value: float, base_year: int,
         hypotheses=hyp, variables={"V0": "valore di partenza", "g": "crescita annua composta dello scenario", "t": "anni dal punto di partenza"},
         parameters={"base_value": base_value, "base_year": base_year, "horizon": horizon, "scenarios": scenarios, "uncertainty": uncertainty, "unit": unit},
         method="V(t) = V0 · (1+g)^t" + ("; banda: V(t) · exp(±1,645 · σ · √t)" if uncertainty > 0 else ""),
-        data_used=data_used, results={"years": years, "paths": paths, "summary": rows, "history": history, "unit": unit},
+        data_used=data_used, results={"years": years, "paths": paths, "summary": rows, "history": history, "unit": unit,
+                                      "comparison": [{"scenario": r["scenario"], "end_value": r["end_value"],
+                                                      "delta_vs_reference": _r(r["end_value"] - rows[0]["end_value"], 4),
+                                                      "pct_vs_reference": _r(r["end_value"] / rows[0]["end_value"] - 1, 4) if rows[0]["end_value"] else None}
+                                                     for r in rows], "reference": rows[0]["scenario"]},
         limitations=lim,
     )

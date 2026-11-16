@@ -152,4 +152,16 @@ class Worker:
                     pass
             except Exception:  # noqa: BLE001 - il worker non deve mai fermarsi
                 logger.exception("Errore nel worker della coda delle ricerche")
+            try:
+                self._periodic()
+            except Exception:  # noqa: BLE001
+                logger.exception("Errore nel controllo periodico di integrità dei file")
             self._stop.wait(self.interval)
+
+    def _periodic(self) -> None:
+        """Controllo di integrità dei file ogni `integrity_interval_hours` ore (registrato in system_checks)."""
+        from . import filesafety
+
+        with self.database.session_factory() as db:
+            if filesafety.due(db, self.settings):
+                filesafety.run_check(db, self.settings, "scheduled")

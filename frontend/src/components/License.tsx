@@ -5,6 +5,7 @@ import type { LicenseEntry, LicenseRegistry, Permission } from '../api/types';
 import { useAsync } from '../lib/useAsync';
 import { lang as currentLang } from '../i18n';
 import { Badge, type BadgeTone } from './ui/Badge';
+import { safeHref } from '../lib/safeUrl';
 
 /** NEXUS Copyright & Data Policy: riquadro della licenza di un elemento (serie, documento, evento). */
 
@@ -35,7 +36,7 @@ export function LicenseFacts({ e }: { e: LicenseEntry }) {
   return (
     <dl className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-[11rem_1fr]">
       <dt className="text-steel-500">Licenza</dt>
-      <dd className="text-paper"><a href={e.license_url} target="_blank" rel="noreferrer noopener" className="hover:underline">{e.license}</a></dd>
+      <dd className="text-paper"><a href={safeHref(e.license_url)} target="_blank" rel="noreferrer noopener" className="hover:underline">{e.license}</a></dd>
       <dt className="text-steel-500">Attribuzione obbligatoria</dt>
       <dd className="text-steel-300">{e.attribution}</dd>
       <dt className="text-steel-500">Uso commerciale</dt>
@@ -48,7 +49,7 @@ export function LicenseFacts({ e }: { e: LicenseEntry }) {
       <dd className="text-steel-300">{e.modifications}</dd>
       <dt className="text-steel-500">Condizioni verificate il</dt>
       <dd className="text-steel-300">
-        {e.verified_on} · <a href={e.terms_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">pagina ufficiale <ExternalLink className="size-3" aria-hidden /></a>
+        {e.verified_on} · <a href={safeHref(e.terms_url)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold-300 hover:underline">pagina ufficiale <ExternalLink className="size-3" aria-hidden /></a>
         {e.status === 'per_item' && <span className="ml-2 text-warn">da verificare serie per serie</span>}
       </dd>
     </dl>

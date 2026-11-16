@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import JSON, ForeignKey, Integer, String, Text
+from datetime import datetime
+
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..database.base import Base, TimestampMixin
+from ..database.base import Base, TimestampMixin, utcnow
 
 # Struttura obbligatoria del rapporto (il titolo è un campo del rapporto, la bibliografia è generata).
 STANDARD_SECTIONS = (
@@ -30,6 +32,8 @@ class Report(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)  # draft | approved
     # Fonti aggiunte esplicitamente alla bibliografia, oltre a quelle citate nel testo.
     source_ids: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    # Fonti della bibliografia lette ma non citate nel testo: compaiono come «consultate».
+    consulted_ids: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
     origin: Mapped[str] = mapped_column(String(40), default="manual", nullable=False)  # manual | research_run:<id>
     contains_ai_text: Mapped[bool] = mapped_column(default=False, nullable=False)
     # Stile delle citazioni nell'export: numeric [1, p. 5] | footnotes (note a piè di pagina) | author_date (Autore anno, p. 5)
@@ -51,6 +55,22 @@ class ReportSection(Base):
     body: Mapped[str] = mapped_column(Text, default="", nullable=False)
     # Grafici e tabelle: [{"type": "series", "series_id": 1, "caption": ""}, {"type": "simulation", ...}, {"type": "table", "columns": [...], "rows": [[...]]}]
     embeds: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+
+
+class ReportSectionVersion(Base):
+    """Versione precedente di una sezione, salvata a ogni modifica (cronologia e ripristino)."""
+
+    __tablename__ = "report_section_versions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(ForeignKey("reports.id", ondelete="CASCADE"), index=True, nullable=False)
+    section_id: Mapped[int] = mapped_column(ForeignKey("report_sections.id", ondelete="CASCADE"), index=True, nullable=False)
+    author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    embeds: Mapped[list] = mapped_column(JSON, nullable=False)
+    reason: Mapped[str] = mapped_column(String(40), default="edit", server_default="edit", nullable=False)  # edit | quote | restore
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
 class Note(TimestampMixin, Base):

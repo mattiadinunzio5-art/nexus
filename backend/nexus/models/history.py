@@ -87,3 +87,8 @@ class KnowledgeItem(TimestampMixin, Base):
     known_since_year: Mapped[int] = mapped_column(Integer, nullable=False)
     kind: Mapped[str] = mapped_column(String(20), default="contemporary", nullable=False)
     source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id", ondelete="SET NULL"), nullable=True)
+    # Tre date distinte (AAAA, AAAA-MM o AAAA-MM-GG): il fatto a cui si riferisce l'informazione, la pubblicazione
+    # del dato o del documento, il momento in cui è diventata disponibile (di solito = pubblicazione; anno = known_since_year).
+    refers_to: Mapped[str] = mapped_column(String(10), default="", server_default="", nullable=False)
+    published_on: Mapped[str] = mapped_column(String(10), default="", server_default="", nullable=False)
+    available_on: Mapped[str] = mapped_column(String(10), default="", server_default="", nullable=False)

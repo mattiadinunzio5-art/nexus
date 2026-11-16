@@ -48,6 +48,21 @@ class LocalStorage:
         if p.is_file():
             p.unlink()
 
+    def stat(self, key: str) -> int | None:
+        """Dimensione in byte, o None se il file non esiste."""
+        p = self._path(key)
+        return p.stat().st_size if p.is_file() else None
+
+    def copy(self, src: str, dst: str) -> None:
+        self.put(dst, self.get(src))
+
+    def list(self, prefix: str) -> dict[str, int]:
+        """Tutti i file sotto il prefisso (ricorsivo): chiave → dimensione."""
+        base = self._path(prefix)
+        if not base.is_dir():
+            return {}
+        return {p.relative_to(self.root).as_posix(): p.stat().st_size for p in base.rglob("*") if p.is_file()}
+
 
 class SupabaseStorage:
     def __init__(self, url: str, service_key: str, bucket: str, client: httpx.Client | None = None):
@@ -91,7 +106,62 @@ class SupabaseStorage:
 
     def delete(self, key: str) -> None:
         self._ensure_bucket()
-        self.http.request("DELETE", f"{self.base}/object/{self.bucket}", headers=self.headers, json={"prefixes": [key]})
+        try:
+            r = self.http.request("DELETE", f"{self.base}/object/{self.bucket}", headers=self.headers, json={"prefixes": [key]})
+        except httpx.HTTPError as exc:
+            raise StorageError("Spazio documenti non raggiungibile: riprova tra poco.") from exc
+        if r.status_code not in (200, 204):
+            raise StorageError(f"Cancellazione del file non riuscita (HTTP {r.status_code}).")
+
+    def _list_dir(self, prefix: str, search: str = "") -> list[dict]:
+        self._ensure_bucket()
+        out, offset = [], 0
+        while True:
+            body = {"prefix": prefix, "limit": 1000, "offset": offset, "sortBy": {"column": "name", "order": "asc"}}
+            if search:
+                body["search"] = search
+            try:
+                r = self.http.post(f"{self.base}/object/list/{self.bucket}", headers=self.headers, json=body)
+            except httpx.HTTPError as exc:
+                raise StorageError("Spazio documenti non raggiungibile: riprova tra poco.") from exc
+            if r.status_code != 200:
+                raise StorageError(f"Elenco dei file non riuscito (HTTP {r.status_code}).")
+            page = r.json()
+            out += page
+            if len(page) < 1000:
+                return out
+            offset += 1000
+
+    def stat(self, key: str) -> int | None:
+        folder, _, name = key.rpartition("/")
+        for o in self._list_dir(folder, name):
+            if o.get("name") == name and o.get("id") is not None:
+                return int((o.get("metadata") or {}).get("size") or 0)
+        return None
+
+    def copy(self, src: str, dst: str) -> None:
+        self._ensure_bucket()
+        try:
+            r = self.http.post(f"{self.base}/object/copy", headers=self.headers,
+                               json={"bucketId": self.bucket, "sourceKey": src, "destinationKey": dst})
+        except httpx.HTTPError as exc:
+            raise StorageError("Spazio documenti non raggiungibile: riprova tra poco.") from exc
+        if r.status_code not in (200, 201):
+            raise StorageError(f"Copia del file non riuscita (HTTP {r.status_code}).")
+
+    def list(self, prefix: str) -> dict[str, int]:
+        """Elenco ricorsivo (le «cartelle» di Supabase hanno id nullo)."""
+        out: dict[str, int] = {}
+        stack = [prefix.rstrip("/")]
+        while stack:
+            folder = stack.pop()
+            for o in self._list_dir(folder):
+                key = f"{folder}/{o['name']}" if folder else o["name"]
+                if o.get("id") is None:
+                    stack.append(key)
+                else:
+                    out[key] = int((o.get("metadata") or {}).get("size") or 0)
+        return out
 
 
 _cache: dict[tuple, object] = {}

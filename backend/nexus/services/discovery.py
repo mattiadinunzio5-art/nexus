@@ -187,8 +187,16 @@ def connection_out(c: DiscoveryConnection) -> dict:
 
 
 def hypothesis_out(h: DiscoveryHypothesis) -> dict:
-    return _cols(h, ["id", "session_id", "connection_id", "title", "description", "phenomena", "motivation", "supporting", "contrary", "missing",
-                     "method", "confidence", "status", "archived", "verification", "decision_note", "decided_at", "origin", "graph_entity_id", "created_at"])
+    from sqlalchemy.orm import object_session
+
+    out = _cols(h, ["id", "session_id", "connection_id", "title", "description", "phenomena", "motivation", "supporting", "contrary", "missing",
+                    "method", "confidence", "status", "archived", "verification", "decision_note", "decided_at", "origin", "graph_entity_id", "created_at"])
+    sess = object_session(h)
+    c = sess.get(DiscoveryConnection, h.connection_id) if sess is not None and h.connection_id else None
+    out["evidence_level"] = hy.evidence_level(c.kind if c else None, h.status, h.verification)
+    last = next((v for v in reversed(h.verification or []) if v.get("checks")), None)
+    out["can_confirm"] = bool(last and hy.can_confirm(last["checks"]))
+    return out
 
 
 def anomaly_out(a: DiscoveryAnomaly) -> dict:
@@ -308,12 +316,39 @@ def decide_hypothesis(db: Session, user: User, hid: int, status: str, note: str)
             raise ValidationFailedError("Motiva la decisione: indica su quali evidenze ti basi.")
         if not h.verification and status == "confirmed":
             raise ValidationFailedError("Esegui almeno una verifica prima di confermare un'ipotesi.")
+        if status == "confirmed" and not hy.can_confirm(h.verification[-1].get("checks", [])):
+            # Mai «confermata» per la sola correlazione o con un solo elemento a favore.
+            raise ValidationFailedError("Non si può confermare: servono almeno due controlli a favore, di cui uno documentario "
+                                        "(passaggi nei documenti, fonti indipendenti o relazioni con fonte). Una correlazione da sola non basta: "
+                                        "scegli «inconcludente» oppure aggiungi fonti e ripeti la verifica.")
         h.decided_at = utcnow()
     else:
         h.decided_at = None
     h.status, h.decision_note = status, note.strip()[:5000]
     activity.record(db, user=user, actor="user", action="discovery.hypothesis_decide", entity_type="discovery_hypothesis", entity_id=h.id,
                     summary=f"Ipotesi «{h.title[:80]}»: {status}")
+    db.commit()
+    db.refresh(h)
+    return h
+
+
+EDITABLE = ("title", "description", "supporting", "contrary", "missing", "method")
+
+
+def update_hypothesis(db: Session, user: User, hid: int, changes: dict) -> DiscoveryHypothesis:
+    """L'utente può riformulare l'ipotesi. Una modifica sostanziale annulla l'esito: va verificata di nuovo."""
+    h = _own(db, user, DiscoveryHypothesis, hid, "Ipotesi")
+    changed = [k for k in EDITABLE if k in changes and changes[k] is not None and changes[k] != getattr(h, k)]
+    if not changed:
+        return h
+    for k in changed:
+        setattr(h, k, changes[k])
+    h.verification = [*h.verification, {"at": utcnow().isoformat(), "edited": changed, "checks": [], "suggested": "to_verify"}][-10:]
+    if h.status in ("confirmed", "rejected", "inconclusive", "verifying"):
+        h.status, h.decided_at = "to_verify", None
+    h.origin = "user" if h.origin == "user" else h.origin
+    activity.record(db, user=user, actor="user", action="discovery.hypothesis_edit", entity_type="discovery_hypothesis", entity_id=h.id,
+                    summary=f"Ipotesi «{h.title[:80]}» modificata ({', '.join(changed)})")
     db.commit()
     db.refresh(h)
     return h

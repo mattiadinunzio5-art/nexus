@@ -162,7 +162,17 @@ export interface Dashboard {
 
 // --- Fase 2: Research Core ---------------------------------------------------
 
-export type VerificationStatus = 'unverified' | 'verified_user' | 'verified_registry' | 'not_found';
+export type VerificationStatus = 'unverified' | 'verified_user' | 'verified_registry' | 'registry_mismatch' | 'registry_incomplete' | 'not_found';
+
+export type FieldCheck = { status: 'match' | 'mismatch' | 'missing_local' | 'missing_registry'; local: unknown; registry: unknown; label: string };
+export interface VerificationDetails {
+  registry: string;
+  registry_url: string;
+  checked_at: string;
+  doi_exists: boolean;
+  fields: Record<string, FieldCheck>;
+  registry_metadata?: { title?: string; authors?: string[]; year?: number | null; container?: string; url?: string; licenses?: string[] };
+}
 
 export interface Source {
   id: number;
@@ -178,9 +188,14 @@ export interface Source {
   url: string;
   accessed_at: string;
   notes: string;
+  license?: string;
+  provenance?: string;
+  /** Fonte primaria (documento d'epoca, dato originale) o secondaria; '' = non indicato. */
+  evidence_class?: '' | 'primary' | 'secondary';
   verification_status: VerificationStatus;
   verification_note: string;
   verified_at: string | null;
+  verification_details?: VerificationDetails | null;
   is_demo: boolean;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
@@ -188,7 +203,7 @@ export interface Source {
   created_at: string;
 }
 
-export type SourceInput = Omit<Source, 'id' | 'verification_status' | 'verification_note' | 'verified_at' | 'is_demo' | 'citation' | 'created_at'>;
+export type SourceInput = Omit<Source, 'id' | 'verification_status' | 'verification_note' | 'verified_at' | 'verification_details' | 'is_demo' | 'citation' | 'created_at'>;
 
 export interface DocumentInfo {
   id: number;
@@ -319,6 +334,12 @@ export interface KnowledgeItem {
   known_since_year: number;
   kind: keyof typeof KNOWLEDGE_KINDS;
   source_id: number | null;
+  /** Data del fatto, della pubblicazione e della disponibilità (AAAA, AAAA-MM o AAAA-MM-GG). */
+  refers_to?: string;
+  published_on?: string;
+  available_on?: string;
+  source_citation?: string;
+  availability?: 'then' | 'later' | 'not_applicable';
 }
 
 export interface EventInput {
@@ -376,15 +397,24 @@ export interface TimelineEvent {
   is_demo: boolean;
   /** Biblioteca NEXUS (sola lettura). */
   library?: boolean;
+  sources?: { source_id: number; citation: string; year: number | null; pages: string; evidence_class: string; published_after: boolean }[];
+  date_precision?: 'day' | 'month' | 'year';
+}
+
+export interface Completeness {
+  score: number; level: 'high' | 'medium' | 'low'; method: string; gaps: string[];
+  components: { key: string; label: string; ok: number; total: number; ratio: number | null }[];
 }
 
 export interface Timeline {
   as_of_year: number | null;
   hindsight: boolean;
   events: TimelineEvent[];
-  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string; retrospective?: boolean }[];
+  indicators: { series_id: number; name: string; unit: string; source: string; last_date: string; last_value: number; caveat: string; retrospective?: boolean;
+    published?: number | null; retrieved_at?: string | null; availability?: 'available' | 'retrospective' | 'unknown' }[];
   hidden_future_events: number;
   notes: string[];
+  completeness?: Completeness | null;
 }
 
 export const ENTITY_TYPES = {
@@ -657,13 +687,26 @@ export interface DocTable { caption: string; columns: string[]; rows: string[][]
 export interface ReportSection { id: number; ordinal: number; key: string; title: string; body: string; embeds: Embed[] }
 export interface Report {
   id: number; title: string; subtitle: string; author: string; status: 'draft' | 'approved'; project_id: number | null; source_ids: number[];
-  origin: string; contains_ai_text: boolean; citation_style: CitationStyle; template: ReportTemplate; created_at: string; updated_at: string; sections: ReportSection[];
+  consulted_ids?: number[]; origin: string; contains_ai_text: boolean; citation_style: CitationStyle; template: ReportTemplate; created_at: string; updated_at: string; sections: ReportSection[];
 }
 export interface ReportSummary { id: number; title: string; status: 'draft' | 'approved'; project_id: number | null; origin: string; updated_at: string }
 export interface ReportCheck {
   ready: boolean; checklist: CheckItem[]; empty_sections: string[]; invalid_citations: number[]; unverified_sources: { id: number; citation: string; status: string }[];
   cited_sources: number; bibliography_size: number; embed_problems: string[]; warnings: string[];
 }
+export type ClaimStatus = 'supported' | 'paragraph' | 'unsupported' | 'invalid_citation' | 'exempt';
+export interface TraceRef { source_id: number; locator: string; has_page: boolean; valid: boolean; evidence_class: '' | 'primary' | 'secondary' }
+export interface TraceClaim { paragraph: number; text: string; status: ClaimStatus; citations: TraceRef[] }
+export interface ReportTrace {
+  report_id: number;
+  summary: { claims: number; supported: number; paragraph: number; unsupported: number; invalid: number; exempt: number; with_page: number; citations: number;
+    primary_cited: number; secondary_cited: number; unclassified_cited: number; unused: number };
+  sections: { section_id: number; key: string; title: string; claims: TraceClaim[] }[];
+  bibliography: { source_id: number; number: number | null; citation: string; status: 'cited' | 'consulted' | 'unused'; evidence_class: string; verification_status: VerificationStatus; verified: boolean; locators: string[] }[];
+  invalid_citations: number[];
+  coherence: { section: string; kind: string; detail: string; sentence?: string }[];
+}
+export interface SectionVersion { id: number; created_at: string; reason: 'edit' | 'quote' | 'restore'; title: string; body: string; embeds: Embed[]; words: number; author: string }
 export interface NoteItem { id: number; title: string; body: string; project_id: number | null; source_id: number | null; document_id: number | null; created_at: string; updated_at: string }
 
 export interface BriefingItem { title: string; date?: string | null; source?: string; value?: number | null; unit?: string; flags?: string[]; url?: string; detail?: string; kind?: string; reason?: string; reliability?: string; previous?: { value: number; date: string } }
@@ -750,9 +793,14 @@ export interface DiscoveryHypothesis {
   id: number; session_id: number | null; connection_id: number | null; title: string; description: string; phenomena: string[];
   motivation: string; supporting: string[]; contrary: string[]; missing: string[]; method: string[]; confidence: DiscoveryLevel;
   library?: boolean;
-  status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string }[];
+  status: HypothesisStatus; archived: boolean; verification: { at: string; checks: VerificationCheck[]; suggested: string; edited?: string[] }[];
   decision_note: string; decided_at: string | null; origin: string; graph_entity_id: number | null; created_at: string;
+  /** Che cosa dimostra davvero: correlazione, associazione temporale, associazione, ipotesi, causalità documentata. */
+  evidence_level?: { level: 'correlation' | 'temporal_association' | 'association' | 'hypothesis' | 'causal'; label: string; explanation: string; basis: string; basis_label: string };
+  /** Almeno due controlli a favore, di cui uno documentario: solo allora si può confermare. */
+  can_confirm?: boolean;
 }
+export type HypothesisEdit = Partial<Pick<DiscoveryHypothesis, 'title' | 'description' | 'supporting' | 'contrary' | 'missing' | 'method'>>;
 
 export interface DiscoveryAnomaly {
   id: number; kind: string; title: string; what_changed: string; reference: string; period: string; data: Record<string, unknown>;
@@ -825,4 +873,13 @@ export interface DocumentProposals {
   events: (Anchored & { title: string; start_year: number; end_year: number | null; countries: string[]; description: string })[];
   entities: (Anchored & { name: string; entity_type: EntityType })[];
   relations: (Anchored & { source: string; target: string; relation_type: string })[];
+}
+
+// --- File: cestino e integrità -----------------------------------------------------------------------
+export interface TrashItem { id: number; document_id: number; title: string; filename: string; kind: string; size_bytes: number; deleted_at: string; purge_after: string; recoverable: boolean }
+export interface StorageCheck {
+  id: number; status: 'ok' | 'problems' | 'failed'; trigger: string; started_at: string; finished_at: string | null;
+  result: { documents?: number; files?: number; trash_items?: number; hash_checked?: number; problems?: number; error?: string;
+    missing_files?: { document_id: number; key: string }[]; size_mismatch?: { document_id: number; key: string }[]; hash_mismatch?: { document_id: number; key: string }[];
+    orphan_files?: { key: string; size: number }[]; trash_missing?: { trash_id: number; key: string }[]; expired_trash?: number[] };
 }
