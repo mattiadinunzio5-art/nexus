@@ -247,8 +247,8 @@ def format_citation(src) -> str:
 
 VERIFICATION_LABEL = {
     "unverified": "Fonte non verificata",
-    "verified_user": "Verificata dall'utente",
-    "verified_registry": "Verificata su registro esterno",
+    "verified_user": "Controllata dall'utente sull'originale",
+    "verified_registry": "Metadati confermati dal registro (contenuto non controllato)",
     "registry_mismatch": "DOI trovato ma metadati discordanti",
     "registry_incomplete": "DOI trovato, scheda incompleta",
     "not_found": "Identificativo non trovato nel registro",

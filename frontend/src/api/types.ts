@@ -883,3 +883,19 @@ export interface StorageCheck {
     missing_files?: { document_id: number; key: string }[]; size_mismatch?: { document_id: number; key: string }[]; hash_mismatch?: { document_id: number; key: string }[];
     orphan_files?: { key: string; size: number }[]; trash_missing?: { trash_id: number; key: string }[]; expired_trash?: number[] };
 }
+
+/** Valutazione di una fonte, dimensione per dimensione (Confidence System). */
+export interface SourceAssessment {
+  source_id: number;
+  authority: 'high' | 'medium' | 'low';
+  originality: 'primary' | 'secondary' | 'derived' | 'tertiary' | 'unknown';
+  identity: 'confirmed' | 'declared' | 'incomplete' | 'doubtful' | 'unchecked';
+  timing: string | null;
+  verified: boolean;
+  qualified: boolean;
+  doubtful: boolean;
+  aggregator: string | null;
+  year: number | null;
+  reasons: string[];
+  content_note: string;
+}

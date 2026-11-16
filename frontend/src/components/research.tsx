@@ -19,8 +19,8 @@ export const CLAIM: Record<ClaimType, { label: string; tone: BadgeTone }> = {
 
 export const VERIFICATION: Record<VerificationStatus, { label: string; tone: BadgeTone }> = {
   unverified: { label: 'Non verificata', tone: 'warn' },
-  verified_user: { label: "Verificata dall'utente", tone: 'ok' },
-  verified_registry: { label: 'Verificata su registro', tone: 'ok' },
+  verified_user: { label: "Controllata sull'originale", tone: 'ok' },
+  verified_registry: { label: 'Metadati confermati', tone: 'ok' },
   registry_mismatch: { label: 'DOI trovato, metadati discordanti', tone: 'bad' },
   registry_incomplete: { label: 'DOI trovato, scheda incompleta', tone: 'warn' },
   not_found: { label: 'Non trovata nel registro', tone: 'bad' },

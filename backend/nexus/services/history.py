@@ -45,7 +45,9 @@ def to_out(db: Session, e: HistoricalEvent, entity_id=_UNSET) -> EventOut:
     if not srcs:
         out.source_warning = "Nessuna fonte bibliografica collegata: le informazioni non sono verificabili."
     elif not any(s.verification_status in ("verified_user", "verified_registry") for s in srcs):
-        out.source_warning = "Le fonti collegate non sono ancora verificate."
+        out.source_warning = "Le fonti collegate non hanno identità accertata (né registro né controllo sull'originale)."
+    elif not any((x.pages or "").strip() for x in srcs):
+        out.source_warning = "Nessuna fonte indica la pagina: il sostegno dell'evento va letto nella fonte."
     return out
 
 

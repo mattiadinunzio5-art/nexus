@@ -28,6 +28,9 @@ describe('interfaccia in inglese', () => {
     _setLangForTests('en');
     expect(tr('Ambito:')).toBe('Scope:');
     expect(tr('Gratuito')).toBe('Free');
+    expect(tr('Indipendenza: 3 fonti utilizzabili in 1 gruppi indipendenti (alcune hanno un\'origine comune)')).toBe('Independence: 3 usable sources in 1 independent groups (some share an origin)');
+    expect(tr('Origine comune: «Libro 1» e «Libro 2»: autore in comune (Rossi, Mario)')).toBe('Common origin: “Libro 1” and “Libro 2”: shared author (Rossi, Mario)');
+    expect(tr('Metadati confermati')).toBe('Metadata confirmed');
     expect(tr(' · si cambia dalla barra in alto')).toBe(' · change it from the bar at the top');
     expect(tr('ultimo controllo 16/11/2026 (manuale)')).toBe('last check 16/11/2026 (manual)');
     expect(tr('1200 parole · 14 citazioni')).toBe('1200 words · 14 citations');
