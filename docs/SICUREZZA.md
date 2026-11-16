@@ -24,7 +24,7 @@ elenchi e ricerca, credenziali (mai restituite).
 
 Verifica nel browser: build di produzione servite con le intestazioni di `vercel.json`, 16 pagine dell'app e 3 del sito,
 zero violazioni CSP. **Da controllare dopo il primo deploy**: l'indirizzo reale dell'API nella variabile `VITE_API_URL`
-(la CSP ammette `https://nexus-api.onrender.com` e `https://*.onrender.com`; se l'API è altrove va aggiunta a `connect-src`).
+(la CSP ammette solo `https://nexus-api-7w2q.onrender.com`; se il server cambia indirizzo va aggiornato `connect-src` in `frontend/vercel.json`).
 Non è stato possibile leggere la configurazione Vercel: serve un'autorizzazione dell'account al team.
 
 ## XSS
