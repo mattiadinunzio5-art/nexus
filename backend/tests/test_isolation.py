@@ -266,7 +266,10 @@ def test_id_manipulation_in_request_bodies(world):
         ("POST", "/api/lab/simulations/monte_carlo_bootstrap", {"series_id": ids["series_id"], "years": 1}),
         ("POST", "/api/lab/simulations/scenarios", {"series_id": ids["series_id"], "scenarios": [{"name": "a", "growth": 0.01}]}),
         ("POST", "/api/lab/simulations/regression", {"y_series_id": ids["series_id"], "x_series_ids": [ids["series_id"]]}),
-        ("POST", "/api/discovery/transmission", {"series_ids": [ids["series_id"], ids["series_id"]]}),
+        ("POST", "/api/discovery/causal/transmission", {"series_ids": [ids["series_id"], ids["series_id"]]}),
+        ("POST", "/api/discovery/causal/chains", {"start": my_entity, "end": ids["entity_id"]}),
+        ("POST", "/api/discovery/causal/chains", {"start": ids["entity_id"], "end": my_entity}),
+        ("POST", "/api/discovery/foresight", {"variables": [{"series_id": ids["series_id"]}]}),
         ("POST", f"/api/projects/{my_project}/items", {"item_type": "document", "item_id": ids["document_id"]}),
         ("POST", f"/api/projects/{my_project}/items", {"item_type": "source", "item_id": ids["source_id"]}),
         ("POST", f"/api/projects/{my_project}/items", {"item_type": "series", "item_id": ids["series_id"]}),
@@ -279,6 +282,8 @@ def test_id_manipulation_in_request_bodies(world):
             r = d.post(url, files={"file": ("x.txt", b"ok")}, data={"project_id": str(ids["project_id"])})
         else:
             r = d.request(method, url, json=body)
+        if r.status_code == 405 or '"message":"Not Found"' in r.text:  # rotta inesistente: il controllo non verificherebbe nulla
+            leaks.append(f"ROTTA INESISTENTE {method} {url} → {r.status_code}")
         if r.status_code < 300 or SECRET in r.text:
             leaks.append(f"{method} {url} {body} → {r.status_code} {r.text[:150]}")
     # Un grafico con la serie di Anna nel proprio rapporto: accettato come dato, ma la verifica lo segnala e l'export non lo mostra.
