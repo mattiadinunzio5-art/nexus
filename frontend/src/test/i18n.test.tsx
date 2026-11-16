@@ -27,6 +27,7 @@ describe('interfaccia in inglese', () => {
   it('translates the texts added after phases 1-3', () => {
     _setLangForTests('en');
     expect(tr('Ambito:')).toBe('Scope:');
+    expect(tr('Gratuito')).toBe('Free');
     expect(tr(' · si cambia dalla barra in alto')).toBe(' · change it from the bar at the top');
     expect(tr('ultimo controllo 16/11/2026 (manuale)')).toBe('last check 16/11/2026 (manual)');
     expect(tr('1200 parole · 14 citazioni')).toBe('1200 words · 14 citations');
