@@ -18,6 +18,7 @@ import networkx as nx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..core import library
 from ..core.errors import NotFoundError, ValidationFailedError
 from ..models import Entity, Relation, Series, Source, User
 from ..research.citations import format_citation
@@ -57,46 +58,65 @@ def _evidence(db: Session, r: Relation) -> str:
 
 
 def chains(db: Session, user: User, start: int, end: int, max_depth: int = 5, limit: int = 12) -> dict:
-    ents = {e.id: e for e in db.scalars(select(Entity).where(Entity.owner_id == user.id))}
-    if start not in ents or end not in ents:
-        raise NotFoundError("Entità non trovata.")
+    """Catene tra due entità leggibili dall'utente (proprie o della Biblioteca NEXUS), sul grafo proprio + Biblioteca.
+
+    Mai dati di altri utenti. Le relazioni si caricano come tuple leggere e la ricerca dei percorsi si limita ai nodi
+    raggiungibili da «start» e che raggiungono «end» entro la profondità indicata (il grafo della Biblioteca è grande).
+    """
+    owners = library.visible_owner_ids(db, user)
+    for eid in (start, end):
+        e = db.get(Entity, eid)
+        if e is None or e.owner_id not in owners:
+            raise NotFoundError("Entità non trovata.")
     if start == end:
         raise ValidationFailedError("Scegli due entità diverse.")
-    rels = list(db.scalars(select(Relation).where(Relation.owner_id == user.id)))
+    rows = db.execute(select(Relation.id, Relation.source_entity_id, Relation.target_entity_id, Relation.relation_type, Relation.provenance)
+                      .where(Relation.owner_id.in_(owners), Relation.relation_type.not_in(("contemporary_of", "related_to", "opposed_to")))).all()
     g = nx.MultiDiGraph()
-    for r in rels:
-        if r.relation_type in ("contemporary_of", "related_to", "opposed_to"):
-            continue  # simmetriche o non orientate: non possono costruire una catena causa → effetto
-        u, v = _directed(r)
+    for r in rows:
+        u, v = _directed(r)  # simmetriche o non orientate escluse: non possono costruire una catena causa → effetto
         g.add_edge(u, v, key=r.id, rel=r)
+    names: dict[int, str] = {}
+
+    def name(eid: int) -> str:
+        if eid not in names:
+            e = db.get(Entity, eid)
+            names[eid] = e.name if e else "?"
+        return names[eid]
+
     paths = []
     if start in g and end in g:
-        for nodes in nx.all_simple_paths(nx.DiGraph(g), start, end, cutoff=max_depth):
-            links = []
-            for u, v in zip(nodes, nodes[1:]):
-                best = max((d["rel"] for d in g.get_edge_data(u, v).values()), key=lambda r: LINK_RANK[classify(r)])
-                k = classify(best)
-                alternatives = [ents[x].name for x, _, d in g.in_edges(v, data=True) if x != u and classify(d["rel"]) != "association"]
-                links.append({"from": ents[u].name, "to": ents[v].name, "relation_type": best.relation_type, "class": k,
-                              "label": LINK_LABEL[k], "evidence": _evidence(db, best), "relation_id": best.id,
-                              "alternatives": sorted(set(alternatives))[:5]})
-            weakest = min(links, key=lambda x: LINK_RANK[x["class"]])
-            paths.append({"nodes": [ents[n].name for n in nodes], "entity_ids": nodes, "links": links,
-                          "strength": weakest["class"], "strength_label": LINK_LABEL[weakest["class"]]})
-            if len(paths) >= 50:
-                break
+        fwd = nx.single_source_shortest_path_length(g, start, cutoff=max_depth)
+        back = nx.single_source_shortest_path_length(g.reverse(copy=False), end, cutoff=max_depth)
+        keep = {n for n in fwd if n in back and fwd[n] + back[n] <= max_depth}
+        sub = nx.DiGraph(g.subgraph(keep))
+        if start in sub and end in sub:
+            for nodes in nx.all_simple_paths(sub, start, end, cutoff=max_depth):
+                links = []
+                for u, v in zip(nodes, nodes[1:]):
+                    best = max(g.get_edge_data(u, v).values(), key=lambda d: LINK_RANK[classify(d["rel"])])["rel"]
+                    k = classify(best)
+                    alternatives = [name(x) for x, _, d in g.in_edges(v, data=True) if x != u and classify(d["rel"]) != "association"][:20]
+                    links.append({"from": name(u), "to": name(v), "relation_type": best.relation_type, "class": k,
+                                  "label": LINK_LABEL[k], "evidence": _evidence(db, db.get(Relation, best.id)), "relation_id": best.id,
+                                  "alternatives": sorted(set(alternatives))[:5]})
+                weakest = min(links, key=lambda x: LINK_RANK[x["class"]])
+                paths.append({"nodes": [name(n) for n in nodes], "entity_ids": nodes, "links": links,
+                              "strength": weakest["class"], "strength_label": LINK_LABEL[weakest["class"]]})
+                if len(paths) >= 50:
+                    break
     paths.sort(key=lambda p: (-LINK_RANK[p["strength"]], len(p["nodes"])))
     paths = paths[:limit]
     common = []
     if start in g and end in g:
-        anc_a, anc_b = nx.ancestors(g, start), nx.ancestors(g, end)
-        common = sorted(ents[x].name for x in anc_a & anc_b)
+        both = nx.ancestors(g, start) & nx.ancestors(g, end)
+        common = sorted(name(x) for x in list(both)[:200])
     notes = []
     if not paths:
         notes.append("Nessuna catena orientata collega le due entità nel grafo: mancano relazioni, oppure i collegamenti sono solo associazioni.")
     if any(p["strength"] != "causal_documented" for p in paths):
         notes.append("Le catene che contengono anelli ipotizzati o associazioni non dimostrano un rapporto causale.")
-    return {"start": ents[start].name, "end": ents[end].name, "paths": paths, "common_causes": common[:10], "notes": notes}
+    return {"start": name(start), "end": name(end), "paths": paths, "common_causes": common[:10], "notes": notes}
 
 
 # --- Catene di trasmissione tra serie -----------------------------------------------------------
@@ -119,13 +139,14 @@ TEMPLATES = [
 def transmission(db: Session, user: User, series_ids: list[int], labels: list[str] | None = None, max_lag: int = 4) -> dict:
     if len(series_ids) < 2 or len(series_ids) > 8:
         raise ValidationFailedError("Indica da 2 a 8 serie, nell'ordine della catena.")
+    owners = library.visible_owner_ids(db, user)  # serie proprie o della Biblioteca NEXUS (sola lettura), mai di altri utenti
     series = []
     for sid in series_ids:
         s = db.get(Series, sid)
-        if s is None or s.owner_id != user.id:
+        if s is None or s.owner_id not in owners:
             raise NotFoundError(f"Serie {sid} non trovata.")
         series.append(s)
-    ent_of = {e.series_id: e.id for e in db.scalars(select(Entity).where(Entity.owner_id == user.id, Entity.series_id.in_(series_ids)))}
+    ent_of = {e.series_id: e.id for e in db.scalars(select(Entity).where(Entity.owner_id.in_(owners), Entity.series_id.in_(series_ids)))}
     steps = []
     for i, (a, b) in enumerate(zip(series, series[1:])):
         fa, fb = series_frame(a), series_frame(b)
@@ -133,7 +154,7 @@ def transmission(db: Session, user: User, series_ids: list[int], labels: list[st
         documented = None
         if a.id in ent_of and b.id in ent_of:
             documented = db.scalar(select(Relation).where(
-                Relation.owner_id == user.id, Relation.provenance == "sourced", Relation.relation_type.in_(CAUSAL | INFLUENCE),
+                Relation.owner_id.in_(owners), Relation.provenance == "sourced", Relation.relation_type.in_(CAUSAL | INFLUENCE),
                 Relation.source_entity_id == ent_of[a.id], Relation.target_entity_id == ent_of[b.id]))
         if documented:
             cls = "causal_documented" if documented.relation_type in CAUSAL else "influence_documented"

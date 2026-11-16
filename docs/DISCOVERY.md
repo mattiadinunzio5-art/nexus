@@ -80,3 +80,46 @@ Nuove tabelle: `discovery_sessions`, `discovery_connections`, `discovery_hypothe
 Servizi esterni: nessuno obbligatorio. Un provider AI (Ollama, compatibile OpenAI o Anthropic) migliora
 l'interpretazione della domanda e la sintesi. Non esiste un'API di ricerca web: le evidenze vengono solo
 dall'archivio dell'utente (documenti, bibliografia, eventi, serie, grafo).
+
+## Archivio personale e Biblioteca NEXUS (verifica del 16 novembre 2026)
+
+La Biblioteca NEXUS (dati aperti condivisi) appartiene a un utente di sistema. Ogni utente la consulta accanto ai propri
+dati, ma non può modificarla; nessun utente vede o usa i dati di un altro.
+
+### Regole verificate, rotta per rotta
+
+| Rotte `/api/discovery/…` | Dati propri | Biblioteca | Dati di un altro utente |
+|---|---|---|---|
+| Elenchi `sessions`, `connections`, `hypotheses`, `anomalies` | `origin=mine` (predefinito) | `origin=library` | mai elencati; un altro valore di `origin` → 422 |
+| Dettaglio `sessions/{id}`, `connections/{id}`, `hypotheses/{id}` | leggibile | leggibile, con `library: true` | 404 (l'esistenza non viene rivelata) |
+| Azioni: stato e ipotesi da una connessione, verifica, esito, modifica, archiviazione, nodo nel grafo, anomalie, pausa/ripresa/arresto | consentite | 403 `read_only` | 404 |
+| `overview` | conteggi solo propri | riquadro separato, uguale per tutti | — |
+| Analisi `causal/chains`, `causal/transmission`, `foresight` | entità e serie utilizzabili | entità, relazioni e serie utilizzabili in sola lettura | 404 |
+| `analyses` (elenco, dettaglio, eliminazione) | solo le proprie | non esposte | 404 |
+
+Le sessioni di discovery analizzano l'archivio dell'utente; la discovery sulla Biblioteca è un'esecuzione separata, i cui
+risultati si consultano con `origin=library`. La verifica di un'ipotesi cerca passaggi nei documenti propri e della
+Biblioteca, e relazioni solo nel grafo dell'utente. I risultati delle analisi sono sempre salvati nell'archivio dell'utente.
+
+### Problemi trovati e correzioni
+
+1. **Biblioteca non consultabile nelle analisi.** In Causal Intelligence e Strategic Foresight i menu offrono anche
+   entità e serie della Biblioteca, ma il server le rifiutava («non trovata»). Ora catene causali, catene di trasmissione
+   e scenari accettano dati propri o della Biblioteca (mai di altri utenti) e usano anche le relazioni documentate della
+   Biblioteca. Le catene caricano le relazioni come tuple leggere e cercano i percorsi solo tra i nodi raggiungibili entro
+   la profondità indicata. Prova su un grafo grande quanto la Biblioteca (36.000 entità, 18.000 relazioni):
+   al massimo 0,47 s per richiesta e 18 MB di memoria di picco.
+2. **Controllo di isolamento che non verificava nulla.** Il test sugli ID altrui nei corpi delle richieste chiamava
+   `/api/discovery/transmission`, rotta inesistente: la risposta 404 lo faceva passare comunque. Corretto in
+   `/api/discovery/causal/transmission`, aggiunti catene causali e scenari, e il test ora fallisce se una rotta non esiste.
+
+Non sono stati trovati accessi incrociati né scritture possibili sulla Biblioteca.
+
+### Test
+
+- `tests/test_discovery_library.py` (nuovo, due utenti più la Biblioteca): consultazione della Biblioteca nelle tre
+  analisi senza modificarla; tutte le azioni sui risultati della Biblioteca rifiutate per entrambi gli utenti, con dati
+  identici prima e dopo; `origin=mine` e `origin=library` senza mescolanze; dettagli e azioni sui dati altrui → 404.
+  Sul codice precedente la correzione, il primo test fallisce (404 sulla catena della Biblioteca).
+- `tests/test_isolation.py`: rotta corretta e controllo delle rotte inesistenti.
+- Suite completa del server: 349 test superati.

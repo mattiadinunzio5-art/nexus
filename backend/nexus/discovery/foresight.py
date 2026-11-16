@@ -13,6 +13,7 @@ import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..core import library
 from ..core.errors import NotFoundError, ValidationFailedError
 from ..models import DiscoveryAnomaly, DiscoveryHypothesis, Entity, Relation, Series, User
 from .connections import series_frame
@@ -40,10 +41,11 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
         raise ValidationFailedError("Scegli da 1 a 6 variabili.")
     if not 0.25 <= horizon_years <= 10:
         raise ValidationFailedError("Orizzonte tra 3 mesi e 10 anni.")
+    owners = library.visible_owner_ids(db, user)  # serie proprie o della Biblioteca NEXUS (sola lettura), mai di altri utenti
     rows, excluded = [], []
     for var in variables:
         s = db.get(Series, var["series_id"])
-        if s is None or s.owner_id != user.id:
+        if s is None or s.owner_id not in owners:
             raise NotFoundError(f"Serie {var['series_id']} non trovata.")
         v = series_frame(s)
         if len(v) < MIN_OBS:
@@ -77,9 +79,9 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
             auto_triggers.append(f"Ipotesi da verificare: {h.title}")
     # Conseguenze documentate nel grafo a partire dagli indicatori.
     consequences = []
-    ent = {e.series_id: e for e in db.scalars(select(Entity).where(Entity.owner_id == user.id, Entity.series_id.in_(ids)))}
+    ent = {e.series_id: e for e in db.scalars(select(Entity).where(Entity.owner_id.in_(owners), Entity.series_id.in_(ids)))}
     for sid, e in ent.items():
-        for r in db.scalars(select(Relation).where(Relation.owner_id == user.id, Relation.source_entity_id == e.id,
+        for r in db.scalars(select(Relation).where(Relation.owner_id.in_(owners), Relation.source_entity_id == e.id,
                                                    Relation.relation_type.in_(("caused", "influenced")))):
             tgt = db.get(Entity, r.target_entity_id)
             consequences.append({"from": e.name, "to": tgt.name if tgt else "?", "relation": r.relation_type,
