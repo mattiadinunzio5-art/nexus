@@ -22,8 +22,27 @@ PPY = {"A": 1, "Q": 4, "M": 12, "W": 52, "D": 252}
 MIN_OBS = 20
 
 
-def bootstrap_changes(values: np.ndarray, n_steps: int, n_paths: int = 2000, block: int = 3, seed: int = 7) -> np.ndarray:
-    d = np.diff(values)
+N_PATHS, BLOCK, SEED = 2000, 3, 7
+
+
+def fingerprint(s: Series) -> str:
+    """Impronta dei dati usati (date e valori): due esecuzioni con la stessa impronta e gli stessi parametri danno lo stesso risultato."""
+    import hashlib
+
+    h = hashlib.sha256()
+    for o in sorted(s.observations, key=lambda o: o.date):
+        h.update(f"{o.date}={o.value!r};".encode())
+    return h.hexdigest()[:16]
+
+
+def bootstrap_changes(values: np.ndarray, n_steps: int, n_paths: int = N_PATHS, block: int = BLOCK, seed: int = SEED,
+                      changes: np.ndarray | None = None, multiplicative: bool = False) -> np.ndarray:
+    """Traiettorie dal bootstrap a blocchi delle variazioni storiche.
+
+    ``changes`` sono le variazioni tra periodi consecutivi (senza quelle a cavallo di buchi); se assenti si usano le
+    differenze dei valori. Con ``multiplicative`` le variazioni sono logaritmiche e i livelli = ultimo valore · exp(somma).
+    """
+    d = np.diff(values) if changes is None else np.asarray(changes, dtype=float)
     rng = np.random.default_rng(seed)
     block = max(1, min(block, len(d)))
     out = np.empty((n_paths, n_steps))
@@ -33,7 +52,8 @@ def bootstrap_changes(values: np.ndarray, n_steps: int, n_paths: int = 2000, blo
             s = rng.integers(0, len(d) - block + 1)
             buf.extend(d[s:s + block])
         out[k] = buf[:n_steps]
-    return values[-1] + np.cumsum(out, axis=1)
+    cum = np.cumsum(out, axis=1)
+    return values[-1] * np.exp(cum) if multiplicative else values[-1] + cum
 
 
 def scenarios(db: Session, user: User, variables: list[dict], horizon_years: float, triggers: list[str] | None = None) -> dict:
@@ -42,7 +62,9 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
     if not 0.25 <= horizon_years <= 10:
         raise ValidationFailedError("Orizzonte tra 3 mesi e 10 anni.")
     owners = library.visible_owner_ids(db, user)  # serie proprie o della Biblioteca NEXUS (sola lettura), mai di altri utenti
-    rows, excluded = [], []
+    from ..finance import analytics
+
+    rows, excluded, data_notes, used = [], [], [], {}
     for var in variables:
         s = db.get(Series, var["series_id"])
         if s is None or s.owner_id not in owners:
@@ -51,9 +73,21 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
         if len(v) < MIN_OBS:
             excluded.append(f"«{s.name}»: {len(v)} osservazioni, ne servono almeno {MIN_OBS}.")
             continue
+        # Serie positive che crescono di ordini di grandezza: variazioni percentuali (log), come nel resto della Discovery.
+        multiplicative = analytics.scale_free(v)
+        d, info = analytics.changes(v, s.frequency, "log" if multiplicative else "diff")
+        if len(d) < MIN_OBS - 1:
+            excluded.append(f"«{s.name}»: {len(d)} variazioni tra periodi consecutivi, ne servono almeno {MIN_OBS - 1}.")
+            continue
+        if note := analytics.gaps_note(s.name, info):
+            data_notes.append(note)
+        missing = sum(1 for o in s.observations if o.value is None)
+        if missing:
+            data_notes.append(f"«{s.name}»: {missing} osservazioni senza valore ignorate.")
+        used[s.id] = s
         ppy = PPY.get(s.frequency, 12)
         n = max(1, int(round(horizon_years * ppy)))
-        paths = bootstrap_changes(v.values.astype(float), n)
+        paths = bootstrap_changes(v.values.astype(float), n, changes=d.values, multiplicative=multiplicative)
         final = paths[:, -1]
         p10, p50, p90 = (float(np.percentile(final, q)) for q in (10, 50, 90))
         up_good = var.get("favorable", "up") == "up"
@@ -63,10 +97,12 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
                      "initial": {"date": v.index[-1].strftime("%Y-%m-%d"), "value": float(v.iloc[-1])},
                      "history": {"n": len(v), "from": v.index[0].strftime("%Y-%m-%d"), "to": v.index[-1].strftime("%Y-%m-%d")},
                      "optimistic": p90 if up_good else p10, "central": p50, "adverse": p10 if up_good else p90, "fan": fan,
-                     "source": s.source_label})
+                     "source": s.source_label, "changes": "percentuali (log)" if multiplicative else "assolute",
+                     "n_changes": len(d), "data_fingerprint": fingerprint(s)})
     if not rows:
         raise ValidationFailedError("Nessuna variabile ha dati sufficienti. " + " ".join(excluded))
     ids = [r["series_id"] for r in rows]
+    dependencies, inconsistent = _dependencies(rows, used)
     # Eventi scatenanti: anomalie aperte e ipotesi in corso che riguardano le variabili, più quelli indicati dall'utente.
     auto_triggers = []
     for a in db.scalars(select(DiscoveryAnomaly).where(DiscoveryAnomaly.owner_id == user.id, DiscoveryAnomaly.status == "open")):
@@ -107,12 +143,56 @@ def scenarios(db: Session, user: User, variables: list[dict], horizon_years: flo
         "triggers": (triggers or []) + auto_triggers,
         "consequences": consequences,
         "indicators_to_monitor": [{"series_id": r["series_id"], "name": r["name"], "adverse_threshold": r["adverse"], "optimistic_threshold": r["optimistic"]} for r in rows],
+        "dependencies": dependencies,
+        "data_notes": data_notes,
+        "reproducibility": {"seed": SEED, "n_paths": N_PATHS, "block": BLOCK, "generator": "numpy.random.default_rng (PCG64)",
+                            "numpy": np.__version__, "data": {r["name"]: r["data_fingerprint"] for r in rows}},
         "uncertainties": [
             "Il modello ricampiona variazioni già osservate: non può produrre shock più grandi di quelli presenti nella storia della serie.",
             "Le variabili sono simulate separatamente: le relazioni tra di loro non sono modellate, quindi gli estremi possono non verificarsi insieme.",
+            *inconsistent,
             "Cambi strutturali successivi al campione non sono considerati.",
             "I dati sono la versione attuale delle serie (possibili revisioni).",
         ],
         "method": "Bootstrap a blocchi (3 periodi) delle variazioni storiche, 2000 traiettorie, seme fisso 7 (risultati riproducibili).",
         "probability_note": "Le bande corrispondono ai percentili 10/50/90 del modello; agli scenari non sono attribuite altre probabilità.",
     }
+
+
+def _dependencies(rows: list[dict], used: dict[int, Series]) -> tuple[list[dict], list[str]]:
+    """Legami storici tra le variabili: correlazione delle variazioni nello stesso periodo (ritardo 0).
+
+    Il modello non li usa (simula ogni variabile da sola): servono a dire quando gli scenari ottimistico e avverso,
+    che combinano gli estremi favorevoli o sfavorevoli di tutte le variabili, uniscono valori che in passato tendevano
+    a NON verificarsi insieme. È una descrizione del passato, non un modello delle dipendenze.
+    """
+    from .connections import lagged_association, series_frame
+
+    out, warn = [], []
+    for i, a in enumerate(rows):
+        for b in rows[i + 1:]:
+            sa, sb = used[a["series_id"]], used[b["series_id"]]
+            try:
+                res = lagged_association(series_frame(sa), series_frame(sb), sa.frequency, sb.frequency, max_lag=0)
+            except Exception:  # noqa: BLE001 — frequenze non confrontabili o dati insufficienti: nessuna stima
+                res = None
+            if not res:
+                out.append({"a": a["name"], "b": b["name"], "r": None, "note": "Periodo comune insufficiente per stimare il legame."})
+                continue
+            same = (a["favorable"] == "up") == (b["favorable"] == "up")
+            significant = res["p"] <= 0.05
+            # Gli scenari estremi assumono che le due variabili vadano insieme nella direzione favorevole (o sfavorevole):
+            # co-movimento positivo se le direzioni favorevoli coincidono, negativo altrimenti.
+            conflict = significant and ((res["r"] > 0) != same)
+            row = {"a": a["name"], "b": b["name"], "r": round(res["r"], 3), "p": round(res["p"], 4), "n": res["n"], "freq": res["freq"],
+                   "gaps_excluded": res.get("gaps_excluded", 0), "significant": significant, "conflict": conflict}
+            if conflict:
+                row["note"] = ("In passato si sono mosse in senso opposto a quanto assumono gli scenari ottimistico e avverso: "
+                               "è improbabile che i loro estremi si verifichino insieme.")
+                warn.append(f"«{a['name']}» e «{b['name']}»: variazioni storicamente correlate (r = {res['r']:+.2f}, n = {res['n']}) "
+                            "in senso opposto a quello combinato negli scenari estremi, che quindi sono poco coerenti per questa coppia.")
+            else:
+                row["note"] = ("Legame storico compatibile con gli scenari estremi." if significant
+                               else "Nessun legame statisticamente significativo nel periodo comune.")
+            out.append(row)
+    return out, warn

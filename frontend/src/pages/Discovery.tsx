@@ -816,9 +816,19 @@ function ForesightView({ r }: { r: ForesightResult }) {
           })}</ul>
           {view}
         </Card>
+        {!!r.dependencies?.length && (
+          <Card title="Legami storici tra le variabili" className="lg:col-span-2">
+            <p className="mb-2 text-xs text-steel-500">Correlazione delle variazioni nello stesso periodo. Il modello simula ogni variabile da sola: questi legami servono a capire se gli estremi degli scenari possono verificarsi insieme.</p>
+            <ul className="space-y-1 text-sm text-steel-300" data-testid="foresight-dependencies">{r.dependencies.map((d) => (
+              <li key={`${d.a}|${d.b}`}>{d.a} ↔ {d.b}: {d.r === null ? '—' : <>r = {formatNumber(d.r, 2)}, n = {d.n}</>}{' '}
+                {d.conflict ? <Badge tone="warn">poco coerente con gli scenari estremi</Badge> : null}
+                <span className="block text-xs text-steel-500">{d.note}</span></li>))}</ul>
+          </Card>
+        )}
         <Card title="Incertezze e metodo" className="lg:col-span-2">
-          <List items={r.uncertainties} />
+          <List items={[...r.uncertainties, ...(r.data_notes ?? [])]} />
           <p className="mt-2 text-xs text-steel-500">{r.method} {r.probability_note}</p>
+          {r.reproducibility && <p className="mt-1 text-xs text-steel-500">{`Riproducibilità: seme ${r.reproducibility.seed}, ${r.reproducibility.n_paths} traiettorie, blocchi di ${r.reproducibility.block}, numpy ${r.reproducibility.numpy}; impronta dei dati: ${Object.entries(r.reproducibility.data).map(([k, v]) => `${k} ${v}`).join(' · ')}.`}</p>}
         </Card>
       </div>
     </div>

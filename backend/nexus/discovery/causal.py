@@ -46,6 +46,21 @@ def classify(r: Relation) -> str:
     return "association"
 
 
+ORIGIN_LABEL = {"sourced": "documentata da fonte", "user_hypothesis": "ipotesi dell'utente", "ai_hypothesis": "ipotesi generata dall'AI, da verificare"}
+WEAKER = {"causal_documented": "causal_hypothesized", "influence_documented": "influence_hypothesized"}
+
+
+def link_class(db: Session, r: Relation) -> tuple[str, str, str]:
+    """Classe dell'anello, origine e nota. Una relazione «con fonte» la cui fonte ha identità dubbia (DOI inesistente o
+    metadati discordanti) non conta come documentata: scende a ipotizzata, e la nota lo dice."""
+    from . import evidence
+
+    k, note = classify(r), ""
+    if k in WEAKER and r.source_id and (s := db.get(Source, r.source_id)) is not None and evidence.assess_source(s)["doubtful"]:
+        k, note = WEAKER[k], "fonte con identità dubbia (DOI non trovato o metadati discordanti): non conta come documentata"
+    return k, r.provenance, note
+
+
 def _directed(r: Relation) -> tuple[int, int]:
     """Direzione causa → effetto (consequence_of è espressa al contrario)."""
     return (r.target_entity_id, r.source_entity_id) if r.relation_type == "consequence_of" else (r.source_entity_id, r.target_entity_id)
@@ -95,10 +110,13 @@ def chains(db: Session, user: User, start: int, end: int, max_depth: int = 5, li
                 links = []
                 for u, v in zip(nodes, nodes[1:]):
                     best = max(g.get_edge_data(u, v).values(), key=lambda d: LINK_RANK[classify(d["rel"])])["rel"]
-                    k = classify(best)
+                    full = db.get(Relation, best.id)
+                    k, origin, caution = link_class(db, full)
                     alternatives = [name(x) for x, _, d in g.in_edges(v, data=True) if x != u and classify(d["rel"]) != "association"][:20]
                     links.append({"from": name(u), "to": name(v), "relation_type": best.relation_type, "class": k,
-                                  "label": LINK_LABEL[k], "evidence": _evidence(db, db.get(Relation, best.id)), "relation_id": best.id,
+                                  "label": LINK_LABEL[k] + ("" if origin == "sourced" else f" ({ORIGIN_LABEL.get(origin, origin)})"),
+                                  "origin": origin, "origin_label": ORIGIN_LABEL.get(origin, origin), "caution": caution,
+                                  "evidence": _evidence(db, full) + (f" — attenzione: {caution}" if caution else ""), "relation_id": best.id,
                                   "alternatives": sorted(set(alternatives))[:5]})
                 weakest = min(links, key=lambda x: LINK_RANK[x["class"]])
                 paths.append({"nodes": [name(n) for n in nodes], "entity_ids": nodes, "links": links,
@@ -116,6 +134,14 @@ def chains(db: Session, user: User, start: int, end: int, max_depth: int = 5, li
         notes.append("Nessuna catena orientata collega le due entità nel grafo: mancano relazioni, oppure i collegamenti sono solo associazioni.")
     if any(p["strength"] != "causal_documented" for p in paths):
         notes.append("Le catene che contengono anelli ipotizzati o associazioni non dimostrano un rapporto causale.")
+    ai = sum(1 for p in paths for x in p["links"] if x["origin"] == "ai_hypothesis")
+    if ai:
+        notes.append(f"{ai} anelli sono ipotesi generate dall'AI: non sono stati verificati da una persona né sostenuti da una fonte.")
+    doubtful = sum(1 for p in paths for x in p["links"] if x["caution"])
+    if doubtful:
+        notes.append(f"{doubtful} anelli hanno una fonte con identità dubbia e sono stati trattati come ipotesi.")
+    if paths:
+        notes.append("«Documentata» significa che una fonte è collegata alla relazione: NEXUS non verifica che la fonte la sostenga davvero.")
     return {"start": name(start), "end": name(end), "paths": paths, "common_causes": common[:10], "notes": notes}
 
 
@@ -156,8 +182,11 @@ def transmission(db: Session, user: User, series_ids: list[int], labels: list[st
             documented = db.scalar(select(Relation).where(
                 Relation.owner_id.in_(owners), Relation.provenance == "sourced", Relation.relation_type.in_(CAUSAL | INFLUENCE),
                 Relation.source_entity_id == ent_of[a.id], Relation.target_entity_id == ent_of[b.id]))
+        caution = ""
         if documented:
-            cls = "causal_documented" if documented.relation_type in CAUSAL else "influence_documented"
+            cls, _, caution = link_class(db, documented)
+            if caution:  # fonte con identità dubbia: il passaggio resta una correlazione
+                cls, documented = "correlation", None
         else:
             cls = "correlation"
         step = {"from": (labels[i] if labels and i < len(labels) else a.name), "to": (labels[i + 1] if labels and i + 1 < len(labels) else b.name),
@@ -166,16 +195,24 @@ def transmission(db: Session, user: User, series_ids: list[int], labels: list[st
                 "variables": [f"{a.name} ({a.unit})", f"{b.name} ({b.unit})"],
                 "alternatives": ["Fattori comuni che muovono entrambe le variabili (es. ciclo economico, shock esterni)",
                                  "Causalità inversa", "Effetti con ritardi più lunghi di quelli provati"]}
+        if caution:
+            step["uncertainty"] = f"Relazione nel grafo ignorata: {caution}. "
         if res is None:
-            step["uncertainty"] = "Dati insufficienti per stimare la relazione (servono almeno 12 osservazioni comuni)."
+            step["uncertainty"] += "Dati insufficienti per stimare la relazione (servono almeno 12 osservazioni comuni)."
         else:
+            # Più passaggi = più test: il p-value è corretto anche per il numero di passaggi della catena (Bonferroni).
+            res = {**res, "p_adj_chain": min(1.0, res["p_adj"] * (len(series) - 1))}
             step["statistic"] = res
             expected = res["lag"] >= 0
-            sig = res["p_adj"] <= 0.05
-            step["uncertainty"] = ("Associazione statisticamente significativa" if sig else "Associazione NON significativa") + \
+            sig = res["p_adj_chain"] <= 0.05
+            step["uncertainty"] += ("Associazione statisticamente significativa" if sig else "Associazione NON significativa") + \
                 (f"; il primo anello anticipa il secondo di {res['lag']} periodi" if res["lag"] > 0 else
                  "; nessun anticipo" if res["lag"] == 0 else f"; attenzione: è il secondo ad anticipare il primo ({-res['lag']} periodi)") + \
                 ("" if expected else " — direzione temporale opposta a quella della catena")
+        if res is not None and res.get("gaps_excluded"):
+            step["uncertainty"] += f" ({res['gaps_excluded']} variazioni escluse perché a cavallo di periodi mancanti)."
         steps.append(step)
     return {"steps": steps, "notes": ["Ogni passaggio senza relazione documentata nel grafo è una correlazione, non una prova causale.",
-                                      "Correlazioni calcolate sulle variazioni, alla frequenza comune più bassa, con p-value corretti per i ritardi provati."]}
+                                      "Correlazioni calcolate sulle variazioni tra periodi consecutivi, alla frequenza comune più bassa, "
+                                      "con p-value corretti per i ritardi provati e per il numero di passaggi della catena (Bonferroni).",
+                                      "Un anticipo temporale non dimostra un effetto: entrambe le serie possono seguire un fattore comune."]}

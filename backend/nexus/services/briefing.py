@@ -90,7 +90,7 @@ def generate(db: Session, user: User, settings: Settings, refresh_sources: bool 
 
     risks = []
     for s in all_series:
-        an = analytics.anomalies(analytics.to_pandas([(o.date, o.value) for o in s.observations]))
+        an = analytics.anomalies(analytics.to_pandas([(o.date, o.value) for o in s.observations]), freq=s.frequency)
         recent = [a for a in an if a["date"] >= f"{today.year - 2}-01-01"]
         for a in recent[-2:]:
             risks.append({"title": f"Variazione anomala in «{s.name}»", "detail": f"{a['date']}: variazione {a['change']:.4g} (z robusto {a['z']:.1f})",

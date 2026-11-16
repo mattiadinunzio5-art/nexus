@@ -402,6 +402,7 @@ export function SimulationPage() {
             <Section title="Dati utilizzati" items={r.data_used} />
             <div><h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-steel-500">Parametri</h3><Textarea readOnly className="mt-1 font-mono text-xs" value={JSON.stringify(r.parameters, null, 1)} /></div>
             <Section title="Limiti del modello" items={r.limitations} />
+            <Section title="Riproducibilità" items={reproducibility(r.results.reproducibility)} />
           </div>
         </Card>
       </div>
@@ -409,4 +410,16 @@ export function SimulationPage() {
         onCancel={() => setDeleting(false)} onConfirm={async () => { await api.deleteSimulation(id); navigate('/lab'); }} />
     </>
   );
+}
+
+/** Come rifare la simulazione con lo stesso risultato: seme, generatore, versione di numpy, impronta dei dati. */
+export function reproducibility(x: unknown): string[] {
+  if (!x || typeof x !== 'object') return [];
+  const r = x as { seed?: number; generator?: string; numpy?: string; data?: Record<string, string>; note?: string };
+  const out: string[] = [];
+  if (r.seed !== undefined) out.push(`Seme ${r.seed} · ${r.generator ?? ''}`.trim());
+  if (r.numpy) out.push(`numpy ${r.numpy}`);
+  for (const [name, fp] of Object.entries(r.data ?? {})) out.push(`Impronta dei dati «${name}»: ${fp}`);
+  if (r.note) out.push(r.note);
+  return out;
 }

@@ -72,8 +72,8 @@ Nuove tabelle: `discovery_sessions`, `discovery_connections`, `discovery_hypothe
 | B. Discovery Engine | Implementato | 5 rilevatori; attori troppo comuni ignorati; misure dello stesso fenomeno escluse; finestre temporali reali per serie irregolari |
 | C. Hypothesis Generator | Implementato | Ipotesi da regole (non da AI); verifica automatica con 4 controlli; esito deciso dall'utente con motivazione obbligatoria |
 | D. Anomaly Detection | Implementato in parte | Variazioni anomale, deviazioni dal trend, discrepanze tra fonti, incongruenze cronologiche. Non implementato: «eventi con caratteristiche ricorrenti» come anomalia dedicata |
-| E. Causal Intelligence | Implementato | Catene nel grafo con classificazione per anello, cause alternative e comuni; catene di trasmissione tra serie |
-| F. Strategic Foresight | Implementato | Bootstrap univariato: le variabili non sono modellate congiuntamente |
+| E. Causal Intelligence | Implementato | Catene nel grafo con classificazione per anello e origine (fonte, utente, AI), cause alternative e comuni; catene di trasmissione tra serie con correzione per ritardi e passaggi. Vedi `docs/CAUSAL_SCENARIOS.md` |
+| F. Strategic Foresight | Implementato | Bootstrap univariato delle variazioni tra periodi consecutivi (percentuali per le serie in crescita); le dipendenze tra variabili sono segnalate, non modellate; impronta dei dati per la riproducibilità |
 | G. Knowledge Graph | Esteso | Nuovi tipi (organizzazione, sistema economico, fenomeno, concetto, ipotesi) e relazioni; deduplicazione per nome/alias; nodi per serie e ipotesi |
 | Valutazione fonti | Implementato in parte | Identità/metadati, autorevolezza, originalità, provenienza, data, indipendenza, contraddizioni, ancoraggio: vedi `docs/CONFIDENCE.md`. La pertinenza non è un punteggio separato: è data dall'ambito della ricerca. Il sostegno delle affermazioni non è verificato automaticamente |
 

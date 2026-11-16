@@ -76,17 +76,21 @@ def drawdown(s: pd.Series) -> tuple[pd.Series, dict]:
     }
 
 
-def anomalies(s: pd.Series, z: float = 4.0) -> list[dict]:
+def anomalies(s: pd.Series, z: float = 4.0, freq: str | None = None) -> list[dict]:
     """Variazioni anomale (z robusto > soglia): segnalate, mai rimosse.
 
     Si usa uno z-score robusto (mediana e MAD) perché con la deviazione standard
     un singolo valore estremo gonfia la dispersione e nasconde sé stesso.
     """
     base = s.dropna()
-    raw = base.diff().dropna()
+    # Con la frequenza nota, la variazione a cavallo di periodi mancanti non viene confrontata (sembrerebbe un salto).
+    raw = changes(base, freq, "diff")[0] if freq else base.diff().dropna()
     # Serie positive che crescono di ordini di grandezza (prezzi dal 1861, produzione dal 1950): le variazioni
     # assolute recenti sembrerebbero tutte anomale. Si confrontano allora le variazioni percentuali (log).
-    diffs = np.log(base).diff().dropna() if scale_free(base) else raw
+    if scale_free(base):
+        diffs = changes(base, freq, "log")[0] if freq else np.log(base).diff().dropna()
+    else:
+        diffs = raw
     if len(diffs) < 10:
         return []
     med = diffs.median()
@@ -99,6 +103,49 @@ def anomalies(s: pd.Series, z: float = 4.0) -> list[dict]:
         return []
     zs = (diffs - med) / scale
     return [{"date": d.strftime("%Y-%m-%d"), "change": _f(raw[d]), "z": _f(zs[d])} for d in zs[zs.abs() > z].index]
+
+
+NOMINAL_DAYS = {"D": 1.0, "W": 7.0, "M": 30.44, "Q": 91.31, "A": 365.25}
+
+
+def changes(s: pd.Series, freq: str, kind: str = "diff") -> tuple[pd.Series, dict]:
+    """Variazioni tra periodi CONSECUTIVI ("diff", "log" o "pct"), senza colmare i buchi.
+
+    In una serie regolare (spaziatura mediana vicina alla frequenza dichiarata) la variazione tra due osservazioni
+    separate da periodi mancanti non è una variazione di un periodo: viene esclusa e contata in ``gaps``.
+    Le serie irregolari per costruzione (es. date dei cambiamenti di un tasso) restano come sono: ``irregular=True``.
+    """
+    v = s.dropna()
+    if kind == "log":
+        if (v <= 0).any():
+            raise AnalysisError("Variazioni logaritmiche non definite per valori ≤ 0.")
+        d = np.log(v).diff()
+    elif kind == "pct":
+        if (v <= 0).any():
+            raise AnalysisError("Variazioni percentuali non definite per valori ≤ 0.")
+        d = v.pct_change()
+    else:
+        d = v.diff()
+    info = {"gaps": 0, "irregular": False}
+    nominal = NOMINAL_DAYS.get(freq)
+    if nominal and len(v) >= 3:
+        days = v.index.to_series().diff().dt.days
+        if float(days.median()) > 1.5 * nominal:
+            info["irregular"] = True
+        else:
+            tol = 7.0 if freq == "D" else 1.5 * nominal  # dati giornalieri: fine settimana e festivi non sono buchi
+            gap = days > tol
+            info["gaps"] = int(gap.sum())
+            d[gap] = np.nan
+    return d.dropna(), info
+
+
+def gaps_note(name: str, info: dict) -> str | None:
+    if info.get("irregular"):
+        return f"«{name}»: osservazioni a intervalli irregolari, variazioni calcolate tra osservazioni successive."
+    if info.get("gaps"):
+        return f"«{name}»: {info['gaps']} variazioni escluse perché a cavallo di periodi mancanti (i buchi non vengono colmati)."
+    return None
 
 
 def scale_free(s: pd.Series) -> bool:
@@ -158,7 +205,7 @@ def analyze(series: SeriesInput, ma_windows: list[int], return_kind: str = "simp
             out["warnings"].append(f"Media mobile a {w} periodi non calcolabile: solo {len(valid)} osservazioni valide.")
             continue
         out["moving_averages"][str(w)] = _points(valid.rolling(w).mean().dropna())
-    an = anomalies(s)
+    an = anomalies(s, freq=series.frequency)
     if an:
         out["warnings"].append(f"{len(an)} variazioni anomale (z robusto > 4): verificare se sono errori di dato o eventi reali.")
     out["anomalies"] = an

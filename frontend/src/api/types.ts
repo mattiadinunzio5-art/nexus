@@ -836,6 +836,10 @@ export interface ForesightResult {
   initial_conditions: string[]; triggers: string[]; consequences: { from: string; to: string; relation: string; documented: boolean }[];
   indicators_to_monitor: { series_id: number; name: string; adverse_threshold: number; optimistic_threshold: number }[];
   uncertainties: string[]; method: string; probability_note: string;
+  /** Legami storici tra le variabili (correlazione delle variazioni nello stesso periodo): il modello non li usa. */
+  dependencies?: { a: string; b: string; r: number | null; p?: number; n?: number; freq?: string; significant?: boolean; conflict?: boolean; note: string }[];
+  data_notes?: string[];
+  reproducibility?: { seed: number; n_paths: number; block: number; generator: string; numpy: string; data: Record<string, string> };
 }
 export interface DiscoveryAnalysis<T = unknown> { id: number; kind: 'causal_chain' | 'transmission' | 'foresight'; title: string; params: Record<string, unknown>; result: T; created_at: string }
 

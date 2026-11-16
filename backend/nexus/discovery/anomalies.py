@@ -67,11 +67,11 @@ def series_anomalies(series: list[Series], events: list[HistoricalEvent], skippe
             skipped["series_too_short"] = skipped.get("series_too_short", 0) + 1
             continue
         pct = analytics.scale_free(v)
-        d = (np.log(v).diff() if pct else v.diff()).dropna()
+        d = analytics.changes(v, s.frequency, "log" if pct else "diff")[0]
         med = float(d.median())
         mad = float((d - med).abs().median() * 1.4826)
         official = s.connector != "upload"
-        for a in analytics.anomalies(v, z=4.0):
+        for a in analytics.anomalies(v, z=4.0, freq=s.frequency):
             year = int(a["date"][:4])
             near = _events_near(events, year, s.country, years)
             alts = ["Revisione o cambio di metodologia della fonte", "Cambio di base o di definizione dell'indicatore",

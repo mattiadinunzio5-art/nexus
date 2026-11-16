@@ -113,14 +113,23 @@ def monte_carlo_gbm(s0: float, mu: float, sigma: float, years: float, steps_per_
 
 
 def monte_carlo_bootstrap(series_name: str, dates: list[str], values: list[float], ppy: int, years: float, n_paths: int,
-                          block: int, seed: int, limits=None) -> SimulationResult:
+                          block: int, seed: int, limits=None, freq: str | None = None) -> SimulationResult:
+    from ..finance import analytics
     from . import engine
 
     v = np.array(values, dtype=float)
     if len(v) < 24 or (v <= 0).any():
         raise SimulationError("Il bootstrap richiede almeno 24 valori positivi (prezzi o indici).")
     lim = _limits(limits)
-    rets = np.diff(np.log(v))
+    # Rendimenti tra periodi consecutivi: quelli a cavallo di periodi mancanti sono esclusi (con la frequenza nota).
+    if freq:
+        r, info = analytics.changes(pd.Series(v, index=pd.to_datetime(dates)), freq, "log")
+        rets = np.asarray(r, dtype=float)
+    else:  # senza frequenza le date sono solo etichette: osservazioni consecutive
+        rets, info = np.diff(np.log(v)), {"gaps": 0, "irregular": False}
+    if len(rets) < 23:
+        raise SimulationError(f"Solo {len(rets)} rendimenti tra periodi consecutivi: ne servono almeno 23.")
+    gaps_note = analytics.gaps_note(series_name, info)
     n = int(round(years * ppy))
     _check(lim, n_paths, n, years)
     block = max(1, min(block, len(rets)))
@@ -133,7 +142,7 @@ def monte_carlo_bootstrap(series_name: str, dates: list[str], values: list[float
         variables={"r": "rendimento logaritmico per periodo"},
         parameters={"years": years, "n_paths": n_paths, "block": block, "seed": seed, "periods_per_year": ppy},
         method="Block bootstrap dei rendimenti logaritmici storici (blocchi contigui per preservare parte dell'autocorrelazione), traiettorie calcolate a blocchi",
-        data_used=[f"{series_name}: {len(v)} osservazioni dal {dates[0]} al {dates[-1]}"],
+        data_used=[f"{series_name}: {len(v)} osservazioni dal {dates[0]} al {dates[-1]}", *([gaps_note] if gaps_note else [])],
         results={"fan": engine.fan(col, [_r(i / ppy, 4) for i in range(n + 1)]),
                  "final": {"start": _r(s0), "mean": _r(final.mean()), **{f"p{p}": _r(np.percentile(final, p)) for p in PERCENTILES}},
                  "historical": {"mean_log_return": _r(rets.mean()), "std_log_return": _r(rets.std(ddof=1)), "n_returns": len(rets)},
@@ -202,10 +211,19 @@ def debt_dynamics(d0: float, r_eff0: float, r_market: float, avg_maturity: float
         res["fan"] = engine.fan(col, list(range(years + 1)))
         res["prob_final_above_start"] = _r((col.final > d0).mean())
         res["computation"] = _compute_note(col, n, years)
+        if getattr(col, "clipped", 0):
+            res["clipped_growth_draws"] = col.clipped
+    hyp = ["Debito e saldo primario in % del PIL", "Il costo medio del debito converge al tasso di mercato al ritmo 1/vita media",
+           "Crescita nominale e saldo primario costanti salvo shock dichiarati", "Nessun effetto di retroazione (tassi→crescita, debito→spread)"]
+    warn = []
+    if stochastic:
+        hyp.append("Incertezza: shock normali su tasso e crescita, correlati tra loro ma indipendenti da un anno all'altro (nessuna persistenza)")
+        if res.get("clipped_growth_draws"):
+            warn.append(f"{res['clipped_growth_draws']} estrazioni della crescita nominale sotto −99% sono state portate a −99%: "
+                        "la deviazione standard indicata è troppo ampia per il modello.")
     return SimulationResult(
         kind="debt", title="Dinamica del debito pubblico",
-        hypotheses=["Debito e saldo primario in % del PIL", "Il costo medio del debito converge al tasso di mercato al ritmo 1/vita media",
-                    "Crescita nominale e saldo primario costanti salvo shock dichiarati", "Nessun effetto di retroazione (tassi→crescita, debito→spread)"],
+        hypotheses=hyp, warnings=warn,
         variables={"d": "debito/PIL", "r": "costo medio effettivo del debito (nominale)", "g": "crescita del PIL nominale", "pb": "saldo primario/PIL"},
         parameters={"d0": d0, "r_eff0": r_eff0, "r_market": r_market, "avg_maturity": avg_maturity, "g": g, "pb": pb, "years": years,
                     "rate_shock": rate_shock, "shock_start": shock_start, "crisis": crisis, "stochastic": stochastic, "seed": seed},
@@ -305,12 +323,27 @@ def taylor_rules(inflation: list[float], output_gap: list[float], labels: list[s
 # --- Regressione -------------------------------------------------------------------------------------------
 
 
-def regression(y_name: str, y: pd.Series, xs: dict[str, pd.Series], transform: str, lags: int, data_used: list[str], procedure: list[str]) -> SimulationResult:
+PERIOD_CODE = {"W": "W", "M": "M", "Q": "Q", "A": "Y"}
+
+
+def regression(y_name: str, y: pd.Series, xs: dict[str, pd.Series], transform: str, lags: int, data_used: list[str], procedure: list[str],
+               freq: str | None = None) -> SimulationResult:
     import statsmodels.api as sm
     from statsmodels.stats.stattools import durbin_watson
     from statsmodels.tsa.stattools import adfuller
 
     df = pd.concat({"y": y, **{f"x_{k}": v for k, v in xs.items()}}, axis=1)
+    if freq in PERIOD_CODE and len(df):
+        # Calendario regolare: i periodi mancanti restano righe vuote, così differenze e ritardi non li scavalcano.
+        code = PERIOD_CODE[freq]
+        df.index = df.index.to_period(code)
+        df = df.groupby(level=0).last()
+        full = pd.period_range(df.index.min(), df.index.max(), freq=code)
+        missing = len(full) - len(df.dropna())
+        df = df.reindex(full)
+        df.index = df.index.to_timestamp()
+        if missing and transform != "levels":
+            procedure = [*procedure, f"{missing} periodi senza dati per tutte le variabili nel periodo comune: le variazioni a cavallo sono escluse"]
     if transform == "diff":
         df = df.diff()
     elif transform == "pct":
