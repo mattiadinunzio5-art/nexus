@@ -75,7 +75,7 @@ Nuove tabelle: `discovery_sessions`, `discovery_connections`, `discovery_hypothe
 | E. Causal Intelligence | Implementato | Catene nel grafo con classificazione per anello, cause alternative e comuni; catene di trasmissione tra serie |
 | F. Strategic Foresight | Implementato | Bootstrap univariato: le variabili non sono modellate congiuntamente |
 | G. Knowledge Graph | Esteso | Nuovi tipi (organizzazione, sistema economico, fenomeno, concetto, ipotesi) e relazioni; deduplicazione per nome/alias; nodi per serie e ipotesi |
-| Valutazione fonti | Implementato in parte | Autorevolezza, originalità, data, indipendenza, contraddizioni. La pertinenza non è un punteggio separato: è data dall'ambito della ricerca |
+| Valutazione fonti | Implementato in parte | Identità/metadati, autorevolezza, originalità, provenienza, data, indipendenza, contraddizioni, ancoraggio: vedi `docs/CONFIDENCE.md`. La pertinenza non è un punteggio separato: è data dall'ambito della ricerca. Il sostegno delle affermazioni non è verificato automaticamente |
 
 Servizi esterni: nessuno obbligatorio. Un provider AI (Ollama, compatibile OpenAI o Anthropic) migliora
 l'interpretazione della domanda e la sintesi. Non esiste un'API di ricerca web: le evidenze vengono solo

@@ -54,6 +54,25 @@ export function VerificationDetailsView({ d }: { d: VerificationDetails }) {
   );
 }
 
+/** Valutazione della fonte, dimensione per dimensione: si carica quando la si apre. */
+function AssessmentView({ id }: { id: number }) {
+  const [open, setOpen] = useState(false);
+  const a = useAsync(() => (open ? api.sourceAssessment(id) : Promise.resolve(undefined)), [open, id]);
+  return (
+    <details className="mt-1 text-xs" data-testid="source-assessment" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="cursor-pointer text-steel-300">Valutazione della fonte: perché</summary>
+      {a.loading && <p className="text-steel-500">Caricamento…</p>}
+      {a.error && <p className="text-bad">Valutazione non disponibile.</p>}
+      {a.data && (
+        <>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-steel-300">{a.data.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
+          <p className="mt-1 text-steel-500">{a.data.content_note}</p>
+        </>
+      )}
+    </details>
+  );
+}
+
 export function SourceForm({ initial, onSubmit, onCancel, draftKey = 'source.new' }: { initial?: Partial<SourceInput>; onSubmit: (d: Partial<SourceInput>) => Promise<void>; onCancel: () => void; draftKey?: string }) {
   const [f, setF, clearF] = useDraft<Partial<SourceInput>>(`${draftKey}.fields`, { ...empty, ...initial });
   const [authors, setAuthors, clearAuthors] = useDraft(`${draftKey}.authors`, (initial?.authors ?? []).join('; '));
@@ -203,6 +222,7 @@ export function BibliographyPage() {
             </div>
             {s.verification_note && <p className={`mt-1 text-xs ${s.verification_status === 'registry_mismatch' ? 'text-bad' : 'text-steel-500'}`}>{s.verification_note}</p>}
             {s.verification_details && <VerificationDetailsView d={s.verification_details} />}
+            <AssessmentView id={s.id} />
             {(s.evidence_class || s.license || s.provenance) && (
               <p className="mt-1 text-[11px] text-steel-500">
                 {s.evidence_class && <span className="mr-2">{s.evidence_class === 'primary' ? 'Fonte primaria' : 'Fonte secondaria'}</span>}

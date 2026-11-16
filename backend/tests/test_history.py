@@ -52,7 +52,7 @@ def test_sources_and_verification_warning(client):
     e = ev(client, CRASH)
     s = client.post("/api/sources", json={"title": "Una storia della borsa"}).json()
     e2 = client.post(f"/api/history/events/{e['id']}/sources", json={"source_id": s["id"], "pages": "12-15"}).json()
-    assert e2["sources"][0]["pages"] == "12-15" and "non sono ancora verificate" in e2["source_warning"]
+    assert e2["sources"][0]["pages"] == "12-15" and "non hanno identità accertata" in e2["source_warning"]
     client.post(f"/api/sources/{s['id']}/verify", json={"method": "user"})
     assert client.get(f"/api/history/events/{e['id']}").json()["source_warning"] is None
     assert client.post(f"/api/history/events/{e['id']}/sources", json={"source_id": s["id"]}).status_code == 422

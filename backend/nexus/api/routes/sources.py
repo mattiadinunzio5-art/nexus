@@ -53,6 +53,15 @@ def get_source(source_id: int, db: DB, user: CurrentUser):
     return _out(svc.get_source(db, user, source_id), user)
 
 
+@router.get("/{source_id}/assessment", summary="Valutazione della fonte, dimensione per dimensione, con le motivazioni")
+def source_assessment(source_id: int, db: DB, user: CurrentUser) -> dict:
+    from ...discovery import evidence
+
+    s = svc.get_source(db, user, source_id)
+    a = evidence.assess_source(s)
+    return {**a, "content_note": evidence.CONTENT_NOTE}
+
+
 @router.put("/{source_id}", response_model=SourceOut)
 def update_source(source_id: int, data: SourceIn, db: DB, user: CurrentUser):
     return svc.to_out(svc.update_source(db, user, source_id, data))

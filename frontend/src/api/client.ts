@@ -70,6 +70,7 @@ import type {
   ProjectStatus,
   SearchResult,
   SystemStatus,
+  SourceAssessment,
 } from './types';
 
 /** Errore uniforme: riflette il formato {error: {code, message, details}} del backend. */
@@ -289,6 +290,7 @@ export const api = {
   updateSource: (id: number, data: Partial<SourceInput>) => request<Source>(`/sources/${id}`, json('PUT', data)),
   verifySource: (id: number, method: 'user' | 'registry', note = '') =>
     request<Source>(`/sources/${id}/verify`, json('POST', { method, note })),
+  sourceAssessment: (id: number) => request<SourceAssessment>(`/sources/${id}/assessment`),
   deleteSource: (id: number) => request<void>(`/sources/${id}?confirm=true`, { method: 'DELETE' }),
 
   researchSearch: (q: string, mode = 'hybrid', limit = 10) =>

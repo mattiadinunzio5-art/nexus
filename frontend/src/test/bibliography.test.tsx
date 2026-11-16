@@ -33,4 +33,23 @@ describe('bibliografia: verifica campo per campo', () => {
     expect(screen.getByText(/Fonte secondaria/)).toBeInTheDocument();
     expect(screen.getByText(/Licenza: CC BY 4.0/)).toBeInTheDocument();
   });
+
+  it('explains the assessment of a source only when opened', async () => {
+    const { calls } = mockApi({
+      'GET /api/notifications': [], 'GET /api/projects': [], 'GET /api/sources': [mismatch], 'GET /api/projects/linked/source/9': [],
+      'GET /api/sources/9/assessment': {
+        source_id: 9, authority: 'medium', originality: 'secondary', identity: 'doubtful', timing: null, verified: false, qualified: false,
+        doubtful: true, aggregator: null, year: 2000,
+        reasons: ["Metadati: DOI trovato ma i metadati del registro non corrispondono alla scheda: identità dell'opera dubbia",
+          'Autorevolezza: pubblicazione editoriale o accademica (editore non riconosciuto come istituzionale)'],
+        content_note: "Contenuto: NEXUS non controlla che le fonti sostengano l'affermazione.",
+      },
+    });
+    renderApp('/bibliography');
+    const box = await screen.findByTestId('source-assessment');
+    expect(calls.some((c) => c.url.includes('/assessment'))).toBe(false);
+    await userEvent.click(within(box).getByText('Valutazione della fonte: perché'));
+    expect(await within(box).findByText(/identità dell'opera dubbia/)).toBeInTheDocument();
+    expect(within(box).getByText(/NEXUS non controlla che le fonti sostengano/)).toBeInTheDocument();
+  });
 });

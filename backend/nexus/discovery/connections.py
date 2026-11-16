@@ -101,7 +101,8 @@ def _event_sources(db: Session, e: HistoricalEvent, cache: dict | None = None) -
 
 def _grade_events(db: Session, evs: list[HistoricalEvent], cache: dict | None = None) -> tuple[str, list[str], list[int]]:
     sources = {s.id: s for e in evs for s in _event_sources(db, e, cache)}
-    level, reasons, _ = ev.grade(db, list(sources.values()))
+    anchored = sum(1 for e in evs for link in e.source_links if (link.pages or "").strip())
+    level, reasons, _ = ev.grade(db, list(sources.values()), claim_refs=anchored)
     disputed = [e.title for e in evs if e.reliability in ("disputed", "unverified")]
     if disputed:
         reasons.append(f"Affidabilità dichiarata bassa o contestata: {', '.join(disputed)}")
@@ -289,7 +290,7 @@ def graph_connections(db: Session, user: User, entities: dict[int, Entity], rels
     for s, u, v, common in scored[:limit]:
         path_rels = [r for c in common for r in by_pair.get(frozenset((u, c)), []) + by_pair.get(frozenset((v, c)), [])]
         sources = [x for r in path_rels if r.source_id and (x := db.get(Source, r.source_id))]
-        level, reasons, _ = ev.grade(db, sources)
+        level, reasons, _ = ev.grade(db, sources, claim_refs=sum(1 for r in path_rels if r.source_id and r.chunk_id))
         hyp = sum(1 for r in path_rels if r.provenance != "sourced")
         if hyp:
             reasons.append(f"{hyp} dei collegamenti intermedi sono ipotesi")

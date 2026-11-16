@@ -47,7 +47,7 @@ def test_independence_counts_sources_sharing_a_primary_source_once(db, user):
     assert len(ev.independent_groups(db, [a, b])) == 1
     assert len(ev.independent_groups(db, [a, b, other])) == 2
     level, reasons, assessed = ev.grade(db, [a, b])
-    assert "2 fonti, 1 indipendenti" in reasons[0] and level != "high"
+    assert "2 fonti utilizzabili in 1 gruppi indipendenti" in reasons[0] and level != "high"
     assert ev.assess_source(primary)["authority"] == "high" and ev.assess_source(primary)["originality"] == "primary"
     assert ev.assess_source(a)["originality"] == "derived"
     with pytest.raises(Exception, match="ciclo"):

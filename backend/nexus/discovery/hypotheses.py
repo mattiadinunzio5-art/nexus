@@ -166,16 +166,23 @@ def _documents(db: Session, user: User, settings: Settings, c: DiscoveryConnecti
 
 
 def _sources(db: Session, c: DiscoveryConnection) -> dict:
+    """Fonti indipendenti collegate agli elementi. Conta come «a favore» solo con almeno due gruppi indipendenti che
+    contengono una fonte con identità accertata e autorevolezza almeno media; resta una verifica sulle fonti, non sul
+    contenuto: il sostegno dell'affermazione va letto nelle fonti."""
     from ..models import Source
 
     srcs = [s for i in c.sources if (s := db.get(Source, i))]
     if not srcs:
         return {"check": "Fonti indipendenti", "outcome": "nothing_found", "detail": "Nessuna fonte bibliografica collegata agli elementi."}
-    groups = ev.independent_groups(db, srcs)
-    verified = sum(1 for s in srcs if s.verification_status in ev.VERIFIED)
-    outcome = "supports" if len(groups) >= 2 and verified >= 2 else "weak"
-    return {"check": "Fonti indipendenti", "outcome": outcome,
-            "detail": f"{len(srcs)} fonti in {len(groups)} gruppi indipendenti; {verified} verificate."}
+    assessed = {a["source_id"]: a for a in (ev.assess_source(s) for s in srcs)}
+    usable = [s for s in srcs if not assessed[s.id]["doubtful"]]
+    groups, notes = ev.independence(db, usable)
+    qualified = sum(1 for g in groups if any(assessed[s.id]["qualified"] for s in g))
+    outcome = "supports" if qualified >= 2 else "weak"
+    detail = (f"{len(srcs)} fonti in {len(groups)} gruppi indipendenti; {qualified} gruppi con una fonte con identità accertata "
+              f"e autorevolezza almeno media" + (f"; {len(srcs) - len(usable)} escluse per identità dubbia" if len(usable) < len(srcs) else "")
+              + ". Controllo sulle fonti, non sul contenuto: va letto se sostengono il legame.")
+    return {"check": "Fonti indipendenti", "outcome": outcome, "detail": detail, "common_origin": notes[:5]}
 
 
 def _graph(db: Session, user: User, c: DiscoveryConnection) -> dict | None:
