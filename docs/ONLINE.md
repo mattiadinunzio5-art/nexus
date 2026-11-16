@@ -23,7 +23,7 @@
 
 ## Variabili dell'interfaccia (Vercel, progetto con Root Directory `frontend`)
 
-`VITE_API_URL` = indirizzo del server su Render (es. `https://nexus-api.onrender.com`).
+`VITE_API_URL` = indirizzo del server su Render (`https://nexus-api-7w2q.onrender.com`).
 
 ## Variabili del sito
 

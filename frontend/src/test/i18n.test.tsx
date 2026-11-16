@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { _setLangForTests, tr } from '../i18n';
 import { EN } from '../i18n/en';
+import { EN_RITOCCHI } from '../i18n/en-ritocchi';
 import { mockApi } from './fixtures';
 import { renderApp } from './render';
 
@@ -20,7 +21,16 @@ describe('interfaccia in inglese', () => {
   });
 
   it('has no empty translations', () => {
-    for (const [k, v] of Object.entries(EN)) expect(v.trim(), k).not.toBe('');
+    for (const [k, v] of Object.entries({ ...EN, ...EN_RITOCCHI })) expect(v.trim(), k).not.toBe('');
+  });
+
+  it('translates the texts added after phases 1-3', () => {
+    _setLangForTests('en');
+    expect(tr('Ambito:')).toBe('Scope:');
+    expect(tr(' · si cambia dalla barra in alto')).toBe(' · change it from the bar at the top');
+    expect(tr('ultimo controllo 16/11/2026 (manuale)')).toBe('last check 16/11/2026 (manual)');
+    expect(tr('1200 parole · 14 citazioni')).toBe('1200 words · 14 citations');
+    expect(tr(' · ripresa dalle fasi già completate (ricerca, analisi): nessun lavoro perso')).toBe(' · resumed from completed phases (ricerca, analisi): no work lost');
   });
 
   it('renders a whole page in English', async () => {
