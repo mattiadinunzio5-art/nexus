@@ -83,6 +83,7 @@ Flussi end-to-end, per modulo:
    - Problema: il workflow GitHub «Sveglia backend» (ogni 10 minuti) è stato eseguito solo 2 volte in circa 8 ore, perché GitHub salta spesso i workflow pianificati frequenti. Sul piano gratuito di Render il server si spegne dopo 15 minuti, e il primo utente aspetta fino a un minuto.
    - Correzione: un job pianificato nel database (Supabase `pg_cron` + `pg_net`) chiama `/api/health` ogni 10 minuti. Il workflow GitHub resta come riserva.
    - Per rimuovere il job: `select cron.unschedule('nexus-wake-backend');`.
+   - Verificato online: alle 17:20 il database ha chiamato il server e ha ricevuto 200 (OK).
 3. **Controllo end-to-end ripetibile.** I flussi usati per questo controllo sono in `scripts/e2e_moduli.py`.
 
 ## Problemi aperti
@@ -90,6 +91,7 @@ Flussi end-to-end, per modulo:
 | Priorità | Problema | Che cosa serve |
 |---|---|---|
 | **Alta** | L'**AI condivisa con tutti gli utenti è attiva e usa la chiave OpenAI (ChatGPT) dell'amministratore**, che è a pagamento: 4 utenti attivi × 10 richieste al giorno | Sostituire la chiave con Groq (gratuito) in Impostazioni, oppure disattivare «Attiva per tutti». Decisione dell'amministratore |
+| Media | Il job della sveglia ha installato l'estensione `pg_net` nello schema `public` (avviso di sicurezza di Supabase «Extension in Public») | Spostarla nello schema `extensions`: `drop extension pg_net; create extension pg_net with schema extensions;`. Supabase chiede una conferma prima di eseguirlo |
 | Media | Protezione dalle password compromesse disattivata in Supabase | Attivarla a mano (`docs/SICUREZZA.md`) |
 | Media | Le 342 connessioni della Discovery sulla Biblioteca hanno l'affidabilità calcolata con le regole precedenti al Confidence System | Rieseguire la Discovery sulla Biblioteca (sostituisce i risultati attuali). L'ultima esecuzione completa ha richiesto più di un workflow GitHub da 6 ore |
 | Bassa | React Router 6: 2 vulnerabilità moderate non sfruttabili in NEXUS | Passaggio a React Router 7, da pianificare |
