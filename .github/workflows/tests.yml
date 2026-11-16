@@ -73,6 +73,9 @@ jobs:
       - run: pip install -r backend/requirements.txt
       - name: Client PostgreSQL 16 (stessa versione del server di prova)
         run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsS -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
           echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
       - name: Database di origine con dati creati tramite l'API
