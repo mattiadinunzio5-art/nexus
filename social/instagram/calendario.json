@@ -83,12 +83,24 @@
       "codice": "S1G7",
       "tipo": "reel",
       "data": "2026-11-18",
-      "ora": "19:00",
+      "ora": "12:30",
       "titolo": "Il debito pubblico in Europa",
       "media": [
         "S1G7/reel.mp4"
       ],
       "didascalia": "Who owes the most in Europe? 💶🔊\n\nOfficial Eurostat data for 2025, ready to compare in NEXUS.\n\nLink in bio.\n\n#publicdebt #europe #italy #greece #eurostat #economics #finance #studygram"
+    },
+    {
+      "id": "S2G1-reel",
+      "codice": "S2G1",
+      "tipo": "reel",
+      "data": "2026-11-18",
+      "ora": "19:00",
+      "titolo": "Speranza di vita",
+      "media": [
+        "S2G1/reel.mp4"
+      ],
+      "didascalia": "How long did Italians live? ⏳🔊 In 1913, life expectancy at birth was 48.5 years. In 2023: 83.7. Thirty-five more years of life in a century. Data from Our World in Data, inside NEXUS. Link in bio. #history #lifeexpectancy #italy #dataviz #economichistory #health #studygram #historyfacts #data #science"
     },
     {
       "id": "S2G1-post",
@@ -107,16 +119,28 @@
       "didascalia": "35 more years of life. 🫀 Italy: 48.5 years (1913) → 65.7 (1950) → 79.6 (2000) → 83.7 (2023). Japan today: 84.7. Nigeria: 54.5. Source: Our World in Data. Swipe to see it in NEXUS → #lifeexpectancy #italy #history #dataviz #economichistory #studygram #historyfacts #ourworldindata"
     },
     {
-      "id": "S2G1-reel",
-      "codice": "S2G1",
+      "id": "S2G2-reel",
+      "codice": "S2G2",
+      "tipo": "reel",
+      "data": "2026-11-19",
+      "ora": "12:30",
+      "titolo": "Cina e India",
+      "media": [
+        "S2G2/reel.mp4"
+      ],
+      "didascalia": "India overtook China. 🌏🔊 1950: China 544 million, India 346. 2022: level at about 1.425 billion. 2023: India ahead, 1.438 billion vs 1.423. Population data for every country, in NEXUS. Link in bio. #india #china #population #demographics #dataviz #geography #history #studygram #worldnews #data"
+    },
+    {
+      "id": "S2G3-reel",
+      "codice": "S2G3",
       "tipo": "reel",
       "data": "2026-11-19",
       "ora": "19:00",
-      "titolo": "Speranza di vita",
+      "titolo": "Germania 1923",
       "media": [
-        "S2G1/reel.mp4"
+        "S2G3/reel.mp4"
       ],
-      "didascalia": "How long did Italians live? ⏳🔊 In 1913, life expectancy at birth was 48.5 years. In 2023: 83.7. Thirty-five more years of life in a century. Data from Our World in Data, inside NEXUS. Link in bio. #history #lifeexpectancy #italy #dataviz #economichistory #health #studygram #historyfacts #data #science"
+      "didascalia": "4.2 trillion marks for one dollar. 💸🔊 Germany, 1923: from about 18,000 marks in January to 4.2 trillion in November. Prices doubled every few days. Then came the Rentenmark: 1 for 1 trillion paper marks. The history of money, with sources, in NEXUS. Link in bio. #hyperinflation #weimar #germany #1923 #history #economics #money #inflation #economichistory #studygram"
     },
     {
       "id": "S2G2-post",
@@ -135,16 +159,28 @@
       "didascalia": "The most populous country on Earth changed in 2023. 🇮🇳🇨🇳 China vs India, from 1950 to today, in official UN data (via Our World in Data). Which surprised you more? 👇 #india #china #population #demographics #dataviz #history #studygram #ourworldindata"
     },
     {
-      "id": "S2G2-reel",
-      "codice": "S2G2",
+      "id": "S2G4-reel",
+      "codice": "S2G4",
+      "tipo": "reel",
+      "data": "2026-11-20",
+      "ora": "12:30",
+      "titolo": "Bretton Woods",
+      "media": [
+        "S2G4/reel.mp4"
+      ],
+      "didascalia": "When the dollar was gold. 🪙🔊 Bretton Woods, 1944: 44 countries, currencies tied to the dollar, the dollar tied to gold at $35 an ounce. On 15 August 1971, Nixon suspended convertibility. Events and data, each with its source, in NEXUS. Link in bio. #brettonwoods #gold #dollar #nixon #1971 #monetaryhistory #economics #history #finance #studygram"
+    },
+    {
+      "id": "S2G5-reel",
+      "codice": "S2G5",
       "tipo": "reel",
       "data": "2026-11-20",
       "ora": "19:00",
-      "titolo": "Cina e India",
+      "titolo": "Tulipani",
       "media": [
-        "S2G2/reel.mp4"
+        "S2G5/reel.mp4"
       ],
-      "didascalia": "India overtook China. 🌏🔊 1950: China 544 million, India 346. 2022: level at about 1.425 billion. 2023: India ahead, 1.438 billion vs 1.423. Population data for every country, in NEXUS. Link in bio. #india #china #population #demographics #dataviz #geography #history #studygram #worldnews #data"
+      "didascalia": "Tulip mania: the first bubble? 🌷🔊 Holland, winter 1637: rare bulbs traded for huge sums. In February, the collapse. But archive research suggests the damage to the economy was limited. Fact or legend? In NEXUS every claim shows its source and reliability. Link in bio. #tulipmania #bubble #financialhistory #history #economics #netherlands #myths #studygram #finance #investing"
     },
     {
       "id": "S2G3-post",
@@ -163,16 +199,28 @@
       "didascalia": "One year, one currency destroyed. 🇩🇪 1914: 4.2 marks per dollar. November 1923: 4.2 trillion. Savings wiped out, wages spent the same day. Sources and values in the slides. Save it for your exam 💾 #weimarrepublic #hyperinflation #history #economics #money #inflation #economichistory #studygram"
     },
     {
-      "id": "S2G3-reel",
-      "codice": "S2G3",
+      "id": "S2G6-reel",
+      "codice": "S2G6",
+      "tipo": "reel",
+      "data": "2026-11-21",
+      "ora": "12:30",
+      "titolo": "Dalla lira all'euro",
+      "media": [
+        "S2G6/reel.mp4"
+      ],
+      "didascalia": "How many lire for one euro? 🇮🇹🔊 1,936.27, fixed for ever on 1 January 1999. The euro was born on screens and in banks; coins and notes arrived on 1 January 2002. The euro from day one, in official ECB data inside NEXUS. Link in bio. #euro #lira #italy #money #ecb #history #economics #europe #studygram #finance"
+    },
+    {
+      "id": "S2G7-reel",
+      "codice": "S2G7",
       "tipo": "reel",
       "data": "2026-11-21",
       "ora": "19:00",
-      "titolo": "Germania 1923",
+      "titolo": "Il paese più ricco nel 1870",
       "media": [
-        "S2G3/reel.mp4"
+        "S2G7/reel.mp4"
       ],
-      "didascalia": "4.2 trillion marks for one dollar. 💸🔊 Germany, 1923: from about 18,000 marks in January to 4.2 trillion in November. Prices doubled every few days. Then came the Rentenmark: 1 for 1 trillion paper marks. The history of money, with sources, in NEXUS. Link in bio. #hyperinflation #weimar #germany #1923 #history #economics #money #inflation #economichistory #studygram"
+      "didascalia": "The richest country in 1870? 🇬🇧🔊 The United Kingdom: about $5,800 per person (2011 prices). By 2022: the United States first, then Germany, the UK and Italy. China grew twenty times. Maddison data, in NEXUS. Link in bio. #economichistory #gdp #history #unitedkingdom #usa #china #italy #dataviz #studygram #economics"
     },
     {
       "id": "S2G4-post",
@@ -191,16 +239,28 @@
       "didascalia": "27 years of fixed exchange rates, 1944–1971. 🏛 What Bretton Woods was, why it ended, and why no major currency is tied to gold today. #brettonwoods #goldstandard #dollar #nixonshock #economichistory #finance #history #studygram"
     },
     {
-      "id": "S2G4-reel",
-      "codice": "S2G4",
+      "id": "S3G1-reel",
+      "codice": "S3G1",
+      "tipo": "reel",
+      "data": "2026-11-22",
+      "ora": "12:30",
+      "titolo": "Corea del Sud",
+      "media": [
+        "S3G1/reel.mp4"
+      ],
+      "didascalia": "×41 in seventy years. 🇰🇷🔊 South Korea, 1950: about $1,000 per person (2011 prices). 1980: 6,000. 2000: 23,000. 2022: 41,000. Long-run data for every country, in NEXUS. Link in bio. #southkorea #economichistory #growth #gdp #dataviz #history #economics #studygram #korea #development"
+    },
+    {
+      "id": "S3G2-reel",
+      "codice": "S3G2",
       "tipo": "reel",
       "data": "2026-11-22",
       "ora": "19:00",
-      "titolo": "Bretton Woods",
+      "titolo": "L'inflazione del 2022",
       "media": [
-        "S2G4/reel.mp4"
+        "S3G2/reel.mp4"
       ],
-      "didascalia": "When the dollar was gold. 🪙🔊 Bretton Woods, 1944: 44 countries, currencies tied to the dollar, the dollar tied to gold at $35 an ounce. On 15 August 1971, Nixon suspended convertibility. Events and data, each with its source, in NEXUS. Link in bio. #brettonwoods #gold #dollar #nixon #1971 #monetaryhistory #economics #history #finance #studygram"
+      "didascalia": "2022: inflation came back. 📈🔊 Greece 9.3%, Italy and Germany 8.7%, Spain 8.3%, France 5.9%. In 2025 Italy was back at 1.7%. Official Eurostat data, in NEXUS. Link in bio. #inflation #europe #italy #germany #eurostat #economics #prices #dataviz #studygram #ecb"
     },
     {
       "id": "S2G5-post",
@@ -219,16 +279,28 @@
       "didascalia": "Tulip mania: fact or legend? 🌷 The famous story, and what historians found in the archives (A. Goldgar, Tulipmania, 2007). Did you know this? 👇 #tulipmania #financialhistory #history #mythbusting #economics #bubble #studygram #finance"
     },
     {
-      "id": "S2G5-reel",
-      "codice": "S2G5",
+      "id": "S3G3-reel",
+      "codice": "S3G3",
+      "tipo": "reel",
+      "data": "2026-11-23",
+      "ora": "12:30",
+      "titolo": "Disoccupazione in Europa",
+      "media": [
+        "S3G3/reel.mp4"
+      ],
+      "didascalia": "Where is unemployment highest in Europe? 💼🔊 2025: Spain 10.5%, Greece 8.9% (down from 17.9% in 2019), France 7.7%, Italy 6.1%, Germany 3.8%. Eurostat data, country by country, in NEXUS. Link in bio. #unemployment #europe #spain #greece #italy #eurostat #jobs #economics #dataviz #studygram"
+    },
+    {
+      "id": "S3G4-reel",
+      "codice": "S3G4",
       "tipo": "reel",
       "data": "2026-11-23",
       "ora": "19:00",
-      "titolo": "Tulipani",
+      "titolo": "Euro e dollaro",
       "media": [
-        "S2G5/reel.mp4"
+        "S3G4/reel.mp4"
       ],
-      "didascalia": "Tulip mania: the first bubble? 🌷🔊 Holland, winter 1637: rare bulbs traded for huge sums. In February, the collapse. But archive research suggests the damage to the economy was limited. Fact or legend? In NEXUS every claim shows its source and reliability. Link in bio. #tulipmania #bubble #financialhistory #history #economics #netherlands #myths #studygram #finance #investing"
+      "didascalia": "The euro vs the dollar. 💶💵🔊 January 1999: $1.16. October 2000: $0.85. July 2008: a record $1.58. September 2022: below parity, $0.99 (monthly averages). Official ECB reference rates, in NEXUS. Link in bio. #euro #dollar #forex #exchangerate #ecb #finance #economics #dataviz #studygram #currency"
     },
     {
       "id": "S2G6-post",
@@ -247,16 +319,28 @@
       "didascalia": "1 euro = 1,936.27 lire. 💶 From the Maastricht Treaty to coins in our pockets, and the euro against the dollar since 1999 (ECB data). #euro #lira #italy #europe #ecb #history #economics #studygram"
     },
     {
-      "id": "S2G6-reel",
-      "codice": "S2G6",
+      "id": "S3G5-reel",
+      "codice": "S3G5",
+      "tipo": "reel",
+      "data": "2026-11-24",
+      "ora": "12:30",
+      "titolo": "Il crollo del 1929",
+      "media": [
+        "S3G5/reel.mp4"
+      ],
+      "didascalia": "How deep was the 1929 crash? 📉🔊 Dow Jones, 3 September 1929: 381.17. 8 July 1932: 41.22. Minus 89%. Back to the 1929 peak only in November 1954. Read the crash without hindsight, in NEXUS. Link in bio. #1929 #stockmarketcrash #greatdepression #dowjones #wallstreet #financialhistory #history #investing #studygram #economics"
+    },
+    {
+      "id": "S3G6-reel",
+      "codice": "S3G6",
       "tipo": "reel",
       "data": "2026-11-24",
       "ora": "19:00",
-      "titolo": "Dalla lira all'euro",
+      "titolo": "Il Giappone e la bolla",
       "media": [
-        "S2G6/reel.mp4"
+        "S3G6/reel.mp4"
       ],
-      "didascalia": "How many lire for one euro? 🇮🇹🔊 1,936.27, fixed for ever on 1 January 1999. The euro was born on screens and in banks; coins and notes arrived on 1 January 2002. The euro from day one, in official ECB data inside NEXUS. Link in bio. #euro #lira #italy #money #ecb #history #economics #europe #studygram #finance"
+      "didascalia": "34 years to recover. 🇯🇵🔊 Nikkei, 29 December 1989: almost 38,900. March 2009: about 7,000. February 2024: a new record, 39,099. Bubbles, crashes and recoveries, in NEXUS. Link in bio. #japan #nikkei #bubble #stockmarket #financialhistory #investing #economics #history #studygram #finance"
     },
     {
       "id": "S2G7-post",
@@ -275,16 +359,16 @@
       "didascalia": "1870 vs 2022: how the ranking of rich countries changed. 📊 GDP per person, Maddison Project Database 2023 (CC BY 4.0). Which country would you add? 👇 #economichistory #gdp #maddisonproject #history #dataviz #economics #studygram #ourworldindata"
     },
     {
-      "id": "S2G7-reel",
-      "codice": "S2G7",
+      "id": "S3G7-reel",
+      "codice": "S3G7",
       "tipo": "reel",
       "data": "2026-11-25",
-      "ora": "19:00",
-      "titolo": "Il paese più ricco nel 1870",
+      "ora": "12:30",
+      "titolo": "La prima azione",
       "media": [
-        "S2G7/reel.mp4"
+        "S3G7/reel.mp4"
       ],
-      "didascalia": "The richest country in 1870? 🇬🇧🔊 The United Kingdom: about $5,800 per person (2011 prices). By 2022: the United States first, then Germany, the UK and Italy. China grew twenty times. Maddison data, in NEXUS. Link in bio. #economichistory #gdp #history #unitedkingdom #usa #china #italy #dataviz #studygram #economics"
+      "didascalia": "Where was the first share sold? 📜🔊 Amsterdam, 1602, with the Dutch East India Company. Anyone could buy a share and sell it on: the first modern stock market. Four centuries of finance, with sources, in NEXUS. Link in bio. #stockmarket #voc #amsterdam #financialhistory #history #investing #finance #economics #studygram #netherlands"
     },
     {
       "id": "S3G1-post",
@@ -303,18 +387,6 @@
       "didascalia": "From one of the poorest countries to one of the richest. 🇰🇷 South Korea's GDP per person, 1950–2022, now above Italy and the UK. #southkorea #economicgrowth #economichistory #gdp #dataviz #studygram #maddisonproject #development"
     },
     {
-      "id": "S3G1-reel",
-      "codice": "S3G1",
-      "tipo": "reel",
-      "data": "2026-11-26",
-      "ora": "19:00",
-      "titolo": "Corea del Sud",
-      "media": [
-        "S3G1/reel.mp4"
-      ],
-      "didascalia": "×41 in seventy years. 🇰🇷🔊 South Korea, 1950: about $1,000 per person (2011 prices). 1980: 6,000. 2000: 23,000. 2022: 41,000. Long-run data for every country, in NEXUS. Link in bio. #southkorea #economichistory #growth #gdp #dataviz #history #economics #studygram #korea #development"
-    },
-    {
       "id": "S3G2-post",
       "codice": "S3G2",
       "tipo": "post",
@@ -329,18 +401,6 @@
         "S3G2/post-05.jpg"
       ],
       "didascalia": "Inflation in Europe: 2022 vs 2025. 🛒 Consumer prices (HICP), annual average change, Eurostat. And the ECB's 2% target. #inflation #europe #eurostat #ecb #economics #prices #dataviz #studygram"
-    },
-    {
-      "id": "S3G2-reel",
-      "codice": "S3G2",
-      "tipo": "reel",
-      "data": "2026-11-27",
-      "ora": "19:00",
-      "titolo": "L'inflazione del 2022",
-      "media": [
-        "S3G2/reel.mp4"
-      ],
-      "didascalia": "2022: inflation came back. 📈🔊 Greece 9.3%, Italy and Germany 8.7%, Spain 8.3%, France 5.9%. In 2025 Italy was back at 1.7%. Official Eurostat data, in NEXUS. Link in bio. #inflation #europe #italy #germany #eurostat #economics #prices #dataviz #studygram #ecb"
     },
     {
       "id": "S3G3-post",
@@ -359,18 +419,6 @@
       "didascalia": "Unemployment in Europe, 2025. 💼 Greece halved its rate since 2019; Spain and Italy fell too. Official Eurostat data (ages 15–74). #unemployment #europe #eurostat #labourmarket #economics #dataviz #studygram #jobs"
     },
     {
-      "id": "S3G3-reel",
-      "codice": "S3G3",
-      "tipo": "reel",
-      "data": "2026-11-28",
-      "ora": "19:00",
-      "titolo": "Disoccupazione in Europa",
-      "media": [
-        "S3G3/reel.mp4"
-      ],
-      "didascalia": "Where is unemployment highest in Europe? 💼🔊 2025: Spain 10.5%, Greece 8.9% (down from 17.9% in 2019), France 7.7%, Italy 6.1%, Germany 3.8%. Eurostat data, country by country, in NEXUS. Link in bio. #unemployment #europe #spain #greece #italy #eurostat #jobs #economics #dataviz #studygram"
-    },
-    {
       "id": "S3G4-post",
       "codice": "S3G4",
       "tipo": "post",
@@ -385,18 +433,6 @@
         "S3G4/post-05.jpg"
       ],
       "didascalia": "25 years of euro vs dollar, in five moments. 📉📈 ECB reference rates, monthly averages. September 2022: the euro worth less than a dollar. #euro #dollar #exchangerates #ecb #forex #finance #economics #studygram"
-    },
-    {
-      "id": "S3G4-reel",
-      "codice": "S3G4",
-      "tipo": "reel",
-      "data": "2026-11-29",
-      "ora": "19:00",
-      "titolo": "Euro e dollaro",
-      "media": [
-        "S3G4/reel.mp4"
-      ],
-      "didascalia": "The euro vs the dollar. 💶💵🔊 January 1999: $1.16. October 2000: $0.85. July 2008: a record $1.58. September 2022: below parity, $0.99 (monthly averages). Official ECB reference rates, in NEXUS. Link in bio. #euro #dollar #forex #exchangerate #ecb #finance #economics #dataviz #studygram #currency"
     },
     {
       "id": "S3G5-post",
@@ -415,18 +451,6 @@
       "didascalia": "−89%: the 1929 crash in four dates. 📉 And why an investor who bought at the top waited 25 years to get back to even. #greatdepression #1929 #dowjones #stockmarket #financialhistory #investing #history #studygram"
     },
     {
-      "id": "S3G5-reel",
-      "codice": "S3G5",
-      "tipo": "reel",
-      "data": "2026-11-30",
-      "ora": "19:00",
-      "titolo": "Il crollo del 1929",
-      "media": [
-        "S3G5/reel.mp4"
-      ],
-      "didascalia": "How deep was the 1929 crash? 📉🔊 Dow Jones, 3 September 1929: 381.17. 8 July 1932: 41.22. Minus 89%. Back to the 1929 peak only in November 1954. Read the crash without hindsight, in NEXUS. Link in bio. #1929 #stockmarketcrash #greatdepression #dowjones #wallstreet #financialhistory #history #investing #studygram #economics"
-    },
-    {
       "id": "S3G6-post",
       "codice": "S3G6",
       "tipo": "post",
@@ -443,18 +467,6 @@
       "didascalia": "Japan's 34-year wait. 🇯🇵 From the 1989 bubble to the 2024 record: the Nikkei 225 in three dates (Nikkei Inc.). Would you have held on? 👇 #japan #nikkei #bubble #lostdecade #investing #financialhistory #stockmarket #studygram"
     },
     {
-      "id": "S3G6-reel",
-      "codice": "S3G6",
-      "tipo": "reel",
-      "data": "2026-12-01",
-      "ora": "19:00",
-      "titolo": "Il Giappone e la bolla",
-      "media": [
-        "S3G6/reel.mp4"
-      ],
-      "didascalia": "34 years to recover. 🇯🇵🔊 Nikkei, 29 December 1989: almost 38,900. March 2009: about 7,000. February 2024: a new record, 39,099. Bubbles, crashes and recoveries, in NEXUS. Link in bio. #japan #nikkei #bubble #stockmarket #financialhistory #investing #economics #history #studygram #finance"
-    },
-    {
       "id": "S3G7-post",
       "codice": "S3G7",
       "tipo": "post",
@@ -469,18 +481,6 @@
         "S3G7/post-05.jpg"
       ],
       "didascalia": "The first share: Amsterdam, 1602. 📜 How the Dutch East India Company (VOC) invented the idea behind every stock exchange today. #voc #stockexchange #amsterdam #financialhistory #history #investing #finance #studygram"
-    },
-    {
-      "id": "S3G7-reel",
-      "codice": "S3G7",
-      "tipo": "reel",
-      "data": "2026-12-02",
-      "ora": "19:00",
-      "titolo": "La prima azione",
-      "media": [
-        "S3G7/reel.mp4"
-      ],
-      "didascalia": "Where was the first share sold? 📜🔊 Amsterdam, 1602, with the Dutch East India Company. Anyone could buy a share and sell it on: the first modern stock market. Four centuries of finance, with sources, in NEXUS. Link in bio. #stockmarket #voc #amsterdam #financialhistory #history #investing #finance #economics #studygram #netherlands"
     }
   ]
 }

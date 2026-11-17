@@ -2,7 +2,7 @@
 """Pubblica su Instagram (nexus.analytic) il contenuto del giorno dal calendario.
 
 Uso:
-    python3 scripts/instagram/pubblica.py --tipo post|reel [--data AAAA-MM-GG] [--dry-run]
+    python3 scripts/instagram/pubblica.py --tipo post|reel [--ora HH:MM] [--data AAAA-MM-GG] [--dry-run]
 
 - Legge social/instagram/calendario.json e social/instagram/registro.json.
 - Non pubblica mai due volte: salta se l'id e' nel registro OPPURE se tra gli
@@ -86,6 +86,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tipo", choices=["post", "reel"], required=True)
     ap.add_argument("--data", help="AAAA-MM-GG (default: oggi, Europe/Rome)")
+    ap.add_argument("--ora", help="HH:MM: sceglie il contenuto di quell'orario (utile con piu' reel al giorno)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -94,9 +95,9 @@ def main():
     ig = cal["account_instagram_id"]
     oggi = a.data or dt.datetime.now(ZoneInfo(cal["fuso_orario"])).date().isoformat()
 
-    voci = [v for v in cal["voci"] if v["tipo"] == a.tipo and v["data"] == oggi]
+    voci = [v for v in cal["voci"] if v["tipo"] == a.tipo and v["data"] == oggi and (not a.ora or v["ora"] == a.ora)]
     if not voci:
-        print(f"Niente da pubblicare: nessun {a.tipo} in calendario per {oggi}.")
+        print(f"Niente da pubblicare: nessun {a.tipo} in calendario per {oggi}" + (f" alle {a.ora}" if a.ora else "") + ".")
         return
     v = voci[0]
     print(f"Contenuto: {v['id']} ({v['titolo']}) del {v['data']} ore {v['ora']}")
