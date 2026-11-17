@@ -8,7 +8,8 @@ raccolti con `scripts/analytics/raccogli_metriche.py`). Da leggere PRIMA di crea
 - Campione ancora piccolo: le conclusioni sotto sono ipotesi da confermare, non regole.
 
 ## Decisioni in vigore
-- **17/11/2026: caroselli Instagram IN PAUSA** (scelta dell'utente). Su Instagram escono solo i reel (19:00). I caroselli restano pronti in `social/instagram/calendario.json` e `media/` per quando ci saranno più follower.
+- **17/11/2026: caroselli Instagram IN PAUSA** (scelta dell'utente). Su Instagram escono solo i reel.
+- **17/11/2026: due reel al giorno su Instagram (12:30 e 19:00)** fino al 25/11, quando finiscono i reel pronti. Confrontare 12:30 vs 19:00 a 72 ore. I caroselli restano pronti in `social/instagram/calendario.json` e `media/` per quando ci saranno più follower.
 
 ## Cosa sembra funzionare
 1. **Reel >> caroselli su Instagram**: reel in media 57 visualizzazioni (migliore 188), caroselli 1–4.
