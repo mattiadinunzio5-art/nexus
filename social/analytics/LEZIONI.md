@@ -7,6 +7,9 @@ raccolti con `scripts/analytics/raccogli_metriche.py`). Da leggere PRIMA di crea
 - TikTok: 7 video, 3.757 visualizzazioni (media ~540). Instagram: 14 contenuti, 420 visualizzazioni, 1 follower.
 - Campione ancora piccolo: le conclusioni sotto sono ipotesi da confermare, non regole.
 
+## Decisioni in vigore
+- **17/11/2026: caroselli Instagram IN PAUSA** (scelta dell'utente). Su Instagram escono solo i reel (19:00). I caroselli restano pronti in `social/instagram/calendario.json` e `media/` per quando ci saranno più follower.
+
 ## Cosa sembra funzionare
 1. **Reel >> caroselli su Instagram**: reel in media 57 visualizzazioni (migliore 188), caroselli 1–4.
    Con pochi follower i caroselli non vengono distribuiti; i reel sì (arrivano a non follower).
