@@ -21,6 +21,14 @@ raccolti con `scripts/analytics/raccogli_metriche.py`). Da leggere PRIMA di crea
 3. **Aggancio con un numero forte** («1929 wasn't the first crash», «Prices up 23,773%») dà il tempo di visione
    migliore (2,8 s contro 1,3–1,8 s) e i reel Instagram migliori.
 
+## 🚀 Primo video virale (20/11/2026)
+- **«Prices up 23,773% in one year. 💸🔊»** (iperinflazione, TikTok, uscito gio 19/11 alle 19:07): **13.627 visualizzazioni in ~27 ore**,
+  tempo medio di visione **13,7 s** (gli altri 1,3–4 s). È 16 volte la media dei video precedenti.
+- Perché probabilmente ha funzionato: numero enorme e incredibile nella prima frase (23.773%), tema «soldi che perdono valore»
+  (tocca tutti), confronto concreto (prezzi ×118 in un anno), stesso stile dei 3 video precedenti che già salivano (4 s di visione).
+- **Da replicare nei nuovi video:** aprire con UN numero estremo e verificabile; temi denaro/prezzi/crisi; dati ufficiali citati.
+- Su Instagram lo stesso video (15/11, alle 12:30) aveva fatto 119 visualizzazioni: TikTok premia molto di più questo formato.
+
 ## Problema principale
 - **Tempo medio di visione 1,3–2,8 secondi** su video di 25–48 s: quasi tutti scorrono via subito.
   L'algoritmo non spinge oltre la prima ondata. Priorità per i nuovi video:
