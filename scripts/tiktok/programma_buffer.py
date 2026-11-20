@@ -2,12 +2,12 @@
 """Programma su Buffer (canale TikTok nexus.analytic) i video del calendario.
 
 Uso:
-    python3 scripts/tiktok/programma_buffer.py [--giorni 8] [--dry-run] [--solo ID]
+    python3 scripts/tiktok/programma_buffer.py [--giorni 3] [--dry-run] [--solo ID]
 
 - Legge social/tiktok/calendario.json e social/tiktok/registro.json.
 - Programma (mode customScheduled) i video con data tra oggi e oggi+giorni,
   la cui ora di uscita e' almeno 20 minuti nel futuro. Il piano gratuito di Buffer
-  tiene al massimo 10 post in coda: con --giorni 8 la coda resta sotto il limite.
+  tiene al massimo 10 post in coda: con 2 video al giorno e --giorni 3 (al massimo 8 post) la coda resta sotto il limite.
 - Non duplica mai: salta se l'id e' nel registro OPPURE se su Buffer esiste gia'
   un post del canale con lo stesso testo.
 - La chiave API NON e' nel codice: il proxy dell'ambiente aggiunge l'header
@@ -80,7 +80,7 @@ def salva(reg):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--giorni", type=int, default=8)
+    ap.add_argument("--giorni", type=int, default=3)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--solo", help="programma solo questo id (es. S1G1-tiktok)")
     a = ap.parse_args()
