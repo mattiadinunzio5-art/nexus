@@ -1,231 +1,850 @@
 {
-  "organizzazione_buffer_id": "6afa122864a4f6318f8f3b03",
-  "canale_buffer_id": "6afa1343ece6dfde5fd7ea7a",
-  "servizio": "tiktok",
-  "account": "nexus.analytic",
-  "fuso_orario": "Europe/Rome",
-  "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/275004987507224afd0f1e68e8885ce2899040f8/social/tiktok/media",
-  "voci": [
-    {
-      "id": "S1G1-tiktok",
-      "codice": "S1G1",
-      "data": "2026-11-16",
-      "ora": "19:00",
-      "media": "S1G1.mp4",
-      "titolo": "1929 wasn't the first crash",
-      "didascalia": "1929 wasn't the first crash. 📉🔊\n\nFive financial panics in 170 years, all before Wall Street. Every one of them is in NEXUS, with its source.\n\nFree demo, link in bio.\n\n#financialhistory #history #economichistory #historyfacts #finance #studygram #economics #historytok",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-730264172528956173.mp4"
-    },
-    {
-      "id": "S1G2-tiktok",
-      "codice": "S1G2",
-      "data": "2026-11-17",
-      "ora": "19:00",
-      "media": "S1G2.mp4",
-      "titolo": "2,000 years of Italian income in 30 seconds.",
-      "didascalia": "2,000 years of Italian income in 30 seconds. 📊🔊\n\nYear 1: about $1,400 a year. 1801: about $2,500. 2022: over $36,000 (2011 prices).\n\nExplore it in NEXUS. Link in bio.\n\n#economichistory #italy #gdp #dataviz #history #economics #studygram #growth",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-9021833938256210488.mp4"
-    },
-    {
-      "id": "S1G3-tiktok",
-      "codice": "S1G3",
-      "data": "2026-11-18",
-      "ora": "19:00",
-      "media": "S1G3.mp4",
-      "titolo": "1 in 4 Americans out of work.",
-      "didascalia": "1 in 4 Americans out of work. 🏭🔊\n\nIn May 1933 US unemployment hit 25.6%. NEXUS shows the method and the source next to every number.\n\nLink in bio.\n\n#greatdepression #unemployment #history #economics #usa #1933 #studygram #finance",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-13140286335224289837.mp4"
-    },
-    {
-      "id": "S1G4-tiktok",
-      "codice": "S1G4",
-      "data": "2026-11-19",
-      "ora": "19:00",
-      "media": "S1G4.mp4",
-      "titolo": "Prices up 23,773% in one year.",
-      "didascalia": "Prices up 23,773% in one year. 💸🔊\n\nIn Bolivia, prices in 1985 were on average 118 times those of 1984. All official data, all in NEXUS.\n\nLink in bio.\n\n#inflation #hyperinflation #economics #money #finance #worldbank #dataviz #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-15229250881003476035.mp4"
-    },
-    {
-      "id": "S1G5-tiktok",
-      "codice": "S1G5",
-      "data": "2026-11-20",
-      "ora": "19:00",
-      "media": "S1G5.mp4",
-      "titolo": "Which central bank is the oldest?",
-      "didascalia": "Which central bank is the oldest? 🏦🔊\n\nSweden's Riksbank, 1668. The Federal Reserve arrived only in 1913. Three centuries of money, each fact with its source, in NEXUS.\n\nLink in bio.\n\n#centralbank #bankofengland #bancaditalia #financialhistory #history #money #economics #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-12837135253022874572.mp4"
-    },
-    {
-      "id": "S1G6-tiktok",
-      "codice": "S1G6",
-      "data": "2026-11-21",
-      "ora": "19:00",
-      "media": "S1G6.mp4",
-      "titolo": "Four sentences that explain markets.",
-      "didascalia": "Four sentences that explain markets. 📚🔊\n\nRead the full classics, free and searchable, in NEXUS.\n\nLink in bio.\n\n#adamsmith #keynes #economics #quotes #classics #books #booksofinstagram #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5567880788199720027.mp4"
-    },
-    {
-      "id": "S1G7-tiktok",
-      "codice": "S1G7",
-      "data": "2026-11-22",
-      "ora": "19:00",
-      "media": "S1G7.mp4",
-      "titolo": "Who owes the most in Europe?",
-      "didascalia": "Who owes the most in Europe? 💶🔊\n\nOfficial Eurostat data for 2025, ready to compare in NEXUS.\n\nLink in bio.\n\n#publicdebt #europe #italy #greece #eurostat #economics #finance #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5643240239355620590.mp4"
-    },
-    {
-      "id": "S2G1-tiktok",
-      "codice": "S2G1",
-      "data": "2026-11-23",
-      "ora": "19:00",
-      "media": "S2G1.mp4",
-      "titolo": "How long did Italians live?",
-      "didascalia": "How long did Italians live? ⏳🔊 In 1913, life expectancy at birth was 48.5 years. In 2023: 83.7. Thirty-five more years of life in a century. Data from Our World in Data, inside NEXUS. Link in bio. #history #lifeexpectancy #italy #dataviz #economichistory #health #studygram #historyfacts #data #science",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-10849473731144308984.mp4"
-    },
-    {
-      "id": "S2G2-tiktok",
-      "codice": "S2G2",
-      "data": "2026-11-24",
-      "ora": "19:00",
-      "media": "S2G2.mp4",
-      "titolo": "India overtook China.",
-      "didascalia": "India overtook China. 🌏🔊 1950: China 544 million, India 346. 2022: level at about 1.425 billion. 2023: India ahead, 1.438 billion vs 1.423. Population data for every country, in NEXUS. Link in bio. #india #china #population #demographics #dataviz #geography #history #studygram #worldnews #data",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-7897636872361301623.mp4"
-    },
-    {
-      "id": "S2G3-tiktok",
-      "codice": "S2G3",
-      "data": "2026-11-25",
-      "ora": "19:00",
-      "media": "S2G3.mp4",
-      "titolo": "4.2 trillion marks for one dollar.",
-      "didascalia": "4.2 trillion marks for one dollar. 💸🔊 Germany, 1923: from about 18,000 marks in January to 4.2 trillion in November. Prices doubled every few days. Then came the Rentenmark: 1 for 1 trillion paper marks. The history of money, with sources, in NEXUS. Link in bio. #hyperinflation #weimar #germany #1923 #history #economics #money #inflation #economichistory #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-7072540478586764593.mp4"
-    },
-    {
-      "id": "S2G4-tiktok",
-      "codice": "S2G4",
-      "data": "2026-11-26",
-      "ora": "08:00",
-      "media": "S2G4.mp4",
-      "titolo": "When the dollar was gold.",
-      "didascalia": "When the dollar was gold. 🪙🔊 Bretton Woods, 1944: 44 countries, currencies tied to the dollar, the dollar tied to gold at $35 an ounce. On 15 August 1971, Nixon suspended convertibility. Events and data, each with its source, in NEXUS. Link in bio. #brettonwoods #gold #dollar #nixon #1971 #monetaryhistory #economics #history #finance #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-13112483388353300761.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S2G5-tiktok",
-      "codice": "S2G5",
-      "data": "2026-11-27",
-      "ora": "19:00",
-      "media": "S2G5.mp4",
-      "titolo": "Tulip mania: the first bubble?",
-      "didascalia": "Tulip mania: the first bubble? 🌷🔊 Holland, winter 1637: rare bulbs traded for huge sums. In February, the collapse. But archive research suggests the damage to the economy was limited. Fact or legend? In NEXUS every claim shows its source and reliability. Link in bio. #tulipmania #bubble #financialhistory #history #economics #netherlands #myths #studygram #finance #investing",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-5151951789605795491.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S2G6-tiktok",
-      "codice": "S2G6",
-      "data": "2026-11-28",
-      "ora": "13:00",
-      "media": "S2G6.mp4",
-      "titolo": "How many lire for one euro?",
-      "didascalia": "How many lire for one euro? 🇮🇹🔊 1,936.27, fixed for ever on 1 January 1999. The euro was born on screens and in banks; coins and notes arrived on 1 January 2002. The euro from day one, in official ECB data inside NEXUS. Link in bio. #euro #lira #italy #money #ecb #history #economics #europe #studygram #finance",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-14222144072817872451.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S2G7-tiktok",
-      "codice": "S2G7",
-      "data": "2026-11-29",
-      "ora": "08:00",
-      "media": "S2G7.mp4",
-      "titolo": "The richest country in 1870?",
-      "didascalia": "The richest country in 1870? 🇬🇧🔊 The United Kingdom: about $5,800 per person (2011 prices). By 2022: the United States first, then Germany, the UK and Italy. China grew twenty times. Maddison data, in NEXUS. Link in bio. #economichistory #gdp #history #unitedkingdom #usa #china #italy #dataviz #studygram #economics",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-3163290953558180079.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G1-tiktok",
-      "codice": "S3G1",
-      "data": "2026-11-30",
-      "ora": "19:00",
-      "media": "S3G1.mp4",
-      "titolo": "×41 in seventy years.",
-      "didascalia": "×41 in seventy years. 🇰🇷🔊 South Korea, 1950: about $1,000 per person (2011 prices). 1980: 6,000. 2000: 23,000. 2022: 41,000. Long-run data for every country, in NEXUS. Link in bio. #southkorea #economichistory #growth #gdp #dataviz #history #economics #studygram #korea #development",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-9681651985881455015.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G2-tiktok",
-      "codice": "S3G2",
-      "data": "2026-12-01",
-      "ora": "13:00",
-      "media": "S3G2.mp4",
-      "titolo": "2022: inflation came back.",
-      "didascalia": "2022: inflation came back. 📈🔊 Greece 9.3%, Italy and Germany 8.7%, Spain 8.3%, France 5.9%. In 2025 Italy was back at 1.7%. Official Eurostat data, in NEXUS. Link in bio. #inflation #europe #italy #germany #eurostat #economics #prices #dataviz #studygram #ecb",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-17277492308426763007.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G3-tiktok",
-      "codice": "S3G3",
-      "data": "2026-12-02",
-      "ora": "08:00",
-      "media": "S3G3.mp4",
-      "titolo": "Where is unemployment highest in Europe?",
-      "didascalia": "Where is unemployment highest in Europe? 💼🔊 2025: Spain 10.5%, Greece 8.9% (down from 17.9% in 2019), France 7.7%, Italy 6.1%, Germany 3.8%. Eurostat data, country by country, in NEXUS. Link in bio. #unemployment #europe #spain #greece #italy #eurostat #jobs #economics #dataviz #studygram",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-4325128526221009696.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G4-tiktok",
-      "codice": "S3G4",
-      "data": "2026-12-03",
-      "ora": "19:00",
-      "media": "S3G4.mp4",
-      "titolo": "The euro vs the dollar.",
-      "didascalia": "The euro vs the dollar. 💶💵🔊 January 1999: $1.16. October 2000: $0.85. July 2008: a record $1.58. September 2022: below parity, $0.99 (monthly averages). Official ECB reference rates, in NEXUS. Link in bio. #euro #dollar #forex #exchangerate #ecb #finance #economics #dataviz #studygram #currency",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-4897888572022242742.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G5-tiktok",
-      "codice": "S3G5",
-      "data": "2026-12-04",
-      "ora": "13:00",
-      "media": "S3G5.mp4",
-      "titolo": "How deep was the 1929 crash?",
-      "didascalia": "How deep was the 1929 crash? 📉🔊 Dow Jones, 3 September 1929: 381.17. 8 July 1932: 41.22. Minus 89%. Back to the 1929 peak only in November 1954. Read the crash without hindsight, in NEXUS. Link in bio. #1929 #stockmarketcrash #greatdepression #dowjones #wallstreet #financialhistory #history #investing #studygram #economics",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-3855775410937702502.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G6-tiktok",
-      "codice": "S3G6",
-      "data": "2026-12-05",
-      "ora": "08:00",
-      "media": "S3G6.mp4",
-      "titolo": "34 years to recover.",
-      "didascalia": "34 years to recover. 🇯🇵🔊 Nikkei, 29 December 1989: almost 38,900. March 2009: about 7,000. February 2024: a new record, 39,099. Bubbles, crashes and recoveries, in NEXUS. Link in bio. #japan #nikkei #bubble #stockmarket #financialhistory #investing #economics #history #studygram #finance",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-16832260187724728456.mp4",
-      "esperimento_orario": true
-    },
-    {
-      "id": "S3G7-tiktok",
-      "codice": "S3G7",
-      "data": "2026-12-06",
-      "ora": "19:00",
-      "media": "S3G7.mp4",
-      "titolo": "Where was the first share sold?",
-      "didascalia": "Where was the first share sold? 📜🔊 Amsterdam, 1602, with the Dutch East India Company. Anyone could buy a share and sell it on: the first modern stock market. Four centuries of finance, with sources, in NEXUS. Link in bio. #stockmarket #voc #amsterdam #financialhistory #history #investing #finance #economics #studygram #netherlands",
-      "sorgente_metricool": "https://static.metricool.com/planner/202611/8123136-file-1626910832894316932.mp4",
-      "esperimento_orario": true
-    }
-  ]
+ "organizzazione_buffer_id": "6afa122864a4f6318f8f3b03",
+ "canale_buffer_id": "6afa1343ece6dfde5fd7ea7a",
+ "servizio": "tiktok",
+ "account": "nexus.analytic",
+ "fuso_orario": "Europe/Rome",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/92c02c78839af70c5772f443fcb91ffd9c7616a3/social/reels",
+ "voci": [
+  {
+   "id": "P-CHN-tiktok",
+   "codice": "P-CHN",
+   "data": "2026-11-21",
+   "ora": "13:00",
+   "media": "P-CHN.mp4",
+   "titolo": "China: 97 in 100 to under 1 in 100",
+   "didascalia": "China: from 97 in 100 to less than 1. 🇨🇳🔊 Share of people living on less than $3 a day (2021 prices): 97% in 1981, 0% in 2019 (World Bank). Poverty data for every country, with sources, in NEXUS. Link in bio. #china #poverty #development #economics #worldbank #dataviz #studygram #asia #humanprogress",
+   "esperimento_orario": false
+  },
+  {
+   "id": "D-KORGHA-tiktok",
+   "codice": "D-KORGHA",
+   "data": "2026-11-21",
+   "ora": "19:00",
+   "media": "D-KORGHA.mp4",
+   "titolo": "In 1960, Ghana was richer than South Korea",
+   "didascalia": "In 1960, Ghana was richer than South Korea. 🇰🇷🇬🇭🔊 Output per person, 1960: South Korea $1,548, Ghana $2,197. 2022: South Korea $41,321, Ghana $4,242 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #southkorea #ghana #development #economics #gdp #history #dataviz #studygram #africa #asia",
+   "esperimento_orario": true
+  },
+  {
+   "id": "KOR1950-tiktok",
+   "codice": "KOR1950",
+   "data": "2026-11-22",
+   "ora": "13:00",
+   "media": "KOR1950.mp4",
+   "titolo": "South Korea: 41 times richer since 1950",
+   "didascalia": "South Korea: 41 times richer. 🇰🇷🔊 Output per person went from $998 in 1950 to $41,321 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #southkorea #korea #economicmiracle #gdp #history #economics #dataviz #studygram #asia",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-UKR-tiktok",
+   "codice": "C-UKR",
+   "data": "2026-11-22",
+   "ora": "20:00",
+   "media": "C-UKR.mp4",
+   "titolo": "Prices up 4,735% in one year",
+   "didascalia": "Prices up 4,735% in one year. 💸🔊 Ukraine, 1993: consumer prices rose 4,735% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #ukraine #hyperinflation #inflation #money #economics #finance #history #ussr #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM1987-tiktok",
+   "codice": "TM1987",
+   "data": "2026-11-23",
+   "ora": "13:00",
+   "media": "TM1987.mp4",
+   "titolo": "Black Monday 1987: what did they know?",
+   "didascalia": "−22.6% in one day. ⏳🔊 Black Monday, 19 October 1987: the Dow fell 22.6% in a single session (Federal Reserve History). Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #blackmonday #stockmarket #crash #wallstreet #financialhistory #history #investing #finance #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-IND-tiktok",
+   "codice": "P-IND",
+   "data": "2026-11-23",
+   "ora": "21:00",
+   "media": "P-IND.mp4",
+   "titolo": "India: 60 in 100 to 3 in 100",
+   "didascalia": "India: from 60 in 100 to 3. 🇮🇳🔊 Share of people living on less than $3 a day (2021 prices): 60% in 1977, 3% in 2023 (World Bank). Poverty data for every country, with sources, in NEXUS. Link in bio. #india #poverty #development #economics #worldbank #dataviz #studygram #asia #humanprogress",
+   "esperimento_orario": true
+  },
+  {
+   "id": "G-BW-tiktok",
+   "codice": "G-BW",
+   "data": "2026-11-24",
+   "ora": "13:00",
+   "media": "G-BW.mp4",
+   "titolo": "One meeting that shaped 80 years of money",
+   "didascalia": "One meeting that shaped 80 years of money. 🕸️🔊 Bretton Woods 1944: IMF, World Bank, $35 gold. Ended in 1971, floating rates from 1973. Every link with its source, in NEXUS. Link in bio. #brettonwoods #imf #worldbank #gold #dollar #financialhistory #history #economics #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "F-MYTHS-tiktok",
+   "codice": "F-MYTHS",
+   "data": "2026-11-24",
+   "ora": "19:00",
+   "media": "F-MYTHS.mp4",
+   "titolo": "3 history myths you still believe",
+   "didascalia": "3 history myths you still believe. 🧐🔊 Napoleon wasn't short, Vikings had no horned helmets, medieval scholars knew the Earth was round. Every claim tagged with its source, in NEXUS. Link in bio. #history #historymyths #napoleon #vikings #middleages #facts #didyouknow #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "CHN1950-tiktok",
+   "codice": "CHN1950",
+   "data": "2026-11-25",
+   "ora": "13:00",
+   "media": "CHN1950.mp4",
+   "titolo": "China: 24 times richer since 1950",
+   "didascalia": "China: 24 times richer. 🇨🇳🔊 Output per person went from $799 in 1950 to $19,238 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #china #chinaeconomy #gdp #history #economics #dataviz #studygram #asia #finance",
+   "esperimento_orario": false
+  },
+  {
+   "id": "D-ARGITA-tiktok",
+   "codice": "D-ARGITA",
+   "data": "2026-11-25",
+   "ora": "20:00",
+   "media": "D-ARGITA.mp4",
+   "titolo": "In 1900, Argentina was richer than Italy",
+   "didascalia": "In 1900, Argentina was richer than Italy. 🇦🇷🇮🇹🔊 Output per person, 1900: Argentina $4,583, Italy $3,264. 2022: Argentina $18,292, Italy $36,224 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #argentina #italia #italy #economichistory #gdp #history #dataviz #studygram #latinamerica",
+   "esperimento_orario": true
+  },
+  {
+   "id": "C-AGO-tiktok",
+   "codice": "C-AGO",
+   "data": "2026-11-26",
+   "ora": "13:00",
+   "media": "C-AGO.mp4",
+   "titolo": "Prices up 4,145% in one year",
+   "didascalia": "Prices up 4,145% in one year. 💸🔊 Angola, 1996: consumer prices rose 4,145% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #angola #hyperinflation #inflation #money #economics #finance #history #africa #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-IDN-tiktok",
+   "codice": "P-IDN",
+   "data": "2026-11-26",
+   "ora": "21:00",
+   "media": "P-IDN.mp4",
+   "titolo": "Indonesia: 86 in 100 to 5 in 100",
+   "didascalia": "Indonesia: from 86 in 100 to 5. 🇮🇩🔊 Share of people living on less than $3 a day (2021 prices): 86% in 1984, 5% in 2024 (World Bank). Poverty data for every country, with sources, in NEXUS. Link in bio. #indonesia #poverty #development #economics #worldbank #dataviz #studygram #asia",
+   "esperimento_orario": true
+  },
+  {
+   "id": "IND1950-tiktok",
+   "codice": "IND1950",
+   "data": "2026-11-27",
+   "ora": "13:00",
+   "media": "IND1950.mp4",
+   "titolo": "India: 8 times richer since 1950",
+   "didascalia": "India: 8 times richer. 🇮🇳🔊 Output per person went from $987 in 1950 to $7,766 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #india #indianeconomy #gdp #history #economics #dataviz #studygram #asia",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-BRA-tiktok",
+   "codice": "C-BRA",
+   "data": "2026-11-27",
+   "ora": "19:00",
+   "media": "C-BRA.mp4",
+   "titolo": "Prices up 2,948% in one year",
+   "didascalia": "Prices up 2,948% in one year. 💸🔊 Brazil, 1990: consumer prices rose 2,948% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #brazil #brasil #hyperinflation #inflation #money #economics #finance #history #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-VNM-tiktok",
+   "codice": "P-VNM",
+   "data": "2026-11-28",
+   "ora": "13:00",
+   "media": "P-VNM.mp4",
+   "titolo": "Vietnam: 58 in 100 to 2 in 100",
+   "didascalia": "Vietnam: from 58 in 100 to 2. 🇻🇳🔊 Share of people living on less than $3 a day (2021 prices): 58% in 1992, 2% in 2022 (World Bank). Poverty data for every country, with sources, in NEXUS. Link in bio. #vietnam #poverty #development #economics #worldbank #dataviz #studygram #asia",
+   "esperimento_orario": false
+  },
+  {
+   "id": "D-CHNIND-tiktok",
+   "codice": "D-CHNIND",
+   "data": "2026-11-28",
+   "ora": "20:00",
+   "media": "D-CHNIND.mp4",
+   "titolo": "In 1950, India was richer than China",
+   "didascalia": "In 1950, India was richer than China. 🇨🇳🇮🇳🔊 Output per person, 1950: China $799, India $987. 2022: China $19,238, India $7,766 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #china #india #asia #economics #gdp #history #dataviz #studygram #geopolitics",
+   "esperimento_orario": true
+  },
+  {
+   "id": "IRL1950-tiktok",
+   "codice": "IRL1950",
+   "data": "2026-11-29",
+   "ora": "13:00",
+   "media": "IRL1950.mp4",
+   "titolo": "Ireland: 11 times richer since 1950",
+   "didascalia": "Ireland: 11 times richer. 🇮🇪🔊 Output per person went from $5,504 in 1950 to $60,257 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #ireland #celtictiger #gdp #history #economics #dataviz #studygram #europe",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-IDN-tiktok",
+   "codice": "C-IDN",
+   "data": "2026-11-29",
+   "ora": "21:00",
+   "media": "C-IDN.mp4",
+   "titolo": "Prices up 1,136% in one year",
+   "didascalia": "Prices up 1,136% in one year. 💸🔊 Indonesia, 1966: consumer prices rose 1,136% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #indonesia #hyperinflation #inflation #money #economics #finance #history #asia #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM2008-tiktok",
+   "codice": "TM2008",
+   "data": "2026-11-30",
+   "ora": "13:00",
+   "media": "TM2008.mp4",
+   "titolo": "Lehman 2008: what did they know?",
+   "didascalia": "15 September 2008, with no hindsight. ⏳🔊 Lehman filed for bankruptcy; the next day the Fed lent AIG up to $85 billion; in 2009 world GDP fell 1.3% (Fed, World Bank). Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #lehman #2008 #financialcrisis #wallstreet #financialhistory #history #finance #economics #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-SSF-tiktok",
+   "codice": "P-SSF",
+   "data": "2026-11-30",
+   "ora": "19:00",
+   "media": "P-SSF.mp4",
+   "titolo": "Sub-Saharan Africa: 62 in 100 to 45 in 100",
+   "didascalia": "Sub-Saharan Africa: from 62 in 100 to 45. 🌍🔊 Share of people living on less than $3 a day (2021 prices): 62% in 1990, 45% in 2024 (World Bank). Poverty data for every country, with sources, in NEXUS. Link in bio. #africa #poverty #development #economics #worldbank #dataviz #studygram #humanprogress",
+   "esperimento_orario": true
+  },
+  {
+   "id": "USA1800-tiktok",
+   "codice": "USA1800",
+   "data": "2026-12-01",
+   "ora": "13:00",
+   "media": "USA1800.mp4",
+   "titolo": "USA: 23 times richer since 1800",
+   "didascalia": "The United States: 23 times richer. 🇺🇸🔊 Output per person went from $2,545 in 1800 to $58,487 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #usa #americanhistory #gdp #history #economics #dataviz #studygram #finance",
+   "esperimento_orario": false
+  },
+  {
+   "id": "G-OIL-tiktok",
+   "codice": "G-OIL",
+   "data": "2026-12-01",
+   "ora": "20:00",
+   "media": "G-OIL.mp4",
+   "titolo": "The 1973 oil shock, as a graph",
+   "didascalia": "The oil shock of 1973, as a graph. 🛢️🔊 Oil went from $2.90 to $11.65 a barrel; US inflation hit 11.0% in 1974 (Federal Reserve History, FRED). Every link with its source, in NEXUS. Link in bio. #oil #oilcrisis #1973 #inflation #opec #financialhistory #history #economics #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "F-QUOTES-tiktok",
+   "codice": "F-QUOTES",
+   "data": "2026-12-02",
+   "ora": "13:00",
+   "media": "F-QUOTES.mp4",
+   "titolo": "3 famous quotes they never said",
+   "didascalia": "3 famous quotes they never said. 🧐🔊 Marie Antoinette, Einstein and Gandhi: no reliable source for these lines. Every claim tagged with its source, in NEXUS. Link in bio. #quotes #history #einstein #gandhi #marieantoinette #facts #didyouknow #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-RUS-tiktok",
+   "codice": "C-RUS",
+   "data": "2026-12-02",
+   "ora": "21:00",
+   "media": "C-RUS.mp4",
+   "titolo": "Prices up 874% in one year",
+   "didascalia": "Prices up 874% in one year. 💸🔊 Russia, 1993: consumer prices rose 874% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #russia #hyperinflation #inflation #ussr #money #economics #finance #history #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-POLUKR-tiktok",
+   "codice": "D-POLUKR",
+   "data": "2026-12-03",
+   "ora": "13:00",
+   "media": "D-POLUKR.mp4",
+   "titolo": "In 1990, Ukraine was richer than Poland",
+   "didascalia": "In 1990, Ukraine was richer than Poland. 🇵🇱🇺🇦🔊 Output per person, 1990: Poland $8,150, Ukraine $9,607. 2022: Poland $32,468, Ukraine $7,749 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #poland #ukraine #europe #economics #gdp #history #dataviz #studygram #easterneurope",
+   "esperimento_orario": false
+  },
+  {
+   "id": "VEN1950-tiktok",
+   "codice": "VEN1950",
+   "data": "2026-12-03",
+   "ora": "19:00",
+   "media": "VEN1950.mp4",
+   "titolo": "Venezuela: −72% in ten years",
+   "didascalia": "Venezuela lost 72% in ten years. 📉🔊 Output per person fell from $18,486 in 2012 to $5,267 in 2022 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #venezuela #economiccrisis #gdp #history #economics #dataviz #latinamerica #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-CHILD-tiktok",
+   "codice": "P-CHILD",
+   "data": "2026-12-04",
+   "ora": "13:00",
+   "media": "P-CHILD.mp4",
+   "titolo": "1800: 43 in 100 children died before 5",
+   "didascalia": "43 in 100 children died before age 5. 🕯️🔊 World child mortality: 42.8% in 1800, 3.7% in 2024 (Our World in Data). Two centuries of data, with sources, in NEXUS. Link in bio. #childmortality #humanprogress #history #health #dataviz #studygram #demography",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-CHL-tiktok",
+   "codice": "C-CHL",
+   "data": "2026-12-04",
+   "ora": "20:00",
+   "media": "C-CHL.mp4",
+   "titolo": "Prices up 505% in one year",
+   "didascalia": "Prices up 505% in one year. 💸🔊 Chile, 1974: consumer prices rose 505% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #chile #inflation #money #economics #finance #history #latinamerica #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "DEU1850-tiktok",
+   "codice": "DEU1850",
+   "data": "2026-12-05",
+   "ora": "13:00",
+   "media": "DEU1850.mp4",
+   "titolo": "Germany lost half its income in 8 years",
+   "didascalia": "Germany lost half its income in 8 years. 🇩🇪🔊 From $7,960 per person in 1938 to $3,534 in 1946, then $12,282 by 1960 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #germany #germanhistory #ww2 #gdp #history #economics #dataviz #studygram #europe",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-NET-tiktok",
+   "codice": "P-NET",
+   "data": "2026-12-05",
+   "ora": "21:00",
+   "media": "P-NET.mp4",
+   "titolo": "How many of us are online?",
+   "didascalia": "How many of us are online? 🌐🔊 2005: 16%. 2024: 71% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #internet #technology #digital #worldbank #dataviz #studygram #history #innovation",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-BWAZMB-tiktok",
+   "codice": "D-BWAZMB",
+   "data": "2026-12-06",
+   "ora": "13:00",
+   "media": "D-BWAZMB.mp4",
+   "titolo": "Botswana vs Zambia: two destinies",
+   "didascalia": "Two neighbours, two destinies. 🇧🇼🇿🇲🔊 Output per person, 1960: Botswana $564, Zambia $1,530. 2022: Botswana $16,352, Zambia $3,342 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #botswana #zambia #africa #development #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-ISR-tiktok",
+   "codice": "C-ISR",
+   "data": "2026-12-06",
+   "ora": "19:00",
+   "media": "C-ISR.mp4",
+   "titolo": "Prices up 373% in one year",
+   "didascalia": "Prices up 373% in one year. 💸🔊 Israel, 1984: consumer prices rose 373% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #israel #inflation #money #economics #finance #history #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM1971-tiktok",
+   "codice": "TM1971",
+   "data": "2026-12-07",
+   "ora": "13:00",
+   "media": "TM1971.mp4",
+   "titolo": "The night the dollar left gold",
+   "didascalia": "The night the dollar left gold. ⏳🔊 15 August 1971: Nixon closed the gold window at $35 an ounce. In January 1980 gold was fixed at $850. Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #gold #nixon #brettonwoods #dollar #financialhistory #history #money #finance #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "ITA1861-tiktok",
+   "codice": "ITA1861",
+   "data": "2026-12-07",
+   "ora": "20:00",
+   "media": "ITA1861.mp4",
+   "titolo": "Italy has not grown since 2007",
+   "didascalia": "Italy has not grown since 2007. 🇮🇹🔊 Output per person peaked at $36,311 in 2007; in 2022 it was $36,224 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #italia #italy #storia #economia #gdp #history #economics #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-ITANET-tiktok",
+   "codice": "P-ITANET",
+   "data": "2026-12-08",
+   "ora": "13:00",
+   "media": "P-ITANET.mp4",
+   "titolo": "Italy online: from 1 in 100 to 89",
+   "didascalia": "How Italy went online. 🇮🇹🔊 1995: 1%. 2024: 89% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #italia #italy #internet #digitale #technology #worldbank #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-LBN-tiktok",
+   "codice": "C-LBN",
+   "data": "2026-12-08",
+   "ora": "21:00",
+   "media": "C-LBN.mp4",
+   "titolo": "Prices up 221% in one year",
+   "didascalia": "Prices up 221% in one year. 💸🔊 Lebanon, 2023: consumer prices rose 221% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #lebanon #inflation #crisis #money #economics #finance #middleeast #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-SGPJAM-tiktok",
+   "codice": "D-SGPJAM",
+   "data": "2026-12-09",
+   "ora": "13:00",
+   "media": "D-SGPJAM.mp4",
+   "titolo": "In 1960, Jamaica was richer than Singapore",
+   "didascalia": "In 1960, Jamaica was richer than Singapore. 🇸🇬🇯🇲🔊 Output per person, 1960: Singapore $3,464, Jamaica $4,230. 2022: Singapore $80,320, Jamaica $7,482 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #singapore #jamaica #development #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "G-2008-tiktok",
+   "codice": "G-2008",
+   "data": "2026-12-09",
+   "ora": "19:00",
+   "media": "G-2008.mp4",
+   "titolo": "2008: from Lehman to Athens",
+   "didascalia": "From Lehman to Athens. 🕸️🔊 Lehman (2008), world GDP −1.3% (2009), Greek bailout (2010), youth unemployment 58% (2013). Every link with its source, in NEXUS. Link in bio. #2008 #financialcrisis #lehman #greece #eurocrisis #history #economics #finance #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "LEWLD-tiktok",
+   "codice": "LEWLD",
+   "data": "2026-12-10",
+   "ora": "13:00",
+   "media": "LEWLD.mp4",
+   "titolo": "How long humans live: 1770 to today",
+   "didascalia": "We gained 41 years of life. ⏳🔊 Life expectancy: 28.5 years in 1770, 32.0 in 1900, 73.2 in 2023 (UN WPP, Riley, Zijdeman via Our World in Data). Long-run data for every country, with sources, in NEXUS. Link in bio. #lifeexpectancy #history #health #demography #dataviz #studygram #science #humanprogress",
+   "esperimento_orario": false
+  },
+  {
+   "id": "F-FINANCE-tiktok",
+   "codice": "F-FINANCE",
+   "data": "2026-12-10",
+   "ora": "20:00",
+   "media": "F-FINANCE.mp4",
+   "titolo": "3 money stories historians dispute",
+   "didascalia": "3 money stories that are more complicated. 🧐🔊 Tulip mania, the 1929 crash and Weimar inflation: what the evidence actually says. Facts and interpretations kept apart, in NEXUS. Link in bio. #financialhistory #tulipmania #greatdepression #weimar #history #economics #finance #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "C-SDN-tiktok",
+   "codice": "C-SDN",
+   "data": "2026-12-11",
+   "ora": "13:00",
+   "media": "C-SDN.mp4",
+   "titolo": "Prices up 359% in one year",
+   "didascalia": "Prices up 359% in one year. 💸🔊 Sudan, 2021: consumer prices rose 359% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #sudan #inflation #crisis #money #economics #finance #africa #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-URB-tiktok",
+   "codice": "P-URB",
+   "data": "2026-12-11",
+   "ora": "21:00",
+   "media": "P-URB.mp4",
+   "titolo": "When did the world become urban?",
+   "didascalia": "When did the world become urban? 🏙️🔊 1960: 34%. 2024: 58% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #cities #urbanization #demography #worldbank #dataviz #studygram #geography",
+   "esperimento_orario": true
+  },
+  {
+   "id": "LEITA-tiktok",
+   "codice": "LEITA",
+   "data": "2026-12-12",
+   "ora": "13:00",
+   "media": "LEITA.mp4",
+   "titolo": "Italians live almost 3 times longer than in 1872",
+   "didascalia": "Italians now live almost 3 times longer. 🇮🇹🔊 Life expectancy in Italy: 29.8 years in 1872, 83.7 in 2023 (Our World in Data). Long-run data for every country, with sources, in NEXUS. Link in bio. #italia #italy #lifeexpectancy #storia #history #health #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-ARM-tiktok",
+   "codice": "C-ARM",
+   "data": "2026-12-12",
+   "ora": "19:00",
+   "media": "C-ARM.mp4",
+   "titolo": "Prices up 3,374% in one year",
+   "didascalia": "Prices up 3,374% in one year. 💸🔊 Armenia, 1994: consumer prices rose 3,374% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #armenia #hyperinflation #inflation #money #economics #finance #history #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM2000-tiktok",
+   "codice": "TM2000",
+   "data": "2026-12-13",
+   "ora": "13:00",
+   "media": "TM2000.mp4",
+   "titolo": "Dot-com 2000: what did they know?",
+   "didascalia": "The dot-com peak, with no hindsight. ⏳🔊 10 March 2000: Nasdaq 5,048.62. 9 October 2002: 1,114.11, −78%. Record regained in April 2015. Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #dotcom #nasdaq #bubble #stockmarket #financialhistory #investing #tech #history #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "D-VENCHL-tiktok",
+   "codice": "D-VENCHL",
+   "data": "2026-12-13",
+   "ora": "20:00",
+   "media": "D-VENCHL.mp4",
+   "titolo": "In 1950, Venezuela was richer than Chile",
+   "didascalia": "In 1950, Venezuela was richer than Chile. 🇨🇱🇻🇪🔊 Output per person, 1950: Chile $5,880, Venezuela $8,462. 2022: Chile $22,741, Venezuela $5,267 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #chile #venezuela #latinamerica #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-AGRCHN-tiktok",
+   "codice": "P-AGRCHN",
+   "data": "2026-12-14",
+   "ora": "13:00",
+   "media": "P-AGRCHN.mp4",
+   "titolo": "China left the fields",
+   "didascalia": "China left the fields. 🌾🔊 1991: 60%. 2024: 22% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #china #agriculture #work #economics #worldbank #dataviz #studygram #asia",
+   "esperimento_orario": false
+  },
+  {
+   "id": "LEGBR-tiktok",
+   "codice": "LEGBR",
+   "data": "2026-12-14",
+   "ora": "21:00",
+   "media": "LEGBR.mp4",
+   "titolo": "480 years of British life expectancy",
+   "didascalia": "480 years of life expectancy. ⏳🔊 England, 1543: 33.9 years. United Kingdom, 2023: 81.3 (Our World in Data). Long-run data for every country, with sources, in NEXUS. Link in bio. #uk #england #lifeexpectancy #history #health #dataviz #studygram #britishhistory",
+   "esperimento_orario": true
+  },
+  {
+   "id": "C-BLR-tiktok",
+   "codice": "C-BLR",
+   "data": "2026-12-15",
+   "ora": "13:00",
+   "media": "C-BLR.mp4",
+   "titolo": "Prices up 2,221% in one year",
+   "didascalia": "Prices up 2,221% in one year. 💸🔊 Belarus, 1994: consumer prices rose 2,221% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #belarus #hyperinflation #inflation #money #economics #finance #history #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-PARL-tiktok",
+   "codice": "P-PARL",
+   "data": "2026-12-15",
+   "ora": "19:00",
+   "media": "P-PARL.mp4",
+   "titolo": "How many MPs are women?",
+   "didascalia": "How many MPs are women? 🏛️🔊 1997: 12%. 2024: 27% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #women #politics #parliament #equality #worldbank #dataviz #studygram #democracy",
+   "esperimento_orario": true
+  },
+  {
+   "id": "CMWLD-tiktok",
+   "codice": "CMWLD",
+   "data": "2026-12-16",
+   "ora": "13:00",
+   "media": "CMWLD.mp4",
+   "titolo": "1800: almost 1 child in 2 died before 5",
+   "didascalia": "In 1800, almost 1 child in 2 died before age 5. 🕯️🔊 World child mortality: 42.8% in 1800, 3.7% in 2024 (Gapminder, UN IGME via Our World in Data). Development data for every country, with sources, in NEXUS. Link in bio. #childmortality #history #health #humanprogress #dataviz #studygram #demography",
+   "esperimento_orario": false
+  },
+  {
+   "id": "D-IRLGBR-tiktok",
+   "codice": "D-IRLGBR",
+   "data": "2026-12-16",
+   "ora": "20:00",
+   "media": "D-IRLGBR.mp4",
+   "titolo": "Ireland overtook the UK in 1997",
+   "didascalia": "Ireland overtook the UK in 1997. 🇮🇪🇬🇧🔊 Output per person, 1950: Ireland $5,504, United Kingdom $11,061. 2022: Ireland $60,257, United Kingdom $38,407 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #ireland #uk #britain #europe #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "C-KAZ-tiktok",
+   "codice": "C-KAZ",
+   "data": "2026-12-17",
+   "ora": "13:00",
+   "media": "C-KAZ.mp4",
+   "titolo": "Prices up 1,877% in one year",
+   "didascalia": "Prices up 1,877% in one year. 💸🔊 Kazakhstan, 1994: consumer prices rose 1,877% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #kazakhstan #hyperinflation #inflation #money #economics #finance #history #asia #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "G-EURO-tiktok",
+   "codice": "G-EURO",
+   "data": "2026-12-17",
+   "ora": "21:00",
+   "media": "G-EURO.mp4",
+   "titolo": "How the euro was born, as a graph",
+   "didascalia": "How the euro was born. 💶🔊 Maastricht 1992, euro 1999 in 11 countries at 1,936.27 lire, cash in 2002, 20 countries in 2023 (ECB). Every link with its source, in NEXUS. Link in bio. #euro #europe #maastricht #lira #italia #ecb #history #economics #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "F-TRUE-tiktok",
+   "codice": "F-TRUE",
+   "data": "2026-12-18",
+   "ora": "13:00",
+   "media": "F-TRUE.mp4",
+   "titolo": "3 history facts that sound fake",
+   "didascalia": "3 facts that sound fake (but are true). 🤯🔊 Oxford is older than the Aztecs, Cleopatra is closer to us than to the pyramids, mammoths saw the pyramids. Every date with its source, in NEXUS. Link in bio. #history #facts #didyouknow #cleopatra #oxford #mammoth #ancienthistory #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "POPWLD-tiktok",
+   "codice": "POPWLD",
+   "data": "2026-12-18",
+   "ora": "19:00",
+   "media": "POPWLD.mp4",
+   "titolo": "8 billion humans, one line",
+   "didascalia": "From 600 million to 8 billion. 🌍🔊 World population: 595 million in 1700, 1.6 billion in 1900, 8.1 billion in 2023 (HYDE, Gapminder, UN WPP via Our World in Data). Long-run data for every country, with sources, in NEXUS. Link in bio. #population #demography #history #worldpopulation #dataviz #studygram #humanprogress",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-JPN65-tiktok",
+   "codice": "P-JPN65",
+   "data": "2026-12-19",
+   "ora": "13:00",
+   "media": "P-JPN65.mp4",
+   "titolo": "Japan: 30 in 100 are over 65",
+   "didascalia": "Japan is the oldest country. 🇯🇵🔊 1960: 6%. 2024: 30% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #japan #ageing #demography #population #worldbank #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-POL-tiktok",
+   "codice": "C-POL",
+   "data": "2026-12-19",
+   "ora": "20:00",
+   "media": "C-POL.mp4",
+   "titolo": "Prices up 568% in one year",
+   "didascalia": "Prices up 568% in one year. 💸🔊 Poland, 1990: consumer prices rose 568% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #poland #polska #inflation #money #economics #finance #history #europe #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM2020-tiktok",
+   "codice": "TM2020",
+   "data": "2026-12-20",
+   "ora": "13:00",
+   "media": "TM2020.mp4",
+   "titolo": "March 2020: what did we know?",
+   "didascalia": "11 March 2020, with no hindsight. ⏳🔊 The WHO called COVID-19 a pandemic. A month later US unemployment hit 14.8% (BLS). Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #covid #pandemic #2020 #history #economics #unemployment #studygram #finance",
+   "esperimento_orario": false
+  },
+  {
+   "id": "FERKOR-tiktok",
+   "codice": "FERKOR",
+   "data": "2026-12-20",
+   "ora": "21:00",
+   "media": "FERKOR.mp4",
+   "titolo": "South Korea: from 6 children to 0.72",
+   "didascalia": "0.72 children per woman. 👶🔊 South Korea's fertility rate fell from 6.0 in 1960 to 0.72 in 2023 (World Bank). Demographic data for every country, with sources, in NEXUS. Link in bio. #southkorea #korea #fertility #demography #birthrate #dataviz #studygram #population",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-CHNBRA-tiktok",
+   "codice": "D-CHNBRA",
+   "data": "2026-12-21",
+   "ora": "13:00",
+   "media": "D-CHNBRA.mp4",
+   "titolo": "In 1980 Brazil was 4 times richer than China",
+   "didascalia": "China overtook Brazil in 2016. 🇨🇳🇧🇷🔊 Output per person, 1980: China $1,930, Brazil $8,249. 2022: China $19,238, Brazil $14,640 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #china #brazil #brics #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-ITA65-tiktok",
+   "codice": "P-ITA65",
+   "data": "2026-12-21",
+   "ora": "19:00",
+   "media": "P-ITA65.mp4",
+   "titolo": "Italy: 25 in 100 are over 65",
+   "didascalia": "Italy is getting older. 🇮🇹🔊 1960: 10%. 2024: 25% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #italia #italy #ageing #demografia #demography #worldbank #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "C-GNQ-tiktok",
+   "codice": "C-GNQ",
+   "data": "2026-12-22",
+   "ora": "13:00",
+   "media": "C-GNQ.mp4",
+   "titolo": "+150% GDP in one year",
+   "didascalia": "+150% GDP in one year. 🛢️🔊 Equatorial Guinea's real GDP grew 150% in 1997, the biggest annual jump in World Bank data. Growth data for every country, with sources, in NEXUS. Link in bio. #equatorialguinea #oil #gdp #growth #economics #africa #finance #studygram #history",
+   "esperimento_orario": false
+  },
+  {
+   "id": "MORT-tiktok",
+   "codice": "MORT",
+   "data": "2026-12-22",
+   "ora": "20:00",
+   "media": "MORT.mp4",
+   "titolo": "Mortgages at 18.63%: 50 years of rates",
+   "didascalia": "Mortgages at 18.63%. 🏠🔊 In October 1981, the average 30-year US mortgage rate hit 18.63% (Freddie Mac via FRED). Rates and markets with sources, in NEXUS. Link in bio. #mortgage #interestrates #realestate #finance #economics #money #investing #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-ELEC-tiktok",
+   "codice": "P-ELEC",
+   "data": "2026-12-23",
+   "ora": "13:00",
+   "media": "P-ELEC.mp4",
+   "titolo": "Sub-Saharan Africa: who has electricity?",
+   "didascalia": "Half of Africa still has no power. 💡🔊 2000: 26%. 2024: 55% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #africa #electricity #energy #development #worldbank #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-IRQ-tiktok",
+   "codice": "C-IRQ",
+   "data": "2026-12-23",
+   "ora": "21:00",
+   "media": "C-IRQ.mp4",
+   "titolo": "−64% GDP in one year",
+   "didascalia": "−64% GDP in one year. 📉🔊 Iraq's real GDP fell 64% in 1991, the deepest annual fall in World Bank data. Growth data for every country, with sources, in NEXUS. Link in bio. #iraq #gulfwar #gdp #economics #middleeast #history #finance #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-KORPRK-tiktok",
+   "codice": "D-KORPRK",
+   "data": "2026-12-24",
+   "ora": "13:00",
+   "media": "D-KORPRK.mp4",
+   "titolo": "South vs North Korea: 26 times apart",
+   "didascalia": "One peninsula, 26 times apart. 🇰🇷🔊 Output per person, 1990: South Korea $13,874, North Korea $2,456. 2022: South Korea $41,321, North Korea $1,569 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #southkorea #northkorea #korea #geopolitics #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "FEDF-tiktok",
+   "codice": "FEDF",
+   "data": "2026-12-24",
+   "ora": "19:00",
+   "media": "FEDF.mp4",
+   "titolo": "The price of money: 70 years of Fed rates",
+   "didascalia": "The price of money, 1954 to today. 🏦🔊 The Fed funds rate averaged 16.4% in 1981 and stayed near zero from 2009 to 2015 (FRED). Rates and markets with sources, in NEXUS. Link in bio. #federalreserve #interestrates #fed #finance #economics #money #investing #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "G-PLAGUE-tiktok",
+   "codice": "G-PLAGUE",
+   "data": "2026-12-25",
+   "ora": "13:00",
+   "media": "G-PLAGUE.mp4",
+   "titolo": "After the Black Death, income rose",
+   "didascalia": "After the plague, income rose. 🕸️🔊 England's output per person: $1,159 in 1300, $1,717 in 1400 (Maddison Project). Why? A hypothesis, tagged as such. Facts and hypotheses kept apart, in NEXUS. Link in bio. #blackdeath #plague #middleages #history #economics #medieval #england #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "F-ROME-tiktok",
+   "codice": "F-ROME",
+   "data": "2026-12-25",
+   "ora": "20:00",
+   "media": "F-ROME.mp4",
+   "titolo": "3 things everyone gets wrong about Rome",
+   "didascalia": "3 things everyone gets wrong about Rome. 🏛️🔊 476 was only the West, a vomitorium was an exit, Caesar wasn't born by C-section. Every claim tagged with its source, in NEXUS. Link in bio. #rome #ancientrome #history #romanempire #juliuscaesar #historymyths #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "P-ESPY-tiktok",
+   "codice": "P-ESPY",
+   "data": "2026-12-26",
+   "ora": "13:00",
+   "media": "P-ESPY.mp4",
+   "titolo": "2013: 55 in 100 young Spaniards unemployed",
+   "didascalia": "In 2013, half of young Spaniards had no job. 🇪🇸🔊 2006: 18%. 2024: 27% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #spain #espana #youth #unemployment #jobs #economics #worldbank #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-FED81-tiktok",
+   "codice": "C-FED81",
+   "data": "2026-12-26",
+   "ora": "21:00",
+   "media": "C-FED81.mp4",
+   "titolo": "The Fed at 19.1%",
+   "didascalia": "The Fed at 19.1%. 🏦🔊 In June 1981 the federal funds rate averaged 19.1%, the highest in its history (FRED). Rates and markets with sources, in NEXUS. Link in bio. #federalreserve #volcker #interestrates #inflation #finance #economics #history #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM1989-tiktok",
+   "codice": "TM1989",
+   "data": "2026-12-27",
+   "ora": "13:00",
+   "media": "TM1989.mp4",
+   "titolo": "Berlin 1989: what did they know?",
+   "didascalia": "9 November 1989, with no hindsight. ⏳🔊 The Berlin Wall opened. Germany reunified on 3 October 1990; the USSR dissolved on 26 December 1991. Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #berlinwall #1989 #coldwar #germany #history #europe #ussr #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "UNR2020-tiktok",
+   "codice": "UNR2020",
+   "data": "2026-12-27",
+   "ora": "19:00",
+   "media": "UNR2020.mp4",
+   "titolo": "14.8% unemployment in one month",
+   "didascalia": "14.8% in one month. 📈🔊 US unemployment jumped from 3.5% in February 2020 to 14.8% in April, the highest since 1948 (BLS via FRED). Labour data with sources, in NEXUS. Link in bio. #unemployment #covid #economy #usa #finance #economics #dataviz #studygram #jobs",
+   "esperimento_orario": true
+  },
+  {
+   "id": "D-ESPITA-tiktok",
+   "codice": "D-ESPITA",
+   "data": "2026-12-28",
+   "ora": "13:00",
+   "media": "D-ESPITA.mp4",
+   "titolo": "Spain vs Italy: almost level",
+   "didascalia": "Spain has almost caught Italy. 🇪🇸🇮🇹🔊 Output per person, 1950: Spain $3,459, Italy $5,582. 2022: Spain $34,123, Italy $36,224 (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #spain #italia #italy #espana #europe #economics #gdp #history #dataviz #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "P-GRCY-tiktok",
+   "codice": "P-GRCY",
+   "data": "2026-12-28",
+   "ora": "20:00",
+   "media": "P-GRCY.mp4",
+   "titolo": "Greece 2013: 58 in 100 young people jobless",
+   "didascalia": "Greece, 2013: 58 in 100 young people jobless. 🇬🇷🔊 2008: 22%. 2024: 22% (World Bank). Data for every country, with sources, in NEXUS. Link in bio. #greece #debtcrisis #youth #unemployment #jobs #economics #worldbank #dataviz #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "ZW2020-tiktok",
+   "codice": "ZW2020",
+   "data": "2026-12-29",
+   "ora": "13:00",
+   "media": "ZW2020.mp4",
+   "titolo": "Prices up 557% in one year",
+   "didascalia": "Prices up 557% in one year. 💸🔊 Zimbabwe, 2020: consumer prices rose 557% in twelve months; in 2017 inflation was below 1% (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #zimbabwe #inflation #hyperinflation #money #economics #finance #africa #history #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "GS10-tiktok",
+   "codice": "GS10",
+   "data": "2026-12-29",
+   "ora": "21:00",
+   "media": "GS10.mp4",
+   "titolo": "70 years of the 10-year yield",
+   "didascalia": "The world's most important rate. 📊🔊 US 10-year yield: 13.9% in 1981, 0.9% in 2020 (FRED). Rates and markets with sources, in NEXUS. Link in bio. #bonds #treasury #interestrates #finance #economics #investing #dataviz #studygram #money",
+   "esperimento_orario": true
+  },
+  {
+   "id": "UK700-tiktok",
+   "codice": "UK700",
+   "data": "2026-12-30",
+   "ora": "13:00",
+   "media": "UK700.mp4",
+   "titolo": "700 years of British income, one line.",
+   "didascalia": "700 years of income, one line. 📈🔊 In 1300, output per person in England was $1,159 a year; by 2022 the UK reached $38,407: 33 times more (Maddison Project). Long-run data for every country, with sources, in NEXUS. Link in bio. #uk #england #economichistory #gdp #history #economics #dataviz #studygram #industrialrevolution",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-BOL-tiktok",
+   "codice": "C-BOL",
+   "data": "2026-12-30",
+   "ora": "19:00",
+   "media": "C-BOL.mp4",
+   "titolo": "Prices up 11,750% in one year",
+   "didascalia": "Prices up 11,750% in one year. 💸🔊 Bolivia, 1985: consumer prices rose 11,750% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #bolivia #hyperinflation #inflation #money #economics #finance #history #latinamerica #studygram",
+   "esperimento_orario": true
+  },
+  {
+   "id": "TM1929-tiktok",
+   "codice": "TM1929",
+   "data": "2026-12-31",
+   "ora": "13:00",
+   "media": "TM1929.mp4",
+   "titolo": "24 October 1929: what did they know?",
+   "didascalia": "24 October 1929, with no hindsight. ⏳🔊 The Dow had peaked at 381.17 on 3 September. Black Tuesday and the 1932 bottom (41.22, −89%) were still in the future (Federal Reserve History). Time Machine, with sources and no hindsight, in NEXUS. Link in bio. #wallstreet #crash1929 #greatdepression #stockmarket #financialhistory #history #investing #studygram",
+   "esperimento_orario": false
+  },
+  {
+   "id": "POV100-tiktok",
+   "codice": "POV100",
+   "data": "2026-12-31",
+   "ora": "20:00",
+   "media": "POV100.mp4",
+   "titolo": "The world as 100 people: extreme poverty, 1820 → 2015",
+   "didascalia": "The world as 100 people. 🌍🔊 In 1820, 89 in 100 lived in extreme poverty; in 2015, 10 in 100 (Ravallion, Bourguignon & Morrisson, World Bank via Our World in Data). Two centuries of data, with sources, in NEXUS. Link in bio. #poverty #humanprogress #history #development #economics #dataviz #studygram #worldbank",
+   "esperimento_orario": true
+  },
+  {
+   "id": "JPN1870-tiktok",
+   "codice": "JPN1870",
+   "data": "2027-01-01",
+   "ora": "13:00",
+   "media": "JPN1870.mp4",
+   "titolo": "Japan: 24 times richer since 1870",
+   "didascalia": "Japan: 24 times richer. 🇯🇵🔊 Output per person went from $1,580 in 1870 to $38,269 in 2022 (Maddison Project, 2011 dollars). Long-run data for every country, with sources, in NEXUS. Link in bio. #japan #economichistory #gdp #history #economics #finance #dataviz #studygram #japanesehistory",
+   "esperimento_orario": false
+  },
+  {
+   "id": "C-PER-tiktok",
+   "codice": "C-PER",
+   "data": "2027-01-01",
+   "ora": "21:00",
+   "media": "C-PER.mp4",
+   "titolo": "Prices up 7,482% in one year",
+   "didascalia": "Prices up 7,482% in one year. 💸🔊 Peru, 1990: consumer prices rose 7,482% in twelve months (World Bank). Inflation for every country, with sources, in NEXUS. Link in bio. #peru #hyperinflation #inflation #money #economics #finance #history #latinamerica #studygram",
+   "esperimento_orario": true
+  }
+ ]
 }
