@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/6c1073a616657419e7f0f35b972b51a44bdd0f42/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/a008a6c4e6b837c9366d6aaa670f9de4f7a85b83/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -315,9 +315,75 @@
    "copertina_ms": 18315
   },
   {
+   "id": "U-UKR-tiktok",
+   "codice": "U-UKR",
+   "data": "2026-12-05",
+   "ora": "13:00",
+   "media": "U-UKR.mp4",
+   "titolo": "Ukraine's banknotes kept growing zeros",
+   "didascalia": "Count the zeros 💵 Ukraine's inflation: 4,735% in 1993, 891% in 1994, 377% in 1995, 80% in 1996 (World Bank). The hryvnia replaced the old money in 1996. Explore any country's inflation in NEXUS — link in bio. #ukraine #hyperinflation #inflation #money #history #economics #europe #currency",
+   "esperimento_orario": false,
+   "copertina_ms": 25355
+  },
+  {
+   "id": "U-ISLANDS-tiktok",
+   "codice": "U-ISLANDS",
+   "data": "2026-12-05",
+   "ora": "21:00",
+   "media": "U-ISLANDS.mp4",
+   "titolo": "Two islands, two destinies",
+   "didascalia": "Two islands, two destinies 🏝️ In 1960 Jamaica's output per person ($4,230) was above Singapore's ($3,464). Singapore caught up by 1968; in 2022 it was $80,320 vs $7,482 (Maddison Project). Compare countries in NEXUS — link in bio. #singapore #jamaica #development #economics #history #islands #growth #asia",
+   "esperimento_orario": true,
+   "copertina_ms": 19573
+  },
+  {
+   "id": "U-RINGS-tiktok",
+   "codice": "U-RINGS",
+   "data": "2026-12-06",
+   "ora": "13:00",
+   "media": "U-RINGS.mp4",
+   "titolo": "America's growth, read in tree rings",
+   "didascalia": "Two centuries in tree rings 🌳 US output per person: $2,545 (1800), $8,038 (1900), $15,240 (1950), $58,487 (2022) — 23× (Maddison Project, 2011 dollars). Explore any country's long run in NEXUS, link in bio. #usa #america #history #economics #gdp #growth #economichistory #data",
+   "esperimento_orario": false,
+   "copertina_ms": 17099
+  },
+  {
+   "id": "U-CHILE-tiktok",
+   "codice": "U-CHILE",
+   "data": "2026-12-06",
+   "ora": "19:00",
+   "media": "U-CHILE.mp4",
+   "titolo": "Chile's shopping cart, 1974",
+   "didascalia": "The cart that kept getting heavier 🛒 Chile's inflation: 78% (1972), 353% (1973), 505% (1974), 375% (1975) — World Bank. Explore inflation history for any country in NEXUS, link in bio. #chile #inflation #latinamerica #money #history #economics #prices #1970s",
+   "esperimento_orario": true,
+   "copertina_ms": 16160
+  },
+  {
+   "id": "U-TRAINS-tiktok",
+   "codice": "U-TRAINS",
+   "data": "2026-12-07",
+   "ora": "13:00",
+   "media": "U-TRAINS.mp4",
+   "titolo": "Poland and Ukraine left the station together",
+   "didascalia": "Same start, different tracks 🚆 In 1990 Ukraine's output per person ($9,607) was above Poland's ($8,150). Poland passed in 1993; by 2022: $32,468 vs $7,749 (Maddison Project). Compare countries in NEXUS — link in bio. #poland #ukraine #europe #economics #history #easterneurope #growth #transition",
+   "esperimento_orario": false,
+   "copertina_ms": 18485
+  },
+  {
+   "id": "U-BRASIL-tiktok",
+   "codice": "U-BRASIL",
+   "data": "2026-12-07",
+   "ora": "20:00",
+   "media": "U-BRASIL.mp4",
+   "titolo": "In 1990 Brazil's prices doubled every 10 weeks",
+   "didascalia": "Prices doubling every ~10 weeks ⏱️🇧🇷 Brazil's inflation: 629% (1988), 1,431% (1989), 2,948% (1990), World Bank. At a steady 1990 pace, that means prices doubling about every ten weeks. Explore it in NEXUS — link in bio. #brazil #brasil #hyperinflation #inflation #money #latinamerica #history #economics",
+   "esperimento_orario": true,
+   "copertina_ms": 17867
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-05",
+   "data": "2026-12-08",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -328,7 +394,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-05",
+   "data": "2026-12-08",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -339,7 +405,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-06",
+   "data": "2026-12-09",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -350,7 +416,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-06",
+   "data": "2026-12-09",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -361,7 +427,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-07",
+   "data": "2026-12-10",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -372,7 +438,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-07",
+   "data": "2026-12-10",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
