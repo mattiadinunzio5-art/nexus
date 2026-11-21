@@ -124,10 +124,13 @@ def main():
 
     base = os.environ.get("IG_MEDIA_BASE", cal["base_url_media"])
     urls = [f"{base}/{p}" for p in v["media"]]
+    cover = f"{base}/{v['copertina']}" if v.get("copertina") else None  # copertina del reel (mai il primo fotogramma nero)
+    if cover and not url_ok(cover):
+        raise SystemExit(f"ERRORE: copertina non raggiungibile: {cover}")
     mancanti = [u for u in urls if not url_ok(u)]
     if mancanti:
         raise SystemExit(f"ERRORE: media non raggiungibili: {mancanti}")
-    print(f"Media raggiungibili: {len(urls)}")
+    print(f"Media raggiungibili: {len(urls)}" + (" + copertina" if cover else ""))
 
     if a.dry_run:
         print("DRY-RUN: mi fermo prima di creare i contenitori.")
@@ -143,8 +146,10 @@ def main():
         cont = api("POST", f"{ig}/media", {"media_type": "CAROUSEL", "children": ",".join(figli),
                                            "caption": v["didascalia"]})["id"]
     else:
-        cont = api("POST", f"{ig}/media", {"media_type": "REELS", "video_url": urls[0],
-                                           "caption": v["didascalia"], "share_to_feed": "true"})["id"]
+        par = {"media_type": "REELS", "video_url": urls[0], "caption": v["didascalia"], "share_to_feed": "true"}
+        if cover: par["cover_url"] = cover
+        elif v.get("copertina_ms") is not None: par["thumb_offset"] = str(v["copertina_ms"])
+        cont = api("POST", f"{ig}/media", par)["id"]
     attendi(cont)
     pub = api("POST", f"{ig}/media_publish", {"creation_id": cont})
     media_id = pub["id"]

@@ -122,6 +122,13 @@ def main():
         url = f"{base}/{v['media']}"
         if not url_ok(url):
             raise SystemExit(f"ERRORE: video non raggiungibile: {url}")
+        video = {"url": url}
+        if v.get("copertina_url"):  # copertina: mai il primo fotogramma nero
+            if not url_ok(v["copertina_url"]):
+                raise SystemExit(f"ERRORE: copertina non raggiungibile: {v['copertina_url']}")
+            video["thumbnailUrl"] = v["copertina_url"]
+        if v.get("copertina_ms") is not None:
+            video["metadata"] = {"thumbnailOffset": int(v["copertina_ms"])}
         due = uscita.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         print(f"{v['id']}: programmo per {uscita.isoformat()} ({due}) con {url}")
         if a.dry_run:
@@ -134,7 +141,7 @@ def main():
         }"""
         inp = {"channelId": cal["canale_buffer_id"], "text": v["didascalia"], "schedulingType": "automatic",
                "mode": "customScheduled", "dueAt": due, "needsApproval": False,
-               "assets": [{"video": {"url": url}}],
+               "assets": [{"video": video}],
                "metadata": {"tiktok": {"title": v["titolo"][:90]}}}
         res = gql(m, {"input": inp})["createPost"]
         if "post" not in res:
