@@ -123,11 +123,7 @@ def main():
         if not url_ok(url):
             raise SystemExit(f"ERRORE: video non raggiungibile: {url}")
         video = {"url": url}
-        if v.get("copertina_url"):  # copertina: mai il primo fotogramma nero
-            if not url_ok(v["copertina_url"]):
-                raise SystemExit(f"ERRORE: copertina non raggiungibile: {v['copertina_url']}")
-            video["thumbnailUrl"] = v["copertina_url"]
-        if v.get("copertina_ms") is not None:
+        if v.get("copertina_ms") is not None:  # copertina = fotogramma scelto (Buffer non accetta immagini per TikTok)
             video["metadata"] = {"thumbnailOffset": int(v["copertina_ms"])}
         due = uscita.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         print(f"{v['id']}: programmo per {uscita.isoformat()} ({due}) con {url}")

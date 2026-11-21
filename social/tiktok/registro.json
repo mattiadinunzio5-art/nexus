@@ -62,49 +62,49 @@
     },
     {
       "id": "P-CHN-tiktok",
-      "buffer_post_id": "6b00d0f45e993799d8352c53",
+      "buffer_post_id": "6b013d175e993799d8595764",
       "dueAt": "2026-11-21T12:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "D-KORGHA-tiktok",
-      "buffer_post_id": "6b00d0fa9ffbc8503ce02fa5",
+      "buffer_post_id": "6b013d18dd205ed779c4d933",
       "dueAt": "2026-11-21T18:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "KOR1950-tiktok",
-      "buffer_post_id": "6b00d0fcd9cbb430a101dfa8",
+      "buffer_post_id": "6b013d1920a2d09a0adbdaa7",
       "dueAt": "2026-11-22T12:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "C-UKR-tiktok",
-      "buffer_post_id": "6b00d0fddd205ed779a1b300",
+      "buffer_post_id": "6b013d19d9cbb430a125c2c6",
       "dueAt": "2026-11-22T19:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "TM1987-tiktok",
-      "buffer_post_id": "6b00d1019ffbc8503ce03c09",
+      "buffer_post_id": "6b013d1add205ed779c4d9aa",
       "dueAt": "2026-11-23T12:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "P-IND-tiktok",
-      "buffer_post_id": "6b00d10220a2d09a0ab86247",
+      "buffer_post_id": "6b013d1bdd205ed779c4d9dc",
       "dueAt": "2026-11-23T20:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "G-BW-tiktok",
-      "buffer_post_id": "6b00d103d9cbb430a101ecb2",
+      "buffer_post_id": "6b013d1b5102766245002224",
       "dueAt": "2026-11-24T12:00:00.000Z",
       "stato": "scheduled"
     },
     {
       "id": "F-MYTHS-tiktok",
-      "buffer_post_id": "6b00d10420a2d09a0ab86830",
+      "buffer_post_id": "6b013d1c9ffbc8503c03970a",
       "dueAt": "2026-11-24T18:00:00.000Z",
       "stato": "scheduled"
     }
