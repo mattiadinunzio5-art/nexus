@@ -1257,6 +1257,90 @@
    "didascalia": "India's scoreboard 🏏🇮🇳 Output per person: $987 (1950), $2,087 (1990), $4,526 (2010), $7,766 (2022) — almost 8× (Maddison Project, 2011 dollars). Explore any country's long run in NEXUS — link in bio. #india #cricket #economy #growth #asia #history #gdp #data",
    "copertina": "reels/covers/U-CRICKET.jpg",
    "copertina_ms": 15115
+  },
+  {
+   "id": "U-TERRACE-reel",
+   "codice": "U-TERRACE",
+   "tipo": "reel",
+   "data": "2026-12-26",
+   "ora": "12:30",
+   "titolo": "Vietnam's rice terraces turned green",
+   "media": [
+    "reels/U-TERRACE.mp4"
+   ],
+   "didascalia": "Terraces turning green 🌾🇻🇳 Share of people in Vietnam living on under $3 a day: 57.5% (1992), 43.3% (2002), 5.2% (2010), 1.6% (2022) — World Bank. Explore it in NEXUS — link in bio. #vietnam #poverty #development #asia #economics #humanprogress #worldbank #rice",
+   "copertina": "reels/covers/U-TERRACE.jpg",
+   "copertina_ms": 19339
+  },
+  {
+   "id": "U-BONSAI-reel",
+   "codice": "U-BONSAI",
+   "tipo": "reel",
+   "data": "2026-12-26",
+   "ora": "19:00",
+   "titolo": "Japan's bonsai of life",
+   "media": [
+    "reels/U-BONSAI.mp4"
+   ],
+   "didascalia": "A bonsai of years 🌳🇯🇵 Life expectancy in Japan: 36.4 (1865), 38.6 (1900), 59.3 (1950), 81.2 (2000), 84.7 (2023) — Our World in Data. Explore life expectancy for every country in NEXUS — link in bio. #japan #lifeexpectancy #longevity #health #history #asia #demography #data",
+   "copertina": "reels/covers/U-BONSAI.jpg",
+   "copertina_ms": 17227
+  },
+  {
+   "id": "U-ROAD-reel",
+   "codice": "U-ROAD",
+   "tipo": "reel",
+   "data": "2026-12-27",
+   "ora": "12:30",
+   "titolo": "Sub-Saharan Africa's long road",
+   "media": [
+    "reels/U-ROAD.mp4"
+   ],
+   "didascalia": "The long road 🛣️🌍 Share of people in Sub-Saharan Africa living on under $3 a day (2021 prices): 61.5% (1990), 62.4% (2000), 49.4% (2010), 45% (2024) — World Bank. Explore poverty data in NEXUS — link in bio. #africa #poverty #development #economics #worldbank #humanprogress #history #data",
+   "copertina": "reels/covers/U-ROAD.jpg",
+   "copertina_ms": 21024
+  },
+  {
+   "id": "U-TREE-reel",
+   "codice": "U-TREE",
+   "tipo": "reel",
+   "data": "2026-12-27",
+   "ora": "19:00",
+   "titolo": "Italy's tree of children",
+   "media": [
+    "reels/U-TREE.mp4"
+   ],
+   "didascalia": "L'albero dei bambini 🌳🇮🇹 Child mortality in Italy (deaths before age 5): 44.5% in 1872, 29.7% in 1900, 8.9% in 1950, 0.3% in 2024 (Gapminder, UN IGME via Our World in Data). Explore it in NEXUS — link in bio. #italia #italy #storia #health #children #humanprogress #history #data",
+   "copertina": "reels/covers/U-TREE.jpg",
+   "copertina_ms": 19040
+  },
+  {
+   "id": "U-BOATS-reel",
+   "codice": "U-BOATS",
+   "tipo": "reel",
+   "data": "2026-12-28",
+   "ora": "12:30",
+   "titolo": "Indonesia's boats left the harbour",
+   "media": [
+    "reels/U-BOATS.mp4"
+   ],
+   "didascalia": "Boats leaving the harbour ⛵🇮🇩 Share of Indonesians living on under $3 a day (2021 prices): 86.3% (1984), 66.2% (1999), 34.1% (2010), 5.4% (2024) — World Bank. Explore poverty data in NEXUS — link in bio. #indonesia #poverty #development #asia #economics #humanprogress #worldbank #history",
+   "copertina": "reels/covers/U-BOATS.jpg",
+   "copertina_ms": 18421
+  },
+  {
+   "id": "U-BENCH-reel",
+   "codice": "U-BENCH",
+   "tipo": "reel",
+   "data": "2026-12-28",
+   "ora": "19:00",
+   "titolo": "Italy's park benches are filling up",
+   "media": [
+    "reels/U-BENCH.mp4"
+   ],
+   "didascalia": "Le panchine si riempiono 🪑🇮🇹 Share of Italians aged 65+: 9.5% (1960), 13.2% (1980), 18.2% (2000), 24.6% (2024) — World Bank, UN WPP. One in four. Explore population data in NEXUS — link in bio. #italia #italy #anziani #demografia #ageing #population #society #data",
+   "copertina": "reels/covers/U-BENCH.jpg",
+   "copertina_ms": 16715
   }
  ]
 }

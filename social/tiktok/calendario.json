@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/acdf9d8ec865d9547a4f32d27f14a5051f2a359c/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/297a7ea8073bc53c9bdc71841b0b0472c491239d/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -711,9 +711,75 @@
    "copertina_ms": 15115
   },
   {
+   "id": "U-TERRACE-tiktok",
+   "codice": "U-TERRACE",
+   "data": "2026-12-23",
+   "ora": "13:00",
+   "media": "U-TERRACE.mp4",
+   "titolo": "Vietnam's rice terraces turned green",
+   "didascalia": "Terraces turning green 🌾🇻🇳 Share of people in Vietnam living on under $3 a day: 57.5% (1992), 43.3% (2002), 5.2% (2010), 1.6% (2022) — World Bank. Explore it in NEXUS — link in bio. #vietnam #poverty #development #asia #economics #humanprogress #worldbank #rice",
+   "esperimento_orario": false,
+   "copertina_ms": 19339
+  },
+  {
+   "id": "U-BONSAI-tiktok",
+   "codice": "U-BONSAI",
+   "data": "2026-12-23",
+   "ora": "21:00",
+   "media": "U-BONSAI.mp4",
+   "titolo": "Japan's bonsai of life",
+   "didascalia": "A bonsai of years 🌳🇯🇵 Life expectancy in Japan: 36.4 (1865), 38.6 (1900), 59.3 (1950), 81.2 (2000), 84.7 (2023) — Our World in Data. Explore life expectancy for every country in NEXUS — link in bio. #japan #lifeexpectancy #longevity #health #history #asia #demography #data",
+   "esperimento_orario": true,
+   "copertina_ms": 17227
+  },
+  {
+   "id": "U-ROAD-tiktok",
+   "codice": "U-ROAD",
+   "data": "2026-12-24",
+   "ora": "13:00",
+   "media": "U-ROAD.mp4",
+   "titolo": "Sub-Saharan Africa's long road",
+   "didascalia": "The long road 🛣️🌍 Share of people in Sub-Saharan Africa living on under $3 a day (2021 prices): 61.5% (1990), 62.4% (2000), 49.4% (2010), 45% (2024) — World Bank. Explore poverty data in NEXUS — link in bio. #africa #poverty #development #economics #worldbank #humanprogress #history #data",
+   "esperimento_orario": false,
+   "copertina_ms": 21024
+  },
+  {
+   "id": "U-TREE-tiktok",
+   "codice": "U-TREE",
+   "data": "2026-12-24",
+   "ora": "19:00",
+   "media": "U-TREE.mp4",
+   "titolo": "Italy's tree of children",
+   "didascalia": "L'albero dei bambini 🌳🇮🇹 Child mortality in Italy (deaths before age 5): 44.5% in 1872, 29.7% in 1900, 8.9% in 1950, 0.3% in 2024 (Gapminder, UN IGME via Our World in Data). Explore it in NEXUS — link in bio. #italia #italy #storia #health #children #humanprogress #history #data",
+   "esperimento_orario": true,
+   "copertina_ms": 19040
+  },
+  {
+   "id": "U-BOATS-tiktok",
+   "codice": "U-BOATS",
+   "data": "2026-12-25",
+   "ora": "13:00",
+   "media": "U-BOATS.mp4",
+   "titolo": "Indonesia's boats left the harbour",
+   "didascalia": "Boats leaving the harbour ⛵🇮🇩 Share of Indonesians living on under $3 a day (2021 prices): 86.3% (1984), 66.2% (1999), 34.1% (2010), 5.4% (2024) — World Bank. Explore poverty data in NEXUS — link in bio. #indonesia #poverty #development #asia #economics #humanprogress #worldbank #history",
+   "esperimento_orario": false,
+   "copertina_ms": 18421
+  },
+  {
+   "id": "U-BENCH-tiktok",
+   "codice": "U-BENCH",
+   "data": "2026-12-25",
+   "ora": "20:00",
+   "media": "U-BENCH.mp4",
+   "titolo": "Italy's park benches are filling up",
+   "didascalia": "Le panchine si riempiono 🪑🇮🇹 Share of Italians aged 65+: 9.5% (1960), 13.2% (1980), 18.2% (2000), 24.6% (2024) — World Bank, UN WPP. One in four. Explore population data in NEXUS — link in bio. #italia #italy #anziani #demografia #ageing #population #society #data",
+   "esperimento_orario": true,
+   "copertina_ms": 16715
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-23",
+   "data": "2026-12-26",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -724,7 +790,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-23",
+   "data": "2026-12-26",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -735,7 +801,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-24",
+   "data": "2026-12-27",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -746,7 +812,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-24",
+   "data": "2026-12-27",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -757,7 +823,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-25",
+   "data": "2026-12-28",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -768,7 +834,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-25",
+   "data": "2026-12-28",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
