@@ -61,12 +61,6 @@
       "nota": "trovato gia' su Buffer"
     },
     {
-      "id": "P-CHN-tiktok",
-      "buffer_post_id": "6b013d175e993799d8595764",
-      "dueAt": "2026-11-21T12:00:00.000Z",
-      "stato": "scheduled"
-    },
-    {
       "id": "D-KORGHA-tiktok",
       "buffer_post_id": "6b013d18dd205ed779c4d933",
       "dueAt": "2026-11-21T18:00:00.000Z",
@@ -106,6 +100,12 @@
       "id": "F-MYTHS-tiktok",
       "buffer_post_id": "6b013d1c9ffbc8503c03970a",
       "dueAt": "2026-11-24T18:00:00.000Z",
+      "stato": "scheduled"
+    },
+    {
+      "id": "P-CHN-tiktok",
+      "buffer_post_id": "6b013fed510276624500f2c1",
+      "dueAt": "2026-11-21T12:00:00.000Z",
       "stato": "scheduled"
     }
   ]
