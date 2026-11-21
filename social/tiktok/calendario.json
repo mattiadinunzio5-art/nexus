@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/71f54f6448728b1949f2ccf259164d383fbe738c/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/d0809e366cdb58c88278583ff7e3ded55b3612a5/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -513,9 +513,75 @@
    "copertina_ms": 21771
   },
   {
+   "id": "U-ROME-tiktok",
+   "codice": "U-ROME",
+   "data": "2026-12-14",
+   "ora": "13:00",
+   "media": "U-ROME.mp4",
+   "titolo": "Rome fell in 476. Half of it",
+   "didascalia": "Rome fell in 476… half of it 🏛️ The last Western emperor was deposed in 476; the Eastern Roman Empire lasted until the fall of Constantinople in 1453 — 977 more years (Britannica). NEXUS tags claims as fact, myth or half true — link in bio. #rome #romanempire #byzantine #history #ancientrome #constantinople #historyfacts #didyouknow",
+   "esperimento_orario": false,
+   "copertina_ms": 19317
+  },
+  {
+   "id": "U-WAVE-tiktok",
+   "codice": "U-WAVE",
+   "data": "2026-12-14",
+   "ora": "21:00",
+   "media": "U-WAVE.mp4",
+   "titolo": "Japan's great wave of growth",
+   "didascalia": "Japan's great wave 🌊🇯🇵 Output per person: $1,580 (1870), $2,771 (1946), $29,949 (1990), $38,269 (2022) — 24× (Maddison Project, 2011 dollars). Explore any country's long run in NEXUS — link in bio. #japan #economichistory #history #growth #gdp #asia #economics #data",
+   "esperimento_orario": true,
+   "copertina_ms": 19915
+  },
+  {
+   "id": "U-THEATRE-tiktok",
+   "codice": "U-THEATRE",
+   "data": "2026-12-15",
+   "ora": "13:00",
+   "media": "U-THEATRE.mp4",
+   "titolo": "Greece's empty seats",
+   "didascalia": "The empty seats 🏛️🇬🇷 Youth unemployment in Greece (15–24, labour force): 21.6% (2008), 33% (2010), 58.5% (2013), 22.4% (2024) — World Bank, ILO estimate. Explore labour data in NEXUS — link in bio. #greece #youth #unemployment #eurocrisis #europe #economics #jobs #history",
+   "esperimento_orario": false,
+   "copertina_ms": 19381
+  },
+  {
+   "id": "U-MAGNA-tiktok",
+   "codice": "U-MAGNA",
+   "data": "2026-12-15",
+   "ora": "19:00",
+   "media": "U-MAGNA.mp4",
+   "titolo": "The 1215 document with four survivors",
+   "didascalia": "Four survivors from 1215 📜 Magna Carta was sealed by King John in June 1215. Four original 1215 copies survive: two at the British Library, one at Lincoln, one at Salisbury (British Library). Explore documents with sources in NEXUS — link in bio. #magnacarta #history #england #medieval #law #democracy #historyfacts #britishlibrary",
+   "esperimento_orario": true,
+   "copertina_ms": 15796
+  },
+  {
+   "id": "U-ELEVATOR-tiktok",
+   "codice": "U-ELEVATOR",
+   "data": "2026-12-16",
+   "ora": "13:00",
+   "media": "U-ELEVATOR.mp4",
+   "titolo": "South Korea took the express elevator",
+   "didascalia": "The express elevator 🛗🇰🇷 South Korea's output per person: $998 (1950), $2,975 (1970), $13,874 (1990), $41,321 (2022) — 41× (Maddison Project, 2011 dollars). Explore it in NEXUS — link in bio. #southkorea #korea #economicmiracle #growth #asia #history #economics #gdp",
+   "esperimento_orario": false,
+   "copertina_ms": 15221
+  },
+  {
+   "id": "U-TULIP-tiktok",
+   "codice": "U-TULIP",
+   "data": "2026-12-16",
+   "ora": "20:00",
+   "media": "U-TULIP.mp4",
+   "titolo": "Did tulips really ruin Holland?",
+   "didascalia": "Did tulips ruin Holland? 🌷 Bulb prices collapsed in February 1637 — but archival research (Anne Goldgar, Tulipmania, 2007) found little evidence of widespread ruin. NEXUS keeps facts and interpretations apart — link in bio. #tulipmania #tulips #bubble #financialhistory #netherlands #history #economics #investing",
+   "esperimento_orario": true,
+   "copertina_ms": 17035
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-14",
+   "data": "2026-12-17",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -526,7 +592,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-14",
+   "data": "2026-12-17",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -537,7 +603,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-15",
+   "data": "2026-12-18",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -548,7 +614,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-15",
+   "data": "2026-12-18",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -559,7 +625,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-16",
+   "data": "2026-12-19",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -570,7 +636,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-16",
+   "data": "2026-12-19",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
