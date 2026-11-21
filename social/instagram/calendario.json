@@ -1341,6 +1341,118 @@
    "didascalia": "Le panchine si riempiono 🪑🇮🇹 Share of Italians aged 65+: 9.5% (1960), 13.2% (1980), 18.2% (2000), 24.6% (2024) — World Bank, UN WPP. One in four. Explore population data in NEXUS — link in bio. #italia #italy #anziani #demografia #ageing #population #society #data",
    "copertina": "reels/covers/U-BENCH.jpg",
    "copertina_ms": 16715
+  },
+  {
+   "id": "U-NIGHT-reel",
+   "codice": "U-NIGHT",
+   "tipo": "reel",
+   "data": "2026-12-29",
+   "ora": "12:30",
+   "titolo": "One peninsula, two nights",
+   "media": [
+    "reels/U-NIGHT.mp4"
+   ],
+   "didascalia": "One peninsula, two nights 🌃 Output per person: South Korea $13,874 vs North Korea $2,456 (1990); $41,321 vs $1,569 (2022) — 26× apart (Maddison Project, 2011 dollars). Compare countries in NEXUS — link in bio. #korea #southkorea #northkorea #asia #geopolitics #economics #history #data",
+   "copertina": "reels/covers/U-NIGHT.jpg",
+   "copertina_ms": 24288
+  },
+  {
+   "id": "U-FEDZERO-reel",
+   "codice": "U-FEDZERO",
+   "tipo": "reel",
+   "data": "2026-12-29",
+   "ora": "19:00",
+   "titolo": "When the price of money froze",
+   "media": [
+    "reels/U-FEDZERO.mp4"
+   ],
+   "didascalia": "The price of money, frozen 🧊 The US federal funds rate averaged 5.02% in 2007, 0.16% in 2009, stayed near zero through 2015 (0.13%), and was back at 5.02% in 2023 (Federal Reserve via FRED). Explore rates history in NEXUS — link in bio. #federalreserve #interestrates #zirp #finance #economics #markets #money #2008",
+   "copertina": "reels/covers/U-FEDZERO.jpg",
+   "copertina_ms": 17675
+  },
+  {
+   "id": "U-WINE-reel",
+   "codice": "U-WINE",
+   "tipo": "reel",
+   "data": "2026-12-30",
+   "ora": "12:30",
+   "titolo": "Spain and Italy, glass for glass",
+   "media": [
+    "reels/U-WINE.mp4"
+   ],
+   "didascalia": "Glass for glass 🍷 Output per person: Italy $5,582 vs Spain $3,459 (1950); $20,959 vs $14,006 (1980); $36,224 vs $34,123 (2022) — Maddison Project, 2011 dollars. Compare countries in NEXUS — link in bio. #italia #spain #espana #italy #europe #economics #history #data",
+   "copertina": "reels/covers/U-WINE.jpg",
+   "copertina_ms": 22197
+  },
+  {
+   "id": "U-PITCH-reel",
+   "codice": "U-PITCH",
+   "tipo": "reel",
+   "data": "2026-12-30",
+   "ora": "19:00",
+   "titolo": "South Africa's youth on the bench",
+   "media": [
+    "reels/U-PITCH.mp4"
+   ],
+   "didascalia": "On the bench ⚽🇿🇦 Youth unemployment in South Africa (15–24, labour force): 43.5% (1991), 44.6% (2008), 65.5% (2021), 60.2% (2024) — World Bank, ILO estimate. Explore labour data in NEXUS — link in bio. #southafrica #youth #unemployment #africa #jobs #economics #football #data",
+   "copertina": "reels/covers/U-PITCH.jpg",
+   "copertina_ms": 22005
+  },
+  {
+   "id": "U-IOU-reel",
+   "codice": "U-IOU",
+   "tipo": "reel",
+   "data": "2026-12-31",
+   "ora": "12:30",
+   "titolo": "America's stack of IOUs",
+   "media": [
+    "reels/U-IOU.mp4"
+   ],
+   "didascalia": "A tower of IOUs 🧾 US central government debt as a share of GDP: 40.9% (1990), 33.3% (2000), 64% (2008), 124.5% (2020), 115.8% (2024) — World Bank. Explore public finance data in NEXUS — link in bio. #debt #usa #publicdebt #economics #finance #government #history #data",
+   "copertina": "reels/covers/U-IOU.jpg",
+   "copertina_ms": 17099
+  },
+  {
+   "id": "U-MICS-reel",
+   "codice": "U-MICS",
+   "tipo": "reel",
+   "data": "2026-12-31",
+   "ora": "19:00",
+   "titolo": "Italy's microphones, switched on",
+   "media": [
+    "reels/U-MICS.mp4"
+   ],
+   "didascalia": "Microfoni accesi 🎙️🇮🇹 Share of seats held by women in Italy's parliament: 11.1% (1997), 31.4% (2013), 35.7% (2018), 32.2% (2024) — World Bank, IPU data. Explore it in NEXUS — link in bio. #italia #parlamento #donne #politica #women #equality #italy #data",
+   "copertina": "reels/covers/U-MICS.jpg",
+   "copertina_ms": 18507
+  },
+  {
+   "id": "U-FORK-reel",
+   "codice": "U-FORK",
+   "tipo": "reel",
+   "data": "2027-01-01",
+   "ora": "12:30",
+   "titolo": "Venezuela and Chile at the crossroads",
+   "media": [
+    "reels/U-FORK.mp4"
+   ],
+   "didascalia": "The crossroads of 1996 🪧 Output per person: Venezuela $8,462 vs Chile $5,880 (1950); level in 1996 (about $14,200–14,400); Chile $22,741 vs Venezuela $5,267 in 2022 (Maddison Project). Compare countries in NEXUS — link in bio. #venezuela #chile #latinamerica #economics #history #development #growth #data",
+   "copertina": "reels/covers/U-FORK.jpg",
+   "copertina_ms": 20960
+  },
+  {
+   "id": "U-STROLLERS-reel",
+   "codice": "U-STROLLERS",
+   "tipo": "reel",
+   "data": "2027-01-01",
+   "ora": "19:00",
+   "titolo": "Who is still having children?",
+   "media": [
+    "reels/U-STROLLERS.mp4"
+   ],
+   "didascalia": "Who is still having children? 👶 Births per woman in 2023: Niger 6.06, India 1.98, USA 1.62, Italy 1.21, South Korea 0.72 (World Bank). About 2.1 keeps a population stable. Explore fertility for every country in NEXUS — link in bio. #fertility #birthrate #population #demography #italy #korea #niger #data",
+   "copertina": "reels/covers/U-STROLLERS.jpg",
+   "copertina_ms": 19232
   }
  ]
 }

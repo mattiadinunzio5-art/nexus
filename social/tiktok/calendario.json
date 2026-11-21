@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/297a7ea8073bc53c9bdc71841b0b0472c491239d/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/32d806573c3c95c11555db9f2b5c2c85796cfc98/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -777,9 +777,97 @@
    "copertina_ms": 16715
   },
   {
+   "id": "U-NIGHT-tiktok",
+   "codice": "U-NIGHT",
+   "data": "2026-12-26",
+   "ora": "13:00",
+   "media": "U-NIGHT.mp4",
+   "titolo": "One peninsula, two nights",
+   "didascalia": "One peninsula, two nights 🌃 Output per person: South Korea $13,874 vs North Korea $2,456 (1990); $41,321 vs $1,569 (2022) — 26× apart (Maddison Project, 2011 dollars). Compare countries in NEXUS — link in bio. #korea #southkorea #northkorea #asia #geopolitics #economics #history #data",
+   "esperimento_orario": false,
+   "copertina_ms": 24288
+  },
+  {
+   "id": "U-FEDZERO-tiktok",
+   "codice": "U-FEDZERO",
+   "data": "2026-12-26",
+   "ora": "21:00",
+   "media": "U-FEDZERO.mp4",
+   "titolo": "When the price of money froze",
+   "didascalia": "The price of money, frozen 🧊 The US federal funds rate averaged 5.02% in 2007, 0.16% in 2009, stayed near zero through 2015 (0.13%), and was back at 5.02% in 2023 (Federal Reserve via FRED). Explore rates history in NEXUS — link in bio. #federalreserve #interestrates #zirp #finance #economics #markets #money #2008",
+   "esperimento_orario": true,
+   "copertina_ms": 17675
+  },
+  {
+   "id": "U-WINE-tiktok",
+   "codice": "U-WINE",
+   "data": "2026-12-27",
+   "ora": "13:00",
+   "media": "U-WINE.mp4",
+   "titolo": "Spain and Italy, glass for glass",
+   "didascalia": "Glass for glass 🍷 Output per person: Italy $5,582 vs Spain $3,459 (1950); $20,959 vs $14,006 (1980); $36,224 vs $34,123 (2022) — Maddison Project, 2011 dollars. Compare countries in NEXUS — link in bio. #italia #spain #espana #italy #europe #economics #history #data",
+   "esperimento_orario": false,
+   "copertina_ms": 22197
+  },
+  {
+   "id": "U-PITCH-tiktok",
+   "codice": "U-PITCH",
+   "data": "2026-12-27",
+   "ora": "19:00",
+   "media": "U-PITCH.mp4",
+   "titolo": "South Africa's youth on the bench",
+   "didascalia": "On the bench ⚽🇿🇦 Youth unemployment in South Africa (15–24, labour force): 43.5% (1991), 44.6% (2008), 65.5% (2021), 60.2% (2024) — World Bank, ILO estimate. Explore labour data in NEXUS — link in bio. #southafrica #youth #unemployment #africa #jobs #economics #football #data",
+   "esperimento_orario": true,
+   "copertina_ms": 22005
+  },
+  {
+   "id": "U-IOU-tiktok",
+   "codice": "U-IOU",
+   "data": "2026-12-28",
+   "ora": "13:00",
+   "media": "U-IOU.mp4",
+   "titolo": "America's stack of IOUs",
+   "didascalia": "A tower of IOUs 🧾 US central government debt as a share of GDP: 40.9% (1990), 33.3% (2000), 64% (2008), 124.5% (2020), 115.8% (2024) — World Bank. Explore public finance data in NEXUS — link in bio. #debt #usa #publicdebt #economics #finance #government #history #data",
+   "esperimento_orario": false,
+   "copertina_ms": 17099
+  },
+  {
+   "id": "U-MICS-tiktok",
+   "codice": "U-MICS",
+   "data": "2026-12-28",
+   "ora": "20:00",
+   "media": "U-MICS.mp4",
+   "titolo": "Italy's microphones, switched on",
+   "didascalia": "Microfoni accesi 🎙️🇮🇹 Share of seats held by women in Italy's parliament: 11.1% (1997), 31.4% (2013), 35.7% (2018), 32.2% (2024) — World Bank, IPU data. Explore it in NEXUS — link in bio. #italia #parlamento #donne #politica #women #equality #italy #data",
+   "esperimento_orario": true,
+   "copertina_ms": 18507
+  },
+  {
+   "id": "U-FORK-tiktok",
+   "codice": "U-FORK",
+   "data": "2026-12-29",
+   "ora": "13:00",
+   "media": "U-FORK.mp4",
+   "titolo": "Venezuela and Chile at the crossroads",
+   "didascalia": "The crossroads of 1996 🪧 Output per person: Venezuela $8,462 vs Chile $5,880 (1950); level in 1996 (about $14,200–14,400); Chile $22,741 vs Venezuela $5,267 in 2022 (Maddison Project). Compare countries in NEXUS — link in bio. #venezuela #chile #latinamerica #economics #history #development #growth #data",
+   "esperimento_orario": false,
+   "copertina_ms": 20960
+  },
+  {
+   "id": "U-STROLLERS-tiktok",
+   "codice": "U-STROLLERS",
+   "data": "2026-12-29",
+   "ora": "21:00",
+   "media": "U-STROLLERS.mp4",
+   "titolo": "Who is still having children?",
+   "didascalia": "Who is still having children? 👶 Births per woman in 2023: Niger 6.06, India 1.98, USA 1.62, Italy 1.21, South Korea 0.72 (World Bank). About 2.1 keeps a population stable. Explore fertility for every country in NEXUS — link in bio. #fertility #birthrate #population #demography #italy #korea #niger #data",
+   "esperimento_orario": true,
+   "copertina_ms": 19232
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-26",
+   "data": "2026-12-30",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -790,8 +878,8 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-26",
-   "ora": "21:00",
+   "data": "2026-12-30",
+   "ora": "19:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
    "didascalia": "28 years to build it, one night to open it 🧱 The Berlin border was sealed on 13 August 1961, the crossings opened on 9 November 1989, and Germany reunified on 3 October 1990. Every date with its source in NEXUS (link in bio). #berlinwall #berlin #1989 #coldwar #germany #history #europe #onthisday",
@@ -801,7 +889,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-27",
+   "data": "2026-12-31",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -812,8 +900,8 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-27",
-   "ora": "19:00",
+   "data": "2026-12-31",
+   "ora": "20:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
    "didascalia": "Black Monday, live on a 1987 terminal 📟 The Dow went from 2,246.74 to 1,738.74 in one session: −22.6%, the largest one-day percentage drop in its history (Federal Reserve History). Relive any market day with no hindsight in NEXUS — link in bio. #blackmonday #1987 #stockmarket #dowjones #wallstreet #financialhistory #investing #markets",
@@ -823,7 +911,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-28",
+   "data": "2027-01-01",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -834,8 +922,8 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-28",
-   "ora": "20:00",
+   "data": "2027-01-01",
+   "ora": "21:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
    "didascalia": "Ricordi la lira? 🇮🇹💶 On 1 January 1999 the rate was fixed at 1,936.27 lire per euro; notes and coins arrived on 1 January 2002; by 2023, 20 countries used the euro (ECB). Every exchange rate with sources in NEXUS — link in bio. #lira #euro #italia #italy #europe #money #history #economia",
