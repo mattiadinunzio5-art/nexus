@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/1fc971f3835260335e91cc680ade6376b4f20d2d/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/71f54f6448728b1949f2ccf259164d383fbe738c/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -447,9 +447,75 @@
    "copertina_ms": 16843
   },
   {
+   "id": "U-LBN-tiktok",
+   "codice": "U-LBN",
+   "data": "2026-12-11",
+   "ora": "13:00",
+   "media": "U-LBN.mp4",
+   "titolo": "What a coffee cost in Lebanon",
+   "didascalia": "The price of a coffee ☕🇱🇧 Lebanon's inflation: 85% (2020), 155% (2021), 171% (2022), 221% (2023). On annual averages, prices in 2023 were about 41× their 2019 level (World Bank). Explore it in NEXUS — link in bio. #lebanon #inflation #economiccrisis #middleeast #money #economics #beirut #history",
+   "esperimento_orario": false,
+   "copertina_ms": 19019
+  },
+  {
+   "id": "U-ISR-tiktok",
+   "codice": "U-ISR",
+   "data": "2026-12-11",
+   "ora": "21:00",
+   "media": "U-ISR.mp4",
+   "titolo": "Israel climbed the inflation ladder, then jumped",
+   "didascalia": "Up the ladder, then down 🪜 Israel's inflation: 117% (1981), 146% (1983), 373% (1984), 307% (1985) and 47.6% (1986) after the 1985 stabilization plan (World Bank, Bank of Israel). Explore it in NEXUS — link in bio. #israel #inflation #economics #history #money #middleeast #1980s #centralbank",
+   "esperimento_orario": true,
+   "copertina_ms": 16672
+  },
+  {
+   "id": "U-KAZ-tiktok",
+   "codice": "U-KAZ",
+   "data": "2026-12-12",
+   "ora": "13:00",
+   "media": "U-KAZ.mp4",
+   "titolo": "Kazakhstan's balloon of prices",
+   "didascalia": "A balloon of prices 🎈🇰🇿 Kazakhstan's inflation: 1,877% in 1994, 176% in 1995, 39% in 1996, 17% in 1997 (World Bank). Explore any country's inflation history in NEXUS — link in bio. #kazakhstan #inflation #hyperinflation #centralasia #money #history #economics #1990s",
+   "esperimento_orario": false,
+   "copertina_ms": 19339
+  },
+  {
+   "id": "U-SDN-tiktok",
+   "codice": "U-SDN",
+   "data": "2026-12-12",
+   "ora": "19:00",
+   "media": "U-SDN.mp4",
+   "titolo": "In Sudan, the same money bought a twelfth",
+   "didascalia": "Same money, shrinking bread 🍞 Sudan's inflation: 163% in 2020 and 359% in 2021 (World Bank). On annual averages, money in 2021 bought about one twelfth of what it bought in 2019. Explore inflation data in NEXUS — link in bio. #sudan #inflation #africa #economics #money #crisis #history #worldbank",
+   "esperimento_orario": true,
+   "copertina_ms": 14496
+  },
+  {
+   "id": "U-BLR-tiktok",
+   "codice": "U-BLR",
+   "data": "2026-12-13",
+   "ora": "13:00",
+   "media": "U-BLR.mp4",
+   "titolo": "Belarus: the pressure gauge in the red",
+   "didascalia": "Pressure in the red 🌡️ Belarus's inflation: 1,190% in 1993, 2,221% in 1994, 709% in 1995, 53% in 1996 (World Bank). Explore any country's inflation history in NEXUS — link in bio. #belarus #hyperinflation #inflation #money #history #economics #europe #1990s",
+   "esperimento_orario": false,
+   "copertina_ms": 19488
+  },
+  {
+   "id": "U-ARM-tiktok",
+   "codice": "U-ARM",
+   "data": "2026-12-13",
+   "ora": "20:00",
+   "media": "U-ARM.mp4",
+   "titolo": "Armenia, 1994: money to burn",
+   "didascalia": "Money to burn 🔥 Armenia's inflation: 3,374% in 1994, 176% in 1995, 18.7% in 1996 (World Bank). Three years after independence, savings went up in smoke. Explore inflation for any country in NEXUS — link in bio. #armenia #hyperinflation #inflation #money #history #economics #caucasus #1990s",
+   "esperimento_orario": true,
+   "copertina_ms": 21771
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-11",
+   "data": "2026-12-14",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -460,7 +526,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-11",
+   "data": "2026-12-14",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -471,7 +537,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-12",
+   "data": "2026-12-15",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -482,7 +548,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-12",
+   "data": "2026-12-15",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -493,7 +559,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-13",
+   "data": "2026-12-16",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -504,7 +570,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-13",
+   "data": "2026-12-16",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
