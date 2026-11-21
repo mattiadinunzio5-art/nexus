@@ -1173,6 +1173,90 @@
    "didascalia": "Switching the world on 💡 Share of people with electricity: 73.2% (1998), 80.7% (2005), 86.9% (2015), 91.9% (2024) — World Bank. About one person in twelve is still without it. Explore energy data in NEXUS — link in bio. #electricity #energy #development #world #humanprogress #worldbank #history #data",
    "copertina": "reels/covers/U-BULB.jpg",
    "copertina_ms": 17141
+  },
+  {
+   "id": "U-MOON-reel",
+   "codice": "U-MOON",
+   "tipo": "reel",
+   "data": "2026-12-23",
+   "ora": "12:30",
+   "titolo": "Only twelve footprints",
+   "media": [
+    "reels/U-MOON.mp4"
+   ],
+   "didascalia": "Only 12 people have walked on the Moon 🌕👣 Apollo 11 landed on 20 July 1969; six crews landed between 1969 and 1972; the last moonwalkers left in December 1972 (NASA). Every date with its source in NEXUS — link in bio. #moon #apollo11 #nasa #space #history #astronomy #didyouknow #science",
+   "copertina": "reels/covers/U-MOON.jpg",
+   "copertina_ms": 17781
+  },
+  {
+   "id": "U-SEESAW-reel",
+   "codice": "U-SEESAW",
+   "tipo": "reel",
+   "data": "2026-12-23",
+   "ora": "19:00",
+   "titolo": "China and India on a seesaw",
+   "media": [
+    "reels/U-SEESAW.mp4"
+   ],
+   "didascalia": "The China–India seesaw ⚖️ Output per person: India $987 vs China $799 (1950); level around 1970; China $2,982 vs $2,087 (1990); $19,238 vs $7,766 (2022) — Maddison Project. Compare countries in NEXUS — link in bio. #china #india #asia #economics #history #growth #development #data",
+   "copertina": "reels/covers/U-SEESAW.jpg",
+   "copertina_ms": 23989
+  },
+  {
+   "id": "U-REBUILD-reel",
+   "codice": "U-REBUILD",
+   "tipo": "reel",
+   "data": "2026-12-24",
+   "ora": "12:30",
+   "titolo": "Germany, from rubble to tower",
+   "media": [
+    "reels/U-REBUILD.mp4"
+   ],
+   "didascalia": "From rubble to tower 🏗️🇩🇪 Germany's output per person: $7,960 (1938), $3,534 (1946), $12,282 (1960), $46,648 (2022) — Maddison Project, 2011 dollars. Explore it in NEXUS — link in bio. #germany #deutschland #history #ww2 #economicmiracle #wirtschaftswunder #europe #economics",
+   "copertina": "reels/covers/U-REBUILD.jpg",
+   "copertina_ms": 21856
+  },
+  {
+   "id": "U-LANTERNS-reel",
+   "codice": "U-LANTERNS",
+   "tipo": "reel",
+   "data": "2026-12-24",
+   "ora": "19:00",
+   "titolo": "China, one lantern at a time",
+   "media": [
+    "reels/U-LANTERNS.mp4"
+   ],
+   "didascalia": "A sky full of lanterns 🏮🇨🇳 China's output per person: $799 (1950), $1,930 (1980), $4,730 (2000), $19,238 (2022) — 24× (Maddison Project, 2011 dollars). Explore it in NEXUS — link in bio. #china #economy #growth #asia #history #economichistory #gdp #data",
+   "copertina": "reels/covers/U-LANTERNS.jpg",
+   "copertina_ms": 17675
+  },
+  {
+   "id": "U-MINES-reel",
+   "codice": "U-MINES",
+   "tipo": "reel",
+   "data": "2026-12-25",
+   "ora": "12:30",
+   "titolo": "Diamonds and copper",
+   "media": [
+    "reels/U-MINES.mp4"
+   ],
+   "didascalia": "Diamonds vs copper 💎⛏️ Output per person: Zambia $1,530 vs Botswana $564 (1960); Botswana ahead by 1975; $16,352 vs $3,342 in 2022 (Maddison Project, 2011 dollars). Compare countries in NEXUS — link in bio. #botswana #zambia #africa #diamonds #development #economics #history #growth",
+   "copertina": "reels/covers/U-MINES.jpg",
+   "copertina_ms": 20000
+  },
+  {
+   "id": "U-CRICKET-reel",
+   "codice": "U-CRICKET",
+   "tipo": "reel",
+   "data": "2026-12-25",
+   "ora": "19:00",
+   "titolo": "India's scoreboard",
+   "media": [
+    "reels/U-CRICKET.mp4"
+   ],
+   "didascalia": "India's scoreboard 🏏🇮🇳 Output per person: $987 (1950), $2,087 (1990), $4,526 (2010), $7,766 (2022) — almost 8× (Maddison Project, 2011 dollars). Explore any country's long run in NEXUS — link in bio. #india #cricket #economy #growth #asia #history #gdp #data",
+   "copertina": "reels/covers/U-CRICKET.jpg",
+   "copertina_ms": 15115
   }
  ]
 }

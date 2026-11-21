@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/a55a30353dad3fa0f8967b3965ec7f7342682d90/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/acdf9d8ec865d9547a4f32d27f14a5051f2a359c/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -645,9 +645,75 @@
    "copertina_ms": 17141
   },
   {
+   "id": "U-MOON-tiktok",
+   "codice": "U-MOON",
+   "data": "2026-12-20",
+   "ora": "13:00",
+   "media": "U-MOON.mp4",
+   "titolo": "Only twelve footprints",
+   "didascalia": "Only 12 people have walked on the Moon 🌕👣 Apollo 11 landed on 20 July 1969; six crews landed between 1969 and 1972; the last moonwalkers left in December 1972 (NASA). Every date with its source in NEXUS — link in bio. #moon #apollo11 #nasa #space #history #astronomy #didyouknow #science",
+   "esperimento_orario": false,
+   "copertina_ms": 17781
+  },
+  {
+   "id": "U-SEESAW-tiktok",
+   "codice": "U-SEESAW",
+   "data": "2026-12-20",
+   "ora": "21:00",
+   "media": "U-SEESAW.mp4",
+   "titolo": "China and India on a seesaw",
+   "didascalia": "The China–India seesaw ⚖️ Output per person: India $987 vs China $799 (1950); level around 1970; China $2,982 vs $2,087 (1990); $19,238 vs $7,766 (2022) — Maddison Project. Compare countries in NEXUS — link in bio. #china #india #asia #economics #history #growth #development #data",
+   "esperimento_orario": true,
+   "copertina_ms": 23989
+  },
+  {
+   "id": "U-REBUILD-tiktok",
+   "codice": "U-REBUILD",
+   "data": "2026-12-21",
+   "ora": "13:00",
+   "media": "U-REBUILD.mp4",
+   "titolo": "Germany, from rubble to tower",
+   "didascalia": "From rubble to tower 🏗️🇩🇪 Germany's output per person: $7,960 (1938), $3,534 (1946), $12,282 (1960), $46,648 (2022) — Maddison Project, 2011 dollars. Explore it in NEXUS — link in bio. #germany #deutschland #history #ww2 #economicmiracle #wirtschaftswunder #europe #economics",
+   "esperimento_orario": false,
+   "copertina_ms": 21856
+  },
+  {
+   "id": "U-LANTERNS-tiktok",
+   "codice": "U-LANTERNS",
+   "data": "2026-12-21",
+   "ora": "19:00",
+   "media": "U-LANTERNS.mp4",
+   "titolo": "China, one lantern at a time",
+   "didascalia": "A sky full of lanterns 🏮🇨🇳 China's output per person: $799 (1950), $1,930 (1980), $4,730 (2000), $19,238 (2022) — 24× (Maddison Project, 2011 dollars). Explore it in NEXUS — link in bio. #china #economy #growth #asia #history #economichistory #gdp #data",
+   "esperimento_orario": true,
+   "copertina_ms": 17675
+  },
+  {
+   "id": "U-MINES-tiktok",
+   "codice": "U-MINES",
+   "data": "2026-12-22",
+   "ora": "13:00",
+   "media": "U-MINES.mp4",
+   "titolo": "Diamonds and copper",
+   "didascalia": "Diamonds vs copper 💎⛏️ Output per person: Zambia $1,530 vs Botswana $564 (1960); Botswana ahead by 1975; $16,352 vs $3,342 in 2022 (Maddison Project, 2011 dollars). Compare countries in NEXUS — link in bio. #botswana #zambia #africa #diamonds #development #economics #history #growth",
+   "esperimento_orario": false,
+   "copertina_ms": 20000
+  },
+  {
+   "id": "U-CRICKET-tiktok",
+   "codice": "U-CRICKET",
+   "data": "2026-12-22",
+   "ora": "20:00",
+   "media": "U-CRICKET.mp4",
+   "titolo": "India's scoreboard",
+   "didascalia": "India's scoreboard 🏏🇮🇳 Output per person: $987 (1950), $2,087 (1990), $4,526 (2010), $7,766 (2022) — almost 8× (Maddison Project, 2011 dollars). Explore any country's long run in NEXUS — link in bio. #india #cricket #economy #growth #asia #history #gdp #data",
+   "esperimento_orario": true,
+   "copertina_ms": 15115
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-20",
+   "data": "2026-12-23",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -658,7 +724,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-20",
+   "data": "2026-12-23",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -669,7 +735,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-21",
+   "data": "2026-12-24",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -680,7 +746,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-21",
+   "data": "2026-12-24",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -691,7 +757,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-22",
+   "data": "2026-12-25",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -702,7 +768,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-22",
+   "data": "2026-12-25",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
