@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/a008a6c4e6b837c9366d6aaa670f9de4f7a85b83/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/1fc971f3835260335e91cc680ade6376b4f20d2d/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -381,9 +381,75 @@
    "copertina_ms": 17867
   },
   {
+   "id": "U-KITES-tiktok",
+   "codice": "U-KITES",
+   "data": "2026-12-08",
+   "ora": "13:00",
+   "media": "U-KITES.mp4",
+   "titolo": "India's kites rise as poverty falls",
+   "didascalia": "Kites over India 🪁🇮🇳 Share of people living on under $3 a day (2021 prices): 59.7% in 1977, 47.5% in 1993, 27.1% in 2011, 2.6% in 2023 (World Bank). Explore poverty data in NEXUS — link in bio. #india #poverty #development #economics #asia #humanprogress #worldbank #history",
+   "esperimento_orario": false,
+   "copertina_ms": 19424
+  },
+  {
+   "id": "U-COASTER-tiktok",
+   "codice": "U-COASTER",
+   "data": "2026-12-08",
+   "ora": "21:00",
+   "media": "U-COASTER.mp4",
+   "titolo": "Seventy years on the bond rollercoaster",
+   "didascalia": "The bond rollercoaster 🎢 US 10-year Treasury yield (annual averages): 2.9% in 1953, 13.9% in 1981, 1.8% in 2012, 0.9% in 2020, 4.3% in 2025 (Federal Reserve via FRED). Ride any rate's history in NEXUS — link in bio. #bonds #treasury #interestrates #investing #finance #markets #economics #fed",
+   "esperimento_orario": true,
+   "copertina_ms": 22219
+  },
+  {
+   "id": "U-HOURGLASS-tiktok",
+   "codice": "U-HOURGLASS",
+   "data": "2026-12-09",
+   "ora": "13:00",
+   "media": "U-HOURGLASS.mp4",
+   "titolo": "Two centuries of poverty, draining away",
+   "didascalia": "The sand is running out ⏳ Share of the world in extreme poverty: 89% in 1820, 74% in 1910, 63% in 1950, 36% in 1990, 10% in 2015 (Ravallion, Bourguignon & Morrisson, World Bank via Our World in Data). Explore it in NEXUS, link in bio. #poverty #humanprogress #history #development #economics #worldbank #globalhealth #data",
+   "esperimento_orario": false,
+   "copertina_ms": 16032
+  },
+  {
+   "id": "U-BOOK-tiktok",
+   "codice": "U-BOOK",
+   "data": "2026-12-09",
+   "ora": "19:00",
+   "media": "U-BOOK.mp4",
+   "titolo": "Italy's book of years",
+   "didascalia": "Il libro degli anni 📖🇮🇹 Life expectancy in Italy: 29.8 years in 1872, 41.9 in 1900, 65.7 in 1950, 79.6 in 2000, 83.7 in 2023 (Our World in Data). Almost 54 years gained. Explore it in NEXUS — link in bio. #italia #italy #lifeexpectancy #storia #history #health #demography #data",
+   "esperimento_orario": true,
+   "copertina_ms": 16928
+  },
+  {
+   "id": "U-URBAN-tiktok",
+   "codice": "U-URBAN",
+   "data": "2026-12-10",
+   "ora": "13:00",
+   "media": "U-URBAN.mp4",
+   "titolo": "The year cities won",
+   "didascalia": "When the world became urban 🏙️🌳 Urban share of the world: 34.2% (1960), 39.5% (1980), 46.8% (2000), over half by 2007, 57.6% in 2024 (World Bank, UN WUP). Explore cities data in NEXUS — link in bio. #cities #urbanization #population #geography #history #demography #worldbank #data",
+   "esperimento_orario": false,
+   "copertina_ms": 16715
+  },
+  {
+   "id": "U-FIELDS-tiktok",
+   "codice": "U-FIELDS",
+   "data": "2026-12-10",
+   "ora": "20:00",
+   "media": "U-FIELDS.mp4",
+   "titolo": "China's workers left the fields",
+   "didascalia": "From the fields to the factory 🌾🏭 Share of China's workers in agriculture: 59.6% (1991), 50% (2000), 36.7% (2010), 22.2% (2024) — World Bank, ILO estimates. Explore labour data in NEXUS, link in bio. #china #agriculture #industry #work #economics #asia #history #development",
+   "esperimento_orario": true,
+   "copertina_ms": 16843
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-08",
+   "data": "2026-12-11",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -394,7 +460,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-08",
+   "data": "2026-12-11",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -405,7 +471,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-09",
+   "data": "2026-12-12",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -416,7 +482,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-09",
+   "data": "2026-12-12",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -427,7 +493,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-10",
+   "data": "2026-12-13",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -438,7 +504,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-10",
+   "data": "2026-12-13",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",

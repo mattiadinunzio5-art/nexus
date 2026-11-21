@@ -837,6 +837,90 @@
    "didascalia": "Prices doubling every ~10 weeks ⏱️🇧🇷 Brazil's inflation: 629% (1988), 1,431% (1989), 2,948% (1990), World Bank. At a steady 1990 pace, that means prices doubling about every ten weeks. Explore it in NEXUS — link in bio. #brazil #brasil #hyperinflation #inflation #money #latinamerica #history #economics",
    "copertina": "reels/covers/U-BRASIL.jpg",
    "copertina_ms": 17867
+  },
+  {
+   "id": "U-KITES-reel",
+   "codice": "U-KITES",
+   "tipo": "reel",
+   "data": "2026-12-11",
+   "ora": "12:30",
+   "titolo": "India's kites rise as poverty falls",
+   "media": [
+    "reels/U-KITES.mp4"
+   ],
+   "didascalia": "Kites over India 🪁🇮🇳 Share of people living on under $3 a day (2021 prices): 59.7% in 1977, 47.5% in 1993, 27.1% in 2011, 2.6% in 2023 (World Bank). Explore poverty data in NEXUS — link in bio. #india #poverty #development #economics #asia #humanprogress #worldbank #history",
+   "copertina": "reels/covers/U-KITES.jpg",
+   "copertina_ms": 19424
+  },
+  {
+   "id": "U-COASTER-reel",
+   "codice": "U-COASTER",
+   "tipo": "reel",
+   "data": "2026-12-11",
+   "ora": "19:00",
+   "titolo": "Seventy years on the bond rollercoaster",
+   "media": [
+    "reels/U-COASTER.mp4"
+   ],
+   "didascalia": "The bond rollercoaster 🎢 US 10-year Treasury yield (annual averages): 2.9% in 1953, 13.9% in 1981, 1.8% in 2012, 0.9% in 2020, 4.3% in 2025 (Federal Reserve via FRED). Ride any rate's history in NEXUS — link in bio. #bonds #treasury #interestrates #investing #finance #markets #economics #fed",
+   "copertina": "reels/covers/U-COASTER.jpg",
+   "copertina_ms": 22219
+  },
+  {
+   "id": "U-HOURGLASS-reel",
+   "codice": "U-HOURGLASS",
+   "tipo": "reel",
+   "data": "2026-12-12",
+   "ora": "12:30",
+   "titolo": "Two centuries of poverty, draining away",
+   "media": [
+    "reels/U-HOURGLASS.mp4"
+   ],
+   "didascalia": "The sand is running out ⏳ Share of the world in extreme poverty: 89% in 1820, 74% in 1910, 63% in 1950, 36% in 1990, 10% in 2015 (Ravallion, Bourguignon & Morrisson, World Bank via Our World in Data). Explore it in NEXUS, link in bio. #poverty #humanprogress #history #development #economics #worldbank #globalhealth #data",
+   "copertina": "reels/covers/U-HOURGLASS.jpg",
+   "copertina_ms": 16032
+  },
+  {
+   "id": "U-BOOK-reel",
+   "codice": "U-BOOK",
+   "tipo": "reel",
+   "data": "2026-12-12",
+   "ora": "19:00",
+   "titolo": "Italy's book of years",
+   "media": [
+    "reels/U-BOOK.mp4"
+   ],
+   "didascalia": "Il libro degli anni 📖🇮🇹 Life expectancy in Italy: 29.8 years in 1872, 41.9 in 1900, 65.7 in 1950, 79.6 in 2000, 83.7 in 2023 (Our World in Data). Almost 54 years gained. Explore it in NEXUS — link in bio. #italia #italy #lifeexpectancy #storia #history #health #demography #data",
+   "copertina": "reels/covers/U-BOOK.jpg",
+   "copertina_ms": 16928
+  },
+  {
+   "id": "U-URBAN-reel",
+   "codice": "U-URBAN",
+   "tipo": "reel",
+   "data": "2026-12-13",
+   "ora": "12:30",
+   "titolo": "The year cities won",
+   "media": [
+    "reels/U-URBAN.mp4"
+   ],
+   "didascalia": "When the world became urban 🏙️🌳 Urban share of the world: 34.2% (1960), 39.5% (1980), 46.8% (2000), over half by 2007, 57.6% in 2024 (World Bank, UN WUP). Explore cities data in NEXUS — link in bio. #cities #urbanization #population #geography #history #demography #worldbank #data",
+   "copertina": "reels/covers/U-URBAN.jpg",
+   "copertina_ms": 16715
+  },
+  {
+   "id": "U-FIELDS-reel",
+   "codice": "U-FIELDS",
+   "tipo": "reel",
+   "data": "2026-12-13",
+   "ora": "19:00",
+   "titolo": "China's workers left the fields",
+   "media": [
+    "reels/U-FIELDS.mp4"
+   ],
+   "didascalia": "From the fields to the factory 🌾🏭 Share of China's workers in agriculture: 59.6% (1991), 50% (2000), 36.7% (2010), 22.2% (2024) — World Bank, ILO estimates. Explore labour data in NEXUS, link in bio. #china #agriculture #industry #work #economics #asia #history #development",
+   "copertina": "reels/covers/U-FIELDS.jpg",
+   "copertina_ms": 16843
   }
  ]
 }
