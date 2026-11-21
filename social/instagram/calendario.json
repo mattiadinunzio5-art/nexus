@@ -1089,6 +1089,90 @@
    "didascalia": "Did tulips ruin Holland? 🌷 Bulb prices collapsed in February 1637 — but archival research (Anne Goldgar, Tulipmania, 2007) found little evidence of widespread ruin. NEXUS keeps facts and interpretations apart — link in bio. #tulipmania #tulips #bubble #financialhistory #netherlands #history #economics #investing",
    "copertina": "reels/covers/U-TULIP.jpg",
    "copertina_ms": 17035
+  },
+  {
+   "id": "U-DOMINO-reel",
+   "codice": "U-DOMINO",
+   "tipo": "reel",
+   "data": "2026-12-20",
+   "ora": "12:30",
+   "titolo": "2008, one tile at a time",
+   "media": [
+    "reels/U-DOMINO.mp4"
+   ],
+   "didascalia": "How 2008 fell, tile by tile 🁢 Bear Stearns rescued (March 2008), Lehman bankrupt (15 Sep), Fed loan to AIG of up to $85bn (16 Sep), world GDP −1.3% in 2009 (Federal Reserve, World Bank). Trace any crisis in NEXUS — link in bio. #2008 #financialcrisis #lehman #wallstreet #history #finance #economics #markets",
+   "copertina": "reels/covers/U-DOMINO.jpg",
+   "copertina_ms": 16864
+  },
+  {
+   "id": "U-TABLE-reel",
+   "codice": "U-TABLE",
+   "tipo": "reel",
+   "data": "2026-12-20",
+   "ora": "19:00",
+   "titolo": "The world's family table got smaller",
+   "media": [
+    "reels/U-TABLE.mp4"
+   ],
+   "didascalia": "The family table got smaller 🍽️ World fertility: 5.31 children per woman (1963), 3.73 (1980), 2.73 (2000), 2.19 (2024). Niger is at 5.93, South Korea at 0.72 (World Bank). Explore it in NEXUS — link in bio. #fertility #population #family #demography #world #history #society #data",
+   "copertina": "reels/covers/U-TABLE.jpg",
+   "copertina_ms": 15051
+  },
+  {
+   "id": "U-PUMP-reel",
+   "codice": "U-PUMP",
+   "tipo": "reel",
+   "data": "2026-12-21",
+   "ora": "12:30",
+   "titolo": "The day oil quadrupled",
+   "media": [
+    "reels/U-PUMP.mp4"
+   ],
+   "didascalia": "×4 in three months ⛽ Oil went from $2.90 a barrel before the October 1973 embargo to $11.65 in January 1974 (Federal Reserve History). US inflation hit 11% in 1974 (BLS via FRED). Explore energy history in NEXUS — link in bio. #oil #oilcrisis #1973 #energy #inflation #opec #history #economics",
+   "copertina": "reels/covers/U-PUMP.jpg",
+   "copertina_ms": 17269
+  },
+  {
+   "id": "U-SIGNAL-reel",
+   "codice": "U-SIGNAL",
+   "tipo": "reel",
+   "data": "2026-12-21",
+   "ora": "19:00",
+   "titolo": "Italy, signal bars",
+   "media": [
+    "reels/U-SIGNAL.mp4"
+   ],
+   "didascalia": "Italia, tacche piene 📶🇮🇹 Internet users in Italy: 0.5% (1995), 23.1% (2000), 53.7% (2010), 89.2% (2024) — World Bank, ITU data. Explore technology data in NEXUS — link in bio. #italia #italy #internet #tecnologia #digitale #history #data #tech",
+   "copertina": "reels/covers/U-SIGNAL.jpg",
+   "copertina_ms": 14859
+  },
+  {
+   "id": "U-DOLLAR-reel",
+   "codice": "U-DOLLAR",
+   "tipo": "reel",
+   "data": "2026-12-22",
+   "ora": "12:30",
+   "titolo": "What $100 from 1947 buys today",
+   "media": [
+    "reels/U-DOLLAR.mp4"
+   ],
+   "didascalia": "Watch $100 shrink 💵 Measured with the US consumer price index (annual averages), $100 from 1947 buys what $57.5 bought in 1970, $17.1 in 1990, $10.2 in 2010 and $6.9 in 2025 — prices are 14.4× higher (BLS via FRED). Explore it in NEXUS — link in bio. #inflation #dollar #money #personalfinance #economics #history #usa #prices",
+   "copertina": "reels/covers/U-DOLLAR.jpg",
+   "copertina_ms": 19360
+  },
+  {
+   "id": "U-BULB-reel",
+   "codice": "U-BULB",
+   "tipo": "reel",
+   "data": "2026-12-22",
+   "ora": "19:00",
+   "titolo": "The world, switching on",
+   "media": [
+    "reels/U-BULB.mp4"
+   ],
+   "didascalia": "Switching the world on 💡 Share of people with electricity: 73.2% (1998), 80.7% (2005), 86.9% (2015), 91.9% (2024) — World Bank. About one person in twelve is still without it. Explore energy data in NEXUS — link in bio. #electricity #energy #development #world #humanprogress #worldbank #history #data",
+   "copertina": "reels/covers/U-BULB.jpg",
+   "copertina_ms": 17141
   }
  ]
 }

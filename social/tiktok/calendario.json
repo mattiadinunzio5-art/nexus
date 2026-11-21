@@ -4,7 +4,7 @@
  "servizio": "tiktok",
  "account": "nexus.analytic",
  "fuso_orario": "Europe/Rome",
- "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/d0809e366cdb58c88278583ff7e3ded55b3612a5/social/reels",
+ "base_url_media": "https://raw.githubusercontent.com/mattiadinunzio5-art/nexus/a55a30353dad3fa0f8967b3965ec7f7342682d90/social/reels",
  "voci": [
   {
    "id": "U-KORBIRTH-tiktok",
@@ -579,9 +579,75 @@
    "copertina_ms": 17035
   },
   {
+   "id": "U-DOMINO-tiktok",
+   "codice": "U-DOMINO",
+   "data": "2026-12-17",
+   "ora": "13:00",
+   "media": "U-DOMINO.mp4",
+   "titolo": "2008, one tile at a time",
+   "didascalia": "How 2008 fell, tile by tile 🁢 Bear Stearns rescued (March 2008), Lehman bankrupt (15 Sep), Fed loan to AIG of up to $85bn (16 Sep), world GDP −1.3% in 2009 (Federal Reserve, World Bank). Trace any crisis in NEXUS — link in bio. #2008 #financialcrisis #lehman #wallstreet #history #finance #economics #markets",
+   "esperimento_orario": false,
+   "copertina_ms": 16864
+  },
+  {
+   "id": "U-TABLE-tiktok",
+   "codice": "U-TABLE",
+   "data": "2026-12-17",
+   "ora": "21:00",
+   "media": "U-TABLE.mp4",
+   "titolo": "The world's family table got smaller",
+   "didascalia": "The family table got smaller 🍽️ World fertility: 5.31 children per woman (1963), 3.73 (1980), 2.73 (2000), 2.19 (2024). Niger is at 5.93, South Korea at 0.72 (World Bank). Explore it in NEXUS — link in bio. #fertility #population #family #demography #world #history #society #data",
+   "esperimento_orario": true,
+   "copertina_ms": 15051
+  },
+  {
+   "id": "U-PUMP-tiktok",
+   "codice": "U-PUMP",
+   "data": "2026-12-18",
+   "ora": "13:00",
+   "media": "U-PUMP.mp4",
+   "titolo": "The day oil quadrupled",
+   "didascalia": "×4 in three months ⛽ Oil went from $2.90 a barrel before the October 1973 embargo to $11.65 in January 1974 (Federal Reserve History). US inflation hit 11% in 1974 (BLS via FRED). Explore energy history in NEXUS — link in bio. #oil #oilcrisis #1973 #energy #inflation #opec #history #economics",
+   "esperimento_orario": false,
+   "copertina_ms": 17269
+  },
+  {
+   "id": "U-SIGNAL-tiktok",
+   "codice": "U-SIGNAL",
+   "data": "2026-12-18",
+   "ora": "19:00",
+   "media": "U-SIGNAL.mp4",
+   "titolo": "Italy, signal bars",
+   "didascalia": "Italia, tacche piene 📶🇮🇹 Internet users in Italy: 0.5% (1995), 23.1% (2000), 53.7% (2010), 89.2% (2024) — World Bank, ITU data. Explore technology data in NEXUS — link in bio. #italia #italy #internet #tecnologia #digitale #history #data #tech",
+   "esperimento_orario": true,
+   "copertina_ms": 14859
+  },
+  {
+   "id": "U-DOLLAR-tiktok",
+   "codice": "U-DOLLAR",
+   "data": "2026-12-19",
+   "ora": "13:00",
+   "media": "U-DOLLAR.mp4",
+   "titolo": "What $100 from 1947 buys today",
+   "didascalia": "Watch $100 shrink 💵 Measured with the US consumer price index (annual averages), $100 from 1947 buys what $57.5 bought in 1970, $17.1 in 1990, $10.2 in 2010 and $6.9 in 2025 — prices are 14.4× higher (BLS via FRED). Explore it in NEXUS — link in bio. #inflation #dollar #money #personalfinance #economics #history #usa #prices",
+   "esperimento_orario": false,
+   "copertina_ms": 19360
+  },
+  {
+   "id": "U-BULB-tiktok",
+   "codice": "U-BULB",
+   "data": "2026-12-19",
+   "ora": "20:00",
+   "media": "U-BULB.mp4",
+   "titolo": "The world, switching on",
+   "didascalia": "Switching the world on 💡 Share of people with electricity: 73.2% (1998), 80.7% (2005), 86.9% (2015), 91.9% (2024) — World Bank. About one person in twelve is still without it. Explore energy data in NEXUS — link in bio. #electricity #energy #development #world #humanprogress #worldbank #history #data",
+   "esperimento_orario": true,
+   "copertina_ms": 17141
+  },
+  {
    "id": "U-BOL-tiktok",
    "codice": "U-BOL",
-   "data": "2026-12-17",
+   "data": "2026-12-20",
    "ora": "13:00",
    "media": "U-BOL.mp4",
    "titolo": "This price tag lived through 1985 Bolivia",
@@ -592,7 +658,7 @@
   {
    "id": "U-BERLIN-tiktok",
    "codice": "U-BERLIN",
-   "data": "2026-12-17",
+   "data": "2026-12-20",
    "ora": "21:00",
    "media": "U-BERLIN.mp4",
    "titolo": "28 years, one night",
@@ -603,7 +669,7 @@
   {
    "id": "U-CANDLE-tiktok",
    "codice": "U-CANDLE",
-   "data": "2026-12-18",
+   "data": "2026-12-21",
    "ora": "13:00",
    "media": "U-CANDLE.mp4",
    "titolo": "Every candle is a lifetime",
@@ -614,7 +680,7 @@
   {
    "id": "U-1987-tiktok",
    "codice": "U-1987",
-   "data": "2026-12-18",
+   "data": "2026-12-21",
    "ora": "19:00",
    "media": "U-1987.mp4",
    "titolo": "Monday 19 October 1987, on the screen",
@@ -625,7 +691,7 @@
   {
    "id": "U-VIKING-tiktok",
    "codice": "U-VIKING",
-   "data": "2026-12-19",
+   "data": "2026-12-22",
    "ora": "13:00",
    "media": "U-VIKING.mp4",
    "titolo": "The horns were never there",
@@ -636,7 +702,7 @@
   {
    "id": "U-LIRA-tiktok",
    "codice": "U-LIRA",
-   "data": "2026-12-19",
+   "data": "2026-12-22",
    "ora": "20:00",
    "media": "U-LIRA.mp4",
    "titolo": "1,936.27 lire against one coin",
