@@ -1,7 +1,7 @@
 import { useScope, scopeKey } from '../state/Scope';
 import { ProjectLinkButton, linkToActiveProject } from '../components/ProjectLink';
 import { ScopeNote } from '../components/ScopeNote';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDraft, useStickyState } from '../lib/useStickyState';
 import { BadgeCheck, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { DownloadButton } from '../components/ui/DownloadButton';
@@ -32,7 +32,9 @@ const FIELD_STATUS: Record<FieldCheck['status'], { label: string; cls: string }>
 const show = (v: unknown) => (Array.isArray(v) && v.length ? v.join('; ') : v === null || v === undefined || v === '' || Array.isArray(v) ? '—' : String(v));
 
 /** Confronto campo per campo con il registro: DOI esistente ≠ riferimento corrispondente. */
-export function VerificationDetailsView({ d }: { d: VerificationDetails }) {
+export function VerificationDetailsView({ d }: { d: VerificationDetails | null | undefined }) {
+  // Una scheda con dettagli vuoti o incompleti (es. «{}») non deve bloccare la pagina.
+  if (!d || typeof d.checked_at !== 'string') return null;
   return (
     <details className="mt-1 text-xs" data-testid="verification-details">
       <summary className="cursor-pointer text-steel-300">
@@ -42,9 +44,9 @@ export function VerificationDetailsView({ d }: { d: VerificationDetails }) {
         <table className="mt-1 w-full text-left">
           <thead><tr className="text-steel-500"><th className="pr-2">Campo</th><th className="pr-2">Scheda</th><th className="pr-2">Registro</th><th>Esito</th></tr></thead>
           <tbody>
-            {Object.entries(d.fields).map(([k, f]) => (
+            {Object.entries(d.fields ?? {}).map(([k, f]) => (
               <tr key={k}><td className="pr-2 text-steel-300">{f.label}</td><td className="pr-2 text-paper">{show(f.local)}</td>
-                <td className="pr-2 text-paper">{show(f.registry)}</td><td className={FIELD_STATUS[f.status].cls}>{FIELD_STATUS[f.status].label}</td></tr>
+                <td className="pr-2 text-paper">{show(f.registry)}</td><td className={(FIELD_STATUS[f.status] ?? FIELD_STATUS.missing_registry).cls}>{(FIELD_STATUS[f.status] ?? FIELD_STATUS.missing_registry).label}</td></tr>
             ))}
           </tbody>
         </table>
@@ -142,6 +144,13 @@ export function BibliographyPage() {
   const setEditing = (v: Source | 'new' | undefined) => setEditingKey(v === undefined ? undefined : v === 'new' ? 'new' : v.id);
   const [toDelete, setToDelete] = useState<Source>();
   const [actionError, setActionError] = useState<Error>();
+  // Esito di un'azione su una singola fonte, mostrato accanto alla fonte (dal telefono la cima della pagina non si vede).
+  const [itemMsg, setItemMsg] = useState<{ id: number; ok: boolean; text: string }>();
+  const formRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  // Il modulo di modifica si apre in cima: portalo in vista.
+  useEffect(() => { if (editingKey !== undefined) formRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }); }, [editingKey]);
+  useEffect(() => { if (actionError) errorRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' }); }, [actionError]);
   const [importMsg, setImportMsg] = useState<string>();
 
   useContextPanel(
@@ -155,13 +164,16 @@ export function BibliographyPage() {
     [],
   );
 
-  async function act(fn: () => Promise<unknown>) {
+  async function act(fn: () => Promise<unknown>, item?: { id: number; ok: string }) {
     setActionError(undefined);
+    setItemMsg(undefined);
     try {
       await fn();
+      if (item) setItemMsg({ id: item.id, ok: true, text: item.ok });
       await reload();
     } catch (e) {
-      setActionError(e as Error);
+      if (item) setItemMsg({ id: item.id, ok: false, text: (e as Error).message || 'Operazione non riuscita.' });
+      else setActionError(e as Error);
     }
   }
 
@@ -187,6 +199,7 @@ export function BibliographyPage() {
       </>} />
       {importMsg && <p role="status" className="mb-4 text-sm text-ok">{importMsg}</p>}
       {editing && (
+        <div ref={formRef} className="scroll-mt-4">
         <Card title={editing === 'new' ? 'Nuova fonte' : 'Modifica fonte'} className="mb-6">
           <SourceForm
             initial={editing === 'new' ? undefined : editing}
@@ -203,8 +216,9 @@ export function BibliographyPage() {
             }}
           />
         </Card>
+        </div>
       )}
-      {actionError && <div className="mb-4"><ErrorBox error={actionError} /></div>}
+      {actionError && <div ref={errorRef} className="mb-4"><ErrorBox error={actionError} /></div>}
       {loading && !data && <Loading />}
       {error && <ErrorBox error={error} onRetry={reload} />}
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -217,7 +231,7 @@ export function BibliographyPage() {
           <li key={s.id} className="rounded-lg border border-ink-700 bg-ink-900 p-3">
             <div className="flex flex-wrap items-start gap-2">
               <p className="min-w-0 flex-1 text-sm text-paper">{s.citation}</p>
-              <Badge tone={VERIFICATION[s.verification_status].tone}>{VERIFICATION[s.verification_status].label}</Badge>
+              <Badge tone={(VERIFICATION[s.verification_status] ?? VERIFICATION.unverified).tone}>{(VERIFICATION[s.verification_status] ?? VERIFICATION.unverified).label}</Badge>
               {s.is_demo && <DemoBadge />}{s.library && <LibraryBadge />}
             </div>
             {s.verification_note && <p className={`mt-1 text-xs ${s.verification_status === 'registry_mismatch' ? 'text-bad' : 'text-steel-500'}`}>{s.verification_note}</p>}
@@ -230,9 +244,10 @@ export function BibliographyPage() {
                 {s.provenance && <span>Provenienza: {s.provenance}</span>}
               </p>
             )}
+            {itemMsg?.id === s.id && <p role={itemMsg.ok ? 'status' : 'alert'} className={`mt-2 text-xs ${itemMsg.ok ? 'text-ok' : 'text-bad'}`}>{itemMsg.text}</p>}
             <div className="mt-2 flex flex-wrap gap-1">
-              <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'user'))}><BadgeCheck className="size-3.5" aria-hidden /> Ho verificato l'originale</Button>
-              {s.doi && <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'registry'))}>Verifica DOI su Crossref</Button>}
+              <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'user'), { id: s.id, ok: "Fatto: fonte segnata come controllata sull'originale." })}><BadgeCheck className="size-3.5" aria-hidden /> Ho verificato l'originale</Button>
+              {s.doi && <Button variant="ghost" className="text-xs" onClick={() => act(() => api.verifySource(s.id, 'registry'), { id: s.id, ok: "Controllo su Crossref fatto: l'esito è nella fonte." })}>Verifica DOI su Crossref</Button>}
               <ProjectLinkButton type="source" id={s.id} onChange={reload} />
               {!s.library && <Button variant="ghost" className="px-2" onClick={() => setEditing(s)} aria-label={`Modifica ${s.title}`}><Pencil className="size-4" /></Button>}
               {!s.library && <Button variant="ghost" className="px-2 hover:text-bad" onClick={() => setToDelete(s)} aria-label={`Elimina ${s.title}`}><Trash2 className="size-4" /></Button>}

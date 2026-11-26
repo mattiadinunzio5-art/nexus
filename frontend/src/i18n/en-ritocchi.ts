@@ -1,6 +1,10 @@
 /** Testi rimasti in italiano dopo le Fasi 1–3 (frammenti accanto a valori, suggerimenti, voci di menu). Vedi en.ts. */
 export const EN_RITOCCHI: Record<string, string> = {
   'Biblioteca': 'Library', 'del': 'on',
+  // Bibliografia: esito accanto alla fonte
+  "Fatto: fonte segnata come controllata sull'originale.": 'Done: source marked as checked against the original.',
+  "Controllo su Crossref fatto: l'esito è nella fonte.": 'Crossref check done: the result is shown on the source.',
+  'Operazione non riuscita.': 'The action did not succeed.',
   // Piani (nome e nota arrivano dal server)
   'Gratuito': 'Free', 'Locale (personale)': 'Local (personal)', 'Uso personale sul proprio computer': 'Personal use on your own computer',
   'Prezzo da definire: pagamenti non ancora attivi': 'Price to be defined: payments not active yet',
