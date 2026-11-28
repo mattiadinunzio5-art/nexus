@@ -81,7 +81,7 @@ class OpenAICompatibleClient(LLMClient):
 
     def __init__(self, base_url: str, api_key: str | None, model: str, timeout: float = 300.0, client: httpx.Client | None = None):
         if not base_url or not model:
-            raise ProviderError("Endpoint compatibile OpenAI: servono base_url e model.")
+            raise ProviderError("AI non configurata: in Sistema → Credenziali manca l'endpoint compatibile OpenAI (URL e modello).")
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
@@ -98,11 +98,11 @@ class OpenAICompatibleClient(LLMClient):
         except httpx.HTTPError as exc:
             raise ProviderError(f"Endpoint non raggiungibile: {type(exc).__name__}", retryable=True) from exc
         if r.status_code in (401, 403):
-            raise ProviderError("Credenziali rifiutate dall'endpoint.")
+            raise ProviderError("Chiave AI rifiutata dal fornitore: controllala o creane una nuova, poi aggiornala in Sistema → Credenziali.")
         if r.status_code == 429:
-            raise ProviderError("Limite di richieste raggiunto presso il fornitore.", retryable=True)
+            raise ProviderError("Limite di richieste raggiunto presso il fornitore AI: riprova tra qualche minuto.", retryable=True)
         if r.status_code != 200:
-            raise ProviderError(f"L'endpoint ha risposto HTTP {r.status_code}: {r.text[:200]}", retryable=r.status_code >= 500)
+            raise ProviderError(_http_message(r.status_code, r.text, self.model), retryable=r.status_code >= 500)
         d = r.json()
         choice = (d.get("choices") or [{}])[0]
         usage = d.get("usage") or {}
@@ -167,3 +167,21 @@ class AnthropicClient(LLMClient):
             output_tokens=resp.usage.output_tokens, stop_reason=resp.stop_reason,
             duration_ms=int((time.perf_counter() - t0) * 1000), notes=notes,
         )
+
+
+def _http_message(status: int, body: str, model: str = "") -> str:
+    """Messaggio comprensibile per un errore HTTP del fornitore AI, con il dettaglio tecnico in coda."""
+    low = (body or "").lower()
+    if status == 404 and ("model" in low or "not found" in low):
+        hint = (f"Il modello «{model}» non esiste più o non è disponibile presso il fornitore: "
+                "scegline un altro in Sistema → Credenziali.") if model else \
+            "Il modello indicato non esiste o non è disponibile presso il fornitore: controllalo in Sistema → Credenziali."
+    elif status == 404:
+        hint = "Indirizzo dell'endpoint non trovato: controlla l'URL in Sistema → Credenziali."
+    elif status == 400:
+        hint = "Il fornitore AI ha rifiutato la richiesta (parametri non accettati)."
+    elif status >= 500:
+        hint = "Il fornitore AI ha un problema temporaneo: riprova tra qualche minuto."
+    else:
+        hint = f"Il fornitore AI ha risposto con un errore (HTTP {status})."
+    return f"{hint} Dettaglio: HTTP {status} {(body or '')[:160]}"

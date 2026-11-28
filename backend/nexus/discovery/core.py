@@ -15,6 +15,8 @@ L'AI è facoltativa: interpreta la domanda e scrive la sintesi; i rilevatori son
 
 from __future__ import annotations
 
+import re
+
 import json
 import time
 
@@ -183,10 +185,13 @@ class Runner:
         se_ids = [s.id for s in series if hit(f"{s.name} {s.category} {s.description[:300]}") >= 1]
         en_ids = [e.id for e in entities.values() if e.event_id is None and hit(" ".join([e.name, *(e.aliases or [])])) >= 1]
         restricted = bool(ev_ids or se_ids or en_ids)
+        period = query_period(q, [e.start_year for e in events if e.id in set(ev_ids)])
         self.s.scope = {"terms": list(wset)[:40], "concepts": concepts, "event_ids": ev_ids, "series_ids": se_ids, "entity_ids": en_ids,
-                        "restricted": restricted}
+                        "restricted": restricted, **({"period": period} if period else {})}
         summary = (f"Ambito: {len(ev_ids)} eventi, {len(se_ids)} serie, {len(en_ids)} entità pertinenti." if restricted else
                    "Nessun elemento dell'archivio corrisponde alla domanda: analizzo l'intero archivio.")
+        if period:
+            summary += f" Periodo della domanda: {period[0]}–{period[1]}."
         self.log("understand", executor=executor, summary=summary, counts={"events": len(ev_ids), "series": len(se_ids), "entities": len(en_ids)}, t0=t0, res=res)
 
     def step_survey(self, t0: float) -> None:
@@ -224,10 +229,18 @@ class Runner:
         events, series, entities, rels, _, all_events, _ = self.data()
         skipped: dict = {}
         cands = an.series_anomalies(series, all_events, skipped) + an.source_discrepancies(series, skipped)
+        period = (self.s.scope or {}).get("period")
+        outside = 0
+        if period:
+            # Solo le anomalie del periodo della domanda (con un margine): il resto della serie non risponde alla domanda.
+            kept = [c for c in cands if in_period(c.period, period)]
+            outside, cands = len(cands) - len(kept), kept
         cands += an.chronology_issues(self.db, events, rels, entities)
         new, dup = self.save_anomalies(cands)
         note = f" Esclusi per dati insufficienti: {', '.join(f'{k} {v}' for k, v in skipped.items())}." if skipped else ""
-        self.log("anomalies", executor="local", t0=t0, counts={"new": new, "already_known": dup, **skipped},
+        if outside:
+            note += f" Escluse {outside} anomalie fuori dal periodo della domanda ({period[0]}–{period[1]}, ±{PERIOD_MARGIN} anni)."
+        self.log("anomalies", executor="local", t0=t0, counts={"new": new, "already_known": dup, **skipped, **({"outside_period": outside} if outside else {})},
                  summary=(f"{len(cands)} anomalie ({new} nuove)." if cands else "Nessuna anomalia rilevata.") + note)
 
     def _session_connections(self) -> list[DiscoveryConnection]:
@@ -370,3 +383,28 @@ def execute(db: Session, sess: DiscoverySession, user: User, settings: Settings,
     sess.elapsed_ms = r.elapsed_ms()
     db.commit()
     return sess
+
+
+PERIOD_MARGIN = 2  # anni di margine attorno al periodo della domanda
+_YEAR = re.compile(r"(?<!\d)(1[0-9]{3}|20[0-9]{2})(?!\d)")
+
+
+def query_period(query: str, event_years: list[int] | None = None, max_span: int = 80) -> list[int] | None:
+    """Periodo [da, a] della domanda: dagli anni scritti nella domanda, altrimenti dagli eventi pertinenti
+    se coprono al massimo `max_span` anni. None se non si ricava un periodo ragionevole."""
+    years = [int(y) for y in _YEAR.findall(query or "")]
+    if not years and event_years:
+        ys = [y for y in event_years if y]
+        if ys and max(ys) - min(ys) <= max_span:
+            years = ys
+    if not years:
+        return None
+    return [min(years), max(years)]
+
+
+def in_period(period_text: str, period: list[int], margin: int = PERIOD_MARGIN) -> bool:
+    """True se il periodo dell'anomalia (es. «1948-03» o «1947–1950») tocca il periodo della domanda; True se non ha anni."""
+    years = [int(y) for y in _YEAR.findall(period_text or "")]
+    if not years:
+        return True
+    return max(years) >= period[0] - margin and min(years) <= period[1] + margin
