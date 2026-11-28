@@ -229,13 +229,13 @@ class Runner:
         events, series, entities, rels, _, all_events, _ = self.data()
         skipped: dict = {}
         cands = an.series_anomalies(series, all_events, skipped) + an.source_discrepancies(series, skipped)
+        cands += an.chronology_issues(self.db, events, rels, entities)
         period = (self.s.scope or {}).get("period")
         outside = 0
         if period:
-            # Solo le anomalie del periodo della domanda (con un margine): il resto della serie non risponde alla domanda.
+            # Solo le anomalie del periodo della domanda (con un margine), cronologia compresa: il resto non risponde alla domanda.
             kept = [c for c in cands if in_period(c.period, period)]
             outside, cands = len(cands) - len(kept), kept
-        cands += an.chronology_issues(self.db, events, rels, entities)
         new, dup = self.save_anomalies(cands)
         note = f" Esclusi per dati insufficienti: {', '.join(f'{k} {v}' for k, v in skipped.items())}." if skipped else ""
         if outside:
